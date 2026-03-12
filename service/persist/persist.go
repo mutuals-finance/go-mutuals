@@ -24,32 +24,6 @@ var cleanString = func(r rune) rune {
 // DBID represents a database ID (application-wide unique identifier).
 type DBID string
 
-// UnmarshalGQL implements the graphql.Unmarshaler interface.
-// It parses a Global ID (e.g., "User:123") and extracts the database ID ("123")
-func (d *DBID) UnmarshalGQL(v interface{}) error {
-	str, ok := v.(string)
-	if !ok {
-		return fmt.Errorf("IDs must be strings")
-	}
-
-	// Logic: Split "Type:ID" and keep the ID part.
-	parts := strings.Split(str, ":")
-	if len(parts) < 2 {
-		return fmt.Errorf("invalid GraphQL ID format: %s", str)
-	}
-
-	// We assume the ID is the second part.
-	// If the ID itself contains colons, we join the rest.
-	*d = DBID(strings.Join(parts[1:], ":"))
-	return nil
-}
-
-// MarshalGQL implements the graphql.Marshaler interface.
-// It writes the raw DBID as a string to the response.
-func (d DBID) MarshalGQL(w io.Writer) {
-	// Note: GraphQL clients usually expect the Global ID (Type:ID).
-	io.WriteString(w, fmt.Sprintf(`"%s"`, d))
-}
 
 // String returns the string representation of the DBID.
 func (d DBID) String() string {
@@ -93,7 +67,6 @@ func (l *DBIDList) Scan(value interface{}) error {
 	return pq.Array(l).Scan(value)
 }
 
-type DBIDTuple [2]DBID
 
 // ErrNotFound is a general error for when some entity is not found.
 var notFoundError ErrNotFound
@@ -191,13 +164,6 @@ func (n *NullString) Scan(value interface{}) error {
 	return nil
 }
 
-// DBIDPtrToNullString converts a DBID pointer to NullString
-func DBIDPtrToNullString(id *DBID) NullString {
-	if id == nil || *id == "" {
-		return NullString("")
-	}
-	return NullString(id.String())
-}
 
 // DBIDPtrToSQLNullString converts a DBID pointer to sql.NullString
 func DBIDPtrToSQLNullString(id *DBID) sql.NullString {
@@ -207,14 +173,6 @@ func DBIDPtrToSQLNullString(id *DBID) sql.NullString {
 	return sql.NullString{String: id.String(), Valid: true}
 }
 
-// NullStringToDBIDPtr converts NullString to DBID pointer
-func NullStringToDBIDPtr(s NullString) *DBID {
-	if s == "" {
-		return nil
-	}
-	dbid := DBID(s.String())
-	return &dbid
-}
 
 // SQLNullStringToDBIDPtr converts sql.NullString to DBID pointer
 func SQLNullStringToDBIDPtr(s sql.NullString) *DBID {
@@ -369,21 +327,6 @@ func (n *NullBool) Scan(value interface{}) error {
 	return nil
 }
 
-type CompleteIndex struct {
-	Index  int `json:"start"`
-	Length int `json:"end"`
-}
-
-func (c CompleteIndex) Value() (driver.Value, error) {
-	return json.Marshal(c)
-}
-
-func (c *CompleteIndex) Scan(value interface{}) error {
-	if value == nil {
-		return nil
-	}
-	return json.Unmarshal(value.([]uint8), c)
-}
 
 // GenerateID generates an application-wide unique ID using ksuid
 func GenerateID() DBID {
@@ -394,59 +337,6 @@ func GenerateID() DBID {
 	return DBID(id.String())
 }
 
-// RemoveDuplicateDBIDs ensures that a slice of DBIDs has no repeated items
-func RemoveDuplicateDBIDs(a []DBID) []DBID {
-	result := make([]DBID, 0, len(a))
-	m := map[DBID]bool{}
-
-	for _, val := range a {
-		if _, ok := m[val]; !ok {
-			m[val] = true
-			result = append(result, val)
-		}
-	}
-
-	return result
-}
-
-// RemoveDuplicateAddresses ensures that a slice of addresses has no repeated items.
-// Note: Requires EthereumAddress type to be defined in this package
-func RemoveDuplicateAddresses(a []EthereumAddress) []EthereumAddress {
-	result := make([]EthereumAddress, 0, len(a))
-	m := map[EthereumAddress]bool{}
-
-	for _, val := range a {
-		if _, ok := m[val]; !ok {
-			m[val] = true
-			result = append(result, val)
-		}
-	}
-
-	return result
-}
-
-// ContainsDBID checks if a DBID exists in a slice
-func ContainsDBID(pSrc []DBID, pID DBID) bool {
-	for _, v := range pSrc {
-		if v == pID {
-			return true
-		}
-	}
-	return false
-}
-
-// ToDBIDs converts a slice of any type to a slice of DBIDs using a converter function
-func ToDBIDs[T any](them []T, convert func(T) (DBID, error)) ([]DBID, error) {
-	result := make([]DBID, len(them))
-	for i, v := range them {
-		d, err := convert(v)
-		if err != nil {
-			return nil, err
-		}
-		result[i] = d
-	}
-	return result, nil
-}
 
 // ToJSONB converts any value to pgtype.JSONB
 func ToJSONB(v any) (pgtype.JSONB, error) {
@@ -484,35 +374,4 @@ func JSONBToJSONPtr(j pgtype.JSONB) *JSON {
 	return &result
 }
 
-type DarkMode int
 
-const (
-	DarkModeDisabled DarkMode = iota
-	DarkModeEnabled
-)
-
-// UnmarshalGQL implements the graphql.Unmarshaler interface
-func (d *DarkMode) UnmarshalGQL(v interface{}) error {
-	n, ok := v.(string)
-	if !ok {
-		return fmt.Errorf("darkMode must be a string")
-	}
-
-	switch strings.ToLower(n) {
-	case "disabled":
-		*d = DarkModeDisabled
-	case "enabled":
-		*d = DarkModeEnabled
-	}
-	return nil
-}
-
-// MarshalGQL implements the graphql.Marshaler interface
-func (d DarkMode) MarshalGQL(w io.Writer) {
-	switch d {
-	case DarkModeDisabled:
-		w.Write([]byte(`"Disabled"`))
-	case DarkModeEnabled:
-		w.Write([]byte(`"Enabled"`))
-	}
-}

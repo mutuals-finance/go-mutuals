@@ -11,67 +11,67 @@ import (
 )
 
 func (r *Claim) ID() GqlID {
-	return GqlID(fmt.Sprintf("Claim:%s", r.ID))
+	return GqlID(fmt.Sprintf("Claim:%s", r.DBID))
 }
 
 func (r *DeletedNode) ID() GqlID {
-	return GqlID(fmt.Sprintf("DeletedNode:%s", r.ID))
+	return GqlID(fmt.Sprintf("DeletedNode:%s", r.DBID))
 }
 
 func (r *Deposit) ID() GqlID {
-	return GqlID(fmt.Sprintf("Deposit:%s", r.ID))
+	return GqlID(fmt.Sprintf("Deposit:%s", r.DBID))
 }
 
 func (r *EVMAccount) ID() GqlID {
-	return GqlID(fmt.Sprintf("EVMAccount:%s", r.ID))
+	return GqlID(fmt.Sprintf("EVMAccount:%s", r.DBID))
 }
 
 func (r *Module) ID() GqlID {
-	return GqlID(fmt.Sprintf("Module:%s", r.ID))
+	return GqlID(fmt.Sprintf("Module:%s", r.DBID))
 }
 
 func (r *ModuleRegistry) ID() GqlID {
-	return GqlID(fmt.Sprintf("ModuleRegistry:%s", r.ID))
+	return GqlID(fmt.Sprintf("ModuleRegistry:%s", r.DBID))
 }
 
 func (r *Pool) ID() GqlID {
-	return GqlID(fmt.Sprintf("Pool:%s", r.ID))
+	return GqlID(fmt.Sprintf("Pool:%s", r.DBID))
 }
 
 func (r *PoolContract) ID() GqlID {
-	return GqlID(fmt.Sprintf("PoolContract:%s", r.ID))
+	return GqlID(fmt.Sprintf("PoolContract:%s", r.DBID))
 }
 
 func (r *PoolDayBalance) ID() GqlID {
-	return GqlID(fmt.Sprintf("PoolDayBalance:%s", r.ID))
+	return GqlID(fmt.Sprintf("PoolDayBalance:%s", r.DBID))
 }
 
 func (r *PoolFactory) ID() GqlID {
-	return GqlID(fmt.Sprintf("PoolFactory:%s", r.ID))
+	return GqlID(fmt.Sprintf("PoolFactory:%s", r.DBID))
 }
 
 func (r *PoolHourBalance) ID() GqlID {
-	return GqlID(fmt.Sprintf("PoolHourBalance:%s", r.ID))
+	return GqlID(fmt.Sprintf("PoolHourBalance:%s", r.DBID))
 }
 
 func (r *Token) ID() GqlID {
-	return GqlID(fmt.Sprintf("Token:%s", r.ID))
+	return GqlID(fmt.Sprintf("Token:%s", r.DBID))
 }
 
 func (r *TokenBalance) ID() GqlID {
-	return GqlID(fmt.Sprintf("TokenBalance:%s", r.ID))
+	return GqlID(fmt.Sprintf("TokenBalance:%s", r.DBID))
 }
 
 func (r *Tx) ID() GqlID {
-	return GqlID(fmt.Sprintf("Tx:%s", r.ID))
+	return GqlID(fmt.Sprintf("Tx:%s", r.DBID))
 }
 
 func (r *User) ID() GqlID {
-	return GqlID(fmt.Sprintf("User:%s", r.ID))
+	return GqlID(fmt.Sprintf("User:%s", r.DBID))
 }
 
 func (r *Withdrawal) ID() GqlID {
-	return GqlID(fmt.Sprintf("Withdrawal:%s", r.ID))
+	return GqlID(fmt.Sprintf("Withdrawal:%s", r.DBID))
 }
 
 type NodeFetcher struct {

@@ -143,7 +143,6 @@ func RegisterCustomValidators(v *validator.Validate) {
 	v.RegisterValidation("chain", ChainValidator)
 	v.RegisterValidation("role", IsValidRole)
 	v.RegisterValidation("opt_in_role", IsOptInRole)
-	v.RegisterValidation("persona", IsValidPersona)
 	v.RegisterValidation("http", HTTPValidator)
 	v.RegisterValidation("at_least_one", AtLeastOneValidator)
 
@@ -168,14 +167,6 @@ var IsValidRole validator.Func = func(fl validator.FieldLevel) bool {
 var IsOptInRole validator.Func = func(fl validator.FieldLevel) bool {
 	role := persist.Role(fl.Field().String())
 	return role == persist.RoleBetaTester
-}
-
-var IsValidPersona validator.Func = func(fl validator.FieldLevel) bool {
-	persona := persist.Persona(fl.Field().String())
-	return persona == persist.PersonaNone ||
-		persona == persist.PersonaCollector ||
-		persona == persist.PersonaCreator ||
-		persona == persist.PersonaBoth
 }
 
 func ChainAddressValidator(sl validator.StructLevel) {

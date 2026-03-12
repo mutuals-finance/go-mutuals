@@ -1,6 +1,6 @@
 # Query operations
 query userByIdQuery($id: ID!) {
-    userById(id: $id) {
+    user(id: $id) {
         ... on User {
             id
             roles
@@ -17,7 +17,7 @@ query userByIdQuery($id: ID!) {
 }
 
 query userByAddressQuery($address: Address!) {
-    userByAddress(address: $address) {
+    user(address: $address) {
         ... on User {
             id
             roles
@@ -91,8 +91,8 @@ query poolQuery($id: ID, $slug: String, $contractId: ID) {
 }
 
 
-query usersByRoleQuery($role: Role!, $before: String, $after: String, $first: Int, $last: Int) {
-    usersByRole(role: $role, before: $before, after: $after, first: $first, last: $last) {
+query usersByRoleQuery($role: Role!, $after: String, $first: Int) {
+    usersByRole(role: $role, after: $after, first: $first) {
         edges {
             node {
                 id

@@ -49,6 +49,7 @@ type ResolverRoot interface {
 	ModuleRegistry() ModuleRegistryResolver
 	Mutation() MutationResolver
 	Pool() PoolResolver
+	PoolBalance() PoolBalanceResolver
 	PoolContract() PoolContractResolver
 	PoolDayBalance() PoolDayBalanceResolver
 	PoolHourBalance() PoolHourBalanceResolver
@@ -131,13 +132,23 @@ type ComplexityRoot struct {
 		UpdatedAt   func(childComplexity int) int
 	}
 
+	DepositConnection struct {
+		Edges    func(childComplexity int) int
+		PageInfo func(childComplexity int) int
+	}
+
+	DepositEdge struct {
+		Cursor func(childComplexity int) int
+		Node   func(childComplexity int) int
+	}
+
 	EVMAccount struct {
 		AccountType func(childComplexity int) int
 		Address     func(childComplexity int) int
-		Balances    func(childComplexity int) int
+		Balances    func(childComplexity int, first *int, after *string) int
 		CreatedAt   func(childComplexity int) int
 		ID          func(childComplexity int) int
-		SelfPools   func(childComplexity int) int
+		SelfPools   func(childComplexity int, first *int, after *string) int
 		UpdatedAt   func(childComplexity int) int
 	}
 
@@ -210,7 +221,6 @@ type ComplexityRoot struct {
 
 	Module struct {
 		Address        func(childComplexity int) int
-		ChainID        func(childComplexity int) int
 		CreatedAt      func(childComplexity int) int
 		Data           func(childComplexity int) int
 		Description    func(childComplexity int) int
@@ -219,16 +229,17 @@ type ComplexityRoot struct {
 		ModuleRegistry func(childComplexity int) int
 		ModuleType     func(childComplexity int) int
 		Name           func(childComplexity int) int
+		Network        func(childComplexity int) int
 		Permissions    func(childComplexity int) int
 		UpdatedAt      func(childComplexity int) int
 	}
 
 	ModuleRegistry struct {
 		Address     func(childComplexity int) int
-		ChainID     func(childComplexity int) int
 		CreatedAt   func(childComplexity int) int
 		ID          func(childComplexity int) int
 		ModuleCount func(childComplexity int) int
+		Network     func(childComplexity int) int
 		Owner       func(childComplexity int) int
 		UpdatedAt   func(childComplexity int) int
 	}
@@ -277,24 +288,30 @@ type ComplexityRoot struct {
 
 	PoolBalance struct {
 		Balance     func(childComplexity int) int
+		Tokens      func(childComplexity int, first *int, after *string) int
 		TotalIncome func(childComplexity int) int
 		Withdrawals func(childComplexity int) int
 	}
 
+	PoolConnection struct {
+		Edges    func(childComplexity int) int
+		PageInfo func(childComplexity int) int
+	}
+
 	PoolContract struct {
-		Account     func(childComplexity int) int
-		Address     func(childComplexity int) int
-		ChainID     func(childComplexity int) int
-		CreatedAt   func(childComplexity int) int
-		DayBalance  func(childComplexity int) int
-		Deposits    func(childComplexity int) int
-		HourBalance func(childComplexity int) int
-		ID          func(childComplexity int) int
-		Owner       func(childComplexity int) int
-		PoolFactory func(childComplexity int) int
-		Status      func(childComplexity int) int
-		UpdatedAt   func(childComplexity int) int
-		Withdrawals func(childComplexity int) int
+		Account      func(childComplexity int) int
+		Address      func(childComplexity int) int
+		CreatedAt    func(childComplexity int) int
+		DayBalances  func(childComplexity int, first *int, after *string) int
+		Deposits     func(childComplexity int, first *int, after *string) int
+		HourBalances func(childComplexity int, first *int, after *string) int
+		ID           func(childComplexity int) int
+		Network      func(childComplexity int) int
+		Owner        func(childComplexity int) int
+		PoolFactory  func(childComplexity int) int
+		Status       func(childComplexity int) int
+		UpdatedAt    func(childComplexity int) int
+		Withdrawals  func(childComplexity int, first *int, after *string) int
 	}
 
 	PoolCreatePayload struct {
@@ -302,43 +319,68 @@ type ComplexityRoot struct {
 	}
 
 	PoolDayBalance struct {
-		Amount    func(childComplexity int) int
-		ChainID   func(childComplexity int) int
-		CreatedAt func(childComplexity int) int
-		Date      func(childComplexity int) int
-		ID        func(childComplexity int) int
-		Pool      func(childComplexity int) int
-		Token     func(childComplexity int) int
-		UpdatedAt func(childComplexity int) int
+		Amount          func(childComplexity int) int
+		CreatedAt       func(childComplexity int) int
+		Date            func(childComplexity int) int
+		FormattedAmount func(childComplexity int) int
+		ID              func(childComplexity int) int
+		Network         func(childComplexity int) int
+		Pool            func(childComplexity int) int
+		Quotes          func(childComplexity int) int
+		Token           func(childComplexity int) int
+		UpdatedAt       func(childComplexity int) int
+	}
+
+	PoolDayBalanceConnection struct {
+		Edges    func(childComplexity int) int
+		PageInfo func(childComplexity int) int
+	}
+
+	PoolDayBalanceEdge struct {
+		Cursor func(childComplexity int) int
+		Node   func(childComplexity int) int
 	}
 
 	PoolDeletePayload struct {
 		Pool func(childComplexity int) int
 	}
 
+	PoolEdge struct {
+		Cursor func(childComplexity int) int
+		Node   func(childComplexity int) int
+	}
+
 	PoolFactory struct {
 		Address   func(childComplexity int) int
-		ChainID   func(childComplexity int) int
 		CreatedAt func(childComplexity int) int
 		ID        func(childComplexity int) int
+		Network   func(childComplexity int) int
 		Owner     func(childComplexity int) int
 		PoolCount func(childComplexity int) int
 		UpdatedAt func(childComplexity int) int
 	}
 
 	PoolHourBalance struct {
-		Amount    func(childComplexity int) int
-		ChainID   func(childComplexity int) int
-		CreatedAt func(childComplexity int) int
-		Date      func(childComplexity int) int
-		ID        func(childComplexity int) int
-		Pool      func(childComplexity int) int
-		Token     func(childComplexity int) int
-		UpdatedAt func(childComplexity int) int
+		Amount          func(childComplexity int) int
+		CreatedAt       func(childComplexity int) int
+		Date            func(childComplexity int) int
+		FormattedAmount func(childComplexity int) int
+		ID              func(childComplexity int) int
+		Network         func(childComplexity int) int
+		Pool            func(childComplexity int) int
+		Quotes          func(childComplexity int) int
+		Token           func(childComplexity int) int
+		UpdatedAt       func(childComplexity int) int
 	}
 
-	PoolSearchResult struct {
-		Pool func(childComplexity int) int
+	PoolHourBalanceConnection struct {
+		Edges    func(childComplexity int) int
+		PageInfo func(childComplexity int) int
+	}
+
+	PoolHourBalanceEdge struct {
+		Cursor func(childComplexity int) int
+		Node   func(childComplexity int) int
 	}
 
 	PoolUpdatePayload struct {
@@ -350,11 +392,16 @@ type ComplexityRoot struct {
 		Pool               func(childComplexity int, id *model.GqlID, slug *string, contractID *model.GqlID) int
 		SearchPools        func(childComplexity int, query string, limit *int, nameWeight *float64, descriptionWeight *float64) int
 		SearchUsers        func(childComplexity int, query string, limit *int, usernameWeight *float64) int
-		UserByAddress      func(childComplexity int, address persist.Address) int
-		UserByID           func(childComplexity int, id model.GqlID) int
-		UsersByRole        func(childComplexity int, role persist.Role, before *string, after *string, first *int, last *int) int
+		User               func(childComplexity int, id *model.GqlID, address *persist.Address) int
+		UsersByRole        func(childComplexity int, role persist.Role, first *int, after *string) int
 		Viewer             func(childComplexity int) int
 		__resolve__service func(childComplexity int) int
+	}
+
+	Quote struct {
+		Currency      func(childComplexity int) int
+		LastUpdatedAt func(childComplexity int) int
+		Value         func(childComplexity int) int
 	}
 
 	RemoveUserWalletsPayload struct {
@@ -375,13 +422,14 @@ type ComplexityRoot struct {
 
 	Token struct {
 		Address      func(childComplexity int) int
-		ChainID      func(childComplexity int) int
 		CreatedAt    func(childComplexity int) int
 		Decimals     func(childComplexity int) int
 		ID           func(childComplexity int) int
 		Logo         func(childComplexity int) int
 		Name         func(childComplexity int) int
+		Network      func(childComplexity int) int
 		PossibleSpam func(childComplexity int) int
+		Quotes       func(childComplexity int) int
 		Symbol       func(childComplexity int) int
 		Thumbnail    func(childComplexity int) int
 		TokenType    func(childComplexity int) int
@@ -390,29 +438,46 @@ type ComplexityRoot struct {
 	}
 
 	TokenBalance struct {
-		Amount    func(childComplexity int) int
-		ChainID   func(childComplexity int) int
-		CreatedAt func(childComplexity int) int
-		Holder    func(childComplexity int) int
-		ID        func(childComplexity int) int
-		Token     func(childComplexity int) int
-		UpdatedAt func(childComplexity int) int
+		Amount          func(childComplexity int) int
+		CreatedAt       func(childComplexity int) int
+		FormattedAmount func(childComplexity int) int
+		Holder          func(childComplexity int) int
+		ID              func(childComplexity int) int
+		Network         func(childComplexity int) int
+		Quotes          func(childComplexity int) int
+		Token           func(childComplexity int) int
+		UpdatedAt       func(childComplexity int) int
+	}
+
+	TokenBalanceConnection struct {
+		Edges    func(childComplexity int) int
+		PageInfo func(childComplexity int) int
+	}
+
+	TokenBalanceEdge struct {
+		Cursor func(childComplexity int) int
+		Node   func(childComplexity int) int
 	}
 
 	Tx struct {
 		CreatedAt   func(childComplexity int) int
-		Deposits    func(childComplexity int) int
+		Deposits    func(childComplexity int, first *int, after *string) int
 		GasPrice    func(childComplexity int) int
 		GasUsed     func(childComplexity int) int
 		ID          func(childComplexity int) int
 		UpdatedAt   func(childComplexity int) int
-		Withdrawals func(childComplexity int) int
+		Withdrawals func(childComplexity int, first *int, after *string) int
 	}
 
 	User struct {
 		ID    func(childComplexity int) int
-		Pools func(childComplexity int) int
+		Pools func(childComplexity int, first *int, after *string) int
 		Roles func(childComplexity int) int
+	}
+
+	UserConnection struct {
+		Edges    func(childComplexity int) int
+		PageInfo func(childComplexity int) int
 	}
 
 	UserDeletePayload struct {
@@ -429,17 +494,8 @@ type ComplexityRoot struct {
 		User                 func(childComplexity int) int
 	}
 
-	UserSearchResult struct {
-		User func(childComplexity int) int
-	}
-
 	UserUpdatePayload struct {
 		User func(childComplexity int) int
-	}
-
-	UsersConnection struct {
-		Edges    func(childComplexity int) int
-		PageInfo func(childComplexity int) int
 	}
 
 	VerifyTokenPayload struct {
@@ -461,6 +517,16 @@ type ComplexityRoot struct {
 		UpdatedAt   func(childComplexity int) int
 	}
 
+	WithdrawalConnection struct {
+		Edges    func(childComplexity int) int
+		PageInfo func(childComplexity int) int
+	}
+
+	WithdrawalEdge struct {
+		Cursor func(childComplexity int) int
+		Node   func(childComplexity int) int
+	}
+
 	_Service struct {
 		SDL func(childComplexity int) int
 	}
@@ -480,8 +546,8 @@ type DepositResolver interface {
 	Token(ctx context.Context, obj *model.Deposit) (*model.Token, error)
 }
 type EVMAccountResolver interface {
-	SelfPools(ctx context.Context, obj *model.EVMAccount) ([]*model.Pool, error)
-	Balances(ctx context.Context, obj *model.EVMAccount) ([]*model.TokenBalance, error)
+	SelfPools(ctx context.Context, obj *model.EVMAccount, first *int, after *string) (*model.PoolConnection, error)
+	Balances(ctx context.Context, obj *model.EVMAccount, first *int, after *string) (*model.TokenBalanceConnection, error)
 }
 type ModuleResolver interface {
 	ModuleRegistry(ctx context.Context, obj *model.Module) (*model.ModuleRegistry, error)
@@ -511,14 +577,17 @@ type PoolResolver interface {
 	Claims(ctx context.Context, obj *model.Pool) ([]*model.Claim, error)
 	Balance(ctx context.Context, obj *model.Pool) (*model.PoolBalance, error)
 }
+type PoolBalanceResolver interface {
+	Tokens(ctx context.Context, obj *model.PoolBalance, first *int, after *string) (*model.TokenBalanceConnection, error)
+}
 type PoolContractResolver interface {
 	PoolFactory(ctx context.Context, obj *model.PoolContract) (*model.PoolFactory, error)
 	Account(ctx context.Context, obj *model.PoolContract) (*model.EVMAccount, error)
 	Owner(ctx context.Context, obj *model.PoolContract) (*model.EVMAccount, error)
-	DayBalance(ctx context.Context, obj *model.PoolContract) ([]*model.PoolDayBalance, error)
-	HourBalance(ctx context.Context, obj *model.PoolContract) ([]*model.PoolHourBalance, error)
-	Deposits(ctx context.Context, obj *model.PoolContract) ([]*model.Deposit, error)
-	Withdrawals(ctx context.Context, obj *model.PoolContract) ([]*model.Withdrawal, error)
+	DayBalances(ctx context.Context, obj *model.PoolContract, first *int, after *string) (*model.PoolDayBalanceConnection, error)
+	HourBalances(ctx context.Context, obj *model.PoolContract, first *int, after *string) (*model.PoolHourBalanceConnection, error)
+	Deposits(ctx context.Context, obj *model.PoolContract, first *int, after *string) (*model.DepositConnection, error)
+	Withdrawals(ctx context.Context, obj *model.PoolContract, first *int, after *string) (*model.WithdrawalConnection, error)
 }
 type PoolDayBalanceResolver interface {
 	Pool(ctx context.Context, obj *model.PoolDayBalance) (*model.Pool, error)
@@ -531,24 +600,23 @@ type PoolHourBalanceResolver interface {
 type QueryResolver interface {
 	Node(ctx context.Context, id model.GqlID) (model.Node, error)
 	Viewer(ctx context.Context) (model.UserResult, error)
-	UserByID(ctx context.Context, id model.GqlID) (model.UserResult, error)
-	UserByAddress(ctx context.Context, address persist.Address) (model.UserResult, error)
+	User(ctx context.Context, id *model.GqlID, address *persist.Address) (model.UserResult, error)
 	Pool(ctx context.Context, id *model.GqlID, slug *string, contractID *model.GqlID) (model.PoolResult, error)
 	SearchUsers(ctx context.Context, query string, limit *int, usernameWeight *float64) (model.SearchUsersResult, error)
 	SearchPools(ctx context.Context, query string, limit *int, nameWeight *float64, descriptionWeight *float64) (model.SearchPoolsResult, error)
-	UsersByRole(ctx context.Context, role persist.Role, before *string, after *string, first *int, last *int) (*model.UsersConnection, error)
+	UsersByRole(ctx context.Context, role persist.Role, first *int, after *string) (*model.UserConnection, error)
 }
 type TokenBalanceResolver interface {
 	Token(ctx context.Context, obj *model.TokenBalance) (*model.Token, error)
 	Holder(ctx context.Context, obj *model.TokenBalance) (model.PoolOrUserOrEVMAccount, error)
 }
 type TxResolver interface {
-	Deposits(ctx context.Context, obj *model.Tx) ([]*model.Deposit, error)
-	Withdrawals(ctx context.Context, obj *model.Tx) ([]*model.Withdrawal, error)
+	Deposits(ctx context.Context, obj *model.Tx, first *int, after *string) (*model.DepositConnection, error)
+	Withdrawals(ctx context.Context, obj *model.Tx, first *int, after *string) (*model.WithdrawalConnection, error)
 }
 type UserResolver interface {
-	Roles(ctx context.Context, obj *model.User) ([]*persist.Role, error)
-	Pools(ctx context.Context, obj *model.User) ([]*model.Pool, error)
+	Roles(ctx context.Context, obj *model.User) ([]persist.Role, error)
+	Pools(ctx context.Context, obj *model.User, first *int, after *string) (*model.PoolConnection, error)
 }
 type WithdrawalResolver interface {
 	Transaction(ctx context.Context, obj *model.Withdrawal) (*model.Tx, error)
@@ -806,6 +874,34 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Deposit.UpdatedAt(childComplexity), true
 
+	case "DepositConnection.edges":
+		if e.complexity.DepositConnection.Edges == nil {
+			break
+		}
+
+		return e.complexity.DepositConnection.Edges(childComplexity), true
+
+	case "DepositConnection.pageInfo":
+		if e.complexity.DepositConnection.PageInfo == nil {
+			break
+		}
+
+		return e.complexity.DepositConnection.PageInfo(childComplexity), true
+
+	case "DepositEdge.cursor":
+		if e.complexity.DepositEdge.Cursor == nil {
+			break
+		}
+
+		return e.complexity.DepositEdge.Cursor(childComplexity), true
+
+	case "DepositEdge.node":
+		if e.complexity.DepositEdge.Node == nil {
+			break
+		}
+
+		return e.complexity.DepositEdge.Node(childComplexity), true
+
 	case "EVMAccount.accountType":
 		if e.complexity.EVMAccount.AccountType == nil {
 			break
@@ -825,7 +921,12 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			break
 		}
 
-		return e.complexity.EVMAccount.Balances(childComplexity), true
+		args, err := ec.field_EVMAccount_balances_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.EVMAccount.Balances(childComplexity, args["first"].(*int), args["after"].(*string)), true
 
 	case "EVMAccount.createdAt":
 		if e.complexity.EVMAccount.CreatedAt == nil {
@@ -846,7 +947,12 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			break
 		}
 
-		return e.complexity.EVMAccount.SelfPools(childComplexity), true
+		args, err := ec.field_EVMAccount_selfPools_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.EVMAccount.SelfPools(childComplexity, args["first"].(*int), args["after"].(*string)), true
 
 	case "EVMAccount.updatedAt":
 		if e.complexity.EVMAccount.UpdatedAt == nil {
@@ -995,13 +1101,6 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Module.Address(childComplexity), true
 
-	case "Module.chainId":
-		if e.complexity.Module.ChainID == nil {
-			break
-		}
-
-		return e.complexity.Module.ChainID(childComplexity), true
-
 	case "Module.createdAt":
 		if e.complexity.Module.CreatedAt == nil {
 			break
@@ -1058,6 +1157,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Module.Name(childComplexity), true
 
+	case "Module.network":
+		if e.complexity.Module.Network == nil {
+			break
+		}
+
+		return e.complexity.Module.Network(childComplexity), true
+
 	case "Module.permissions":
 		if e.complexity.Module.Permissions == nil {
 			break
@@ -1079,13 +1185,6 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.ModuleRegistry.Address(childComplexity), true
 
-	case "ModuleRegistry.chainId":
-		if e.complexity.ModuleRegistry.ChainID == nil {
-			break
-		}
-
-		return e.complexity.ModuleRegistry.ChainID(childComplexity), true
-
 	case "ModuleRegistry.createdAt":
 		if e.complexity.ModuleRegistry.CreatedAt == nil {
 			break
@@ -1106,6 +1205,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.ModuleRegistry.ModuleCount(childComplexity), true
+
+	case "ModuleRegistry.network":
+		if e.complexity.ModuleRegistry.Network == nil {
+			break
+		}
+
+		return e.complexity.ModuleRegistry.Network(childComplexity), true
 
 	case "ModuleRegistry.owner":
 		if e.complexity.ModuleRegistry.Owner == nil {
@@ -1424,6 +1530,18 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.PoolBalance.Balance(childComplexity), true
 
+	case "PoolBalance.tokens":
+		if e.complexity.PoolBalance.Tokens == nil {
+			break
+		}
+
+		args, err := ec.field_PoolBalance_tokens_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.PoolBalance.Tokens(childComplexity, args["first"].(*int), args["after"].(*string)), true
+
 	case "PoolBalance.totalIncome":
 		if e.complexity.PoolBalance.TotalIncome == nil {
 			break
@@ -1437,6 +1555,20 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.PoolBalance.Withdrawals(childComplexity), true
+
+	case "PoolConnection.edges":
+		if e.complexity.PoolConnection.Edges == nil {
+			break
+		}
+
+		return e.complexity.PoolConnection.Edges(childComplexity), true
+
+	case "PoolConnection.pageInfo":
+		if e.complexity.PoolConnection.PageInfo == nil {
+			break
+		}
+
+		return e.complexity.PoolConnection.PageInfo(childComplexity), true
 
 	case "PoolContract.account":
 		if e.complexity.PoolContract.Account == nil {
@@ -1452,13 +1584,6 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.PoolContract.Address(childComplexity), true
 
-	case "PoolContract.chainId":
-		if e.complexity.PoolContract.ChainID == nil {
-			break
-		}
-
-		return e.complexity.PoolContract.ChainID(childComplexity), true
-
 	case "PoolContract.createdAt":
 		if e.complexity.PoolContract.CreatedAt == nil {
 			break
@@ -1466,26 +1591,41 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.PoolContract.CreatedAt(childComplexity), true
 
-	case "PoolContract.dayBalance":
-		if e.complexity.PoolContract.DayBalance == nil {
+	case "PoolContract.dayBalances":
+		if e.complexity.PoolContract.DayBalances == nil {
 			break
 		}
 
-		return e.complexity.PoolContract.DayBalance(childComplexity), true
+		args, err := ec.field_PoolContract_dayBalances_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.PoolContract.DayBalances(childComplexity, args["first"].(*int), args["after"].(*string)), true
 
 	case "PoolContract.deposits":
 		if e.complexity.PoolContract.Deposits == nil {
 			break
 		}
 
-		return e.complexity.PoolContract.Deposits(childComplexity), true
+		args, err := ec.field_PoolContract_deposits_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
 
-	case "PoolContract.hourBalance":
-		if e.complexity.PoolContract.HourBalance == nil {
+		return e.complexity.PoolContract.Deposits(childComplexity, args["first"].(*int), args["after"].(*string)), true
+
+	case "PoolContract.hourBalances":
+		if e.complexity.PoolContract.HourBalances == nil {
 			break
 		}
 
-		return e.complexity.PoolContract.HourBalance(childComplexity), true
+		args, err := ec.field_PoolContract_hourBalances_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.PoolContract.HourBalances(childComplexity, args["first"].(*int), args["after"].(*string)), true
 
 	case "PoolContract.id":
 		if e.complexity.PoolContract.ID == nil {
@@ -1493,6 +1633,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.PoolContract.ID(childComplexity), true
+
+	case "PoolContract.network":
+		if e.complexity.PoolContract.Network == nil {
+			break
+		}
+
+		return e.complexity.PoolContract.Network(childComplexity), true
 
 	case "PoolContract.owner":
 		if e.complexity.PoolContract.Owner == nil {
@@ -1527,7 +1674,12 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			break
 		}
 
-		return e.complexity.PoolContract.Withdrawals(childComplexity), true
+		args, err := ec.field_PoolContract_withdrawals_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.PoolContract.Withdrawals(childComplexity, args["first"].(*int), args["after"].(*string)), true
 
 	case "PoolCreatePayload.pool":
 		if e.complexity.PoolCreatePayload.Pool == nil {
@@ -1543,13 +1695,6 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.PoolDayBalance.Amount(childComplexity), true
 
-	case "PoolDayBalance.chainId":
-		if e.complexity.PoolDayBalance.ChainID == nil {
-			break
-		}
-
-		return e.complexity.PoolDayBalance.ChainID(childComplexity), true
-
 	case "PoolDayBalance.createdAt":
 		if e.complexity.PoolDayBalance.CreatedAt == nil {
 			break
@@ -1564,6 +1709,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.PoolDayBalance.Date(childComplexity), true
 
+	case "PoolDayBalance.formattedAmount":
+		if e.complexity.PoolDayBalance.FormattedAmount == nil {
+			break
+		}
+
+		return e.complexity.PoolDayBalance.FormattedAmount(childComplexity), true
+
 	case "PoolDayBalance.id":
 		if e.complexity.PoolDayBalance.ID == nil {
 			break
@@ -1571,12 +1723,26 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.PoolDayBalance.ID(childComplexity), true
 
+	case "PoolDayBalance.network":
+		if e.complexity.PoolDayBalance.Network == nil {
+			break
+		}
+
+		return e.complexity.PoolDayBalance.Network(childComplexity), true
+
 	case "PoolDayBalance.pool":
 		if e.complexity.PoolDayBalance.Pool == nil {
 			break
 		}
 
 		return e.complexity.PoolDayBalance.Pool(childComplexity), true
+
+	case "PoolDayBalance.quotes":
+		if e.complexity.PoolDayBalance.Quotes == nil {
+			break
+		}
+
+		return e.complexity.PoolDayBalance.Quotes(childComplexity), true
 
 	case "PoolDayBalance.token":
 		if e.complexity.PoolDayBalance.Token == nil {
@@ -1592,6 +1758,34 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.PoolDayBalance.UpdatedAt(childComplexity), true
 
+	case "PoolDayBalanceConnection.edges":
+		if e.complexity.PoolDayBalanceConnection.Edges == nil {
+			break
+		}
+
+		return e.complexity.PoolDayBalanceConnection.Edges(childComplexity), true
+
+	case "PoolDayBalanceConnection.pageInfo":
+		if e.complexity.PoolDayBalanceConnection.PageInfo == nil {
+			break
+		}
+
+		return e.complexity.PoolDayBalanceConnection.PageInfo(childComplexity), true
+
+	case "PoolDayBalanceEdge.cursor":
+		if e.complexity.PoolDayBalanceEdge.Cursor == nil {
+			break
+		}
+
+		return e.complexity.PoolDayBalanceEdge.Cursor(childComplexity), true
+
+	case "PoolDayBalanceEdge.node":
+		if e.complexity.PoolDayBalanceEdge.Node == nil {
+			break
+		}
+
+		return e.complexity.PoolDayBalanceEdge.Node(childComplexity), true
+
 	case "PoolDeletePayload.pool":
 		if e.complexity.PoolDeletePayload.Pool == nil {
 			break
@@ -1599,19 +1793,26 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.PoolDeletePayload.Pool(childComplexity), true
 
+	case "PoolEdge.cursor":
+		if e.complexity.PoolEdge.Cursor == nil {
+			break
+		}
+
+		return e.complexity.PoolEdge.Cursor(childComplexity), true
+
+	case "PoolEdge.node":
+		if e.complexity.PoolEdge.Node == nil {
+			break
+		}
+
+		return e.complexity.PoolEdge.Node(childComplexity), true
+
 	case "PoolFactory.address":
 		if e.complexity.PoolFactory.Address == nil {
 			break
 		}
 
 		return e.complexity.PoolFactory.Address(childComplexity), true
-
-	case "PoolFactory.chainId":
-		if e.complexity.PoolFactory.ChainID == nil {
-			break
-		}
-
-		return e.complexity.PoolFactory.ChainID(childComplexity), true
 
 	case "PoolFactory.createdAt":
 		if e.complexity.PoolFactory.CreatedAt == nil {
@@ -1626,6 +1827,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.PoolFactory.ID(childComplexity), true
+
+	case "PoolFactory.network":
+		if e.complexity.PoolFactory.Network == nil {
+			break
+		}
+
+		return e.complexity.PoolFactory.Network(childComplexity), true
 
 	case "PoolFactory.owner":
 		if e.complexity.PoolFactory.Owner == nil {
@@ -1655,13 +1863,6 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.PoolHourBalance.Amount(childComplexity), true
 
-	case "PoolHourBalance.chainId":
-		if e.complexity.PoolHourBalance.ChainID == nil {
-			break
-		}
-
-		return e.complexity.PoolHourBalance.ChainID(childComplexity), true
-
 	case "PoolHourBalance.createdAt":
 		if e.complexity.PoolHourBalance.CreatedAt == nil {
 			break
@@ -1676,6 +1877,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.PoolHourBalance.Date(childComplexity), true
 
+	case "PoolHourBalance.formattedAmount":
+		if e.complexity.PoolHourBalance.FormattedAmount == nil {
+			break
+		}
+
+		return e.complexity.PoolHourBalance.FormattedAmount(childComplexity), true
+
 	case "PoolHourBalance.id":
 		if e.complexity.PoolHourBalance.ID == nil {
 			break
@@ -1683,12 +1891,26 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.PoolHourBalance.ID(childComplexity), true
 
+	case "PoolHourBalance.network":
+		if e.complexity.PoolHourBalance.Network == nil {
+			break
+		}
+
+		return e.complexity.PoolHourBalance.Network(childComplexity), true
+
 	case "PoolHourBalance.pool":
 		if e.complexity.PoolHourBalance.Pool == nil {
 			break
 		}
 
 		return e.complexity.PoolHourBalance.Pool(childComplexity), true
+
+	case "PoolHourBalance.quotes":
+		if e.complexity.PoolHourBalance.Quotes == nil {
+			break
+		}
+
+		return e.complexity.PoolHourBalance.Quotes(childComplexity), true
 
 	case "PoolHourBalance.token":
 		if e.complexity.PoolHourBalance.Token == nil {
@@ -1704,12 +1926,33 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.PoolHourBalance.UpdatedAt(childComplexity), true
 
-	case "PoolSearchResult.pool":
-		if e.complexity.PoolSearchResult.Pool == nil {
+	case "PoolHourBalanceConnection.edges":
+		if e.complexity.PoolHourBalanceConnection.Edges == nil {
 			break
 		}
 
-		return e.complexity.PoolSearchResult.Pool(childComplexity), true
+		return e.complexity.PoolHourBalanceConnection.Edges(childComplexity), true
+
+	case "PoolHourBalanceConnection.pageInfo":
+		if e.complexity.PoolHourBalanceConnection.PageInfo == nil {
+			break
+		}
+
+		return e.complexity.PoolHourBalanceConnection.PageInfo(childComplexity), true
+
+	case "PoolHourBalanceEdge.cursor":
+		if e.complexity.PoolHourBalanceEdge.Cursor == nil {
+			break
+		}
+
+		return e.complexity.PoolHourBalanceEdge.Cursor(childComplexity), true
+
+	case "PoolHourBalanceEdge.node":
+		if e.complexity.PoolHourBalanceEdge.Node == nil {
+			break
+		}
+
+		return e.complexity.PoolHourBalanceEdge.Node(childComplexity), true
 
 	case "PoolUpdatePayload.pool":
 		if e.complexity.PoolUpdatePayload.Pool == nil {
@@ -1766,29 +2009,17 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Query.SearchUsers(childComplexity, args["query"].(string), args["limit"].(*int), args["usernameWeight"].(*float64)), true
 
-	case "Query.userByAddress":
-		if e.complexity.Query.UserByAddress == nil {
+	case "Query.user":
+		if e.complexity.Query.User == nil {
 			break
 		}
 
-		args, err := ec.field_Query_userByAddress_args(context.TODO(), rawArgs)
+		args, err := ec.field_Query_user_args(context.TODO(), rawArgs)
 		if err != nil {
 			return 0, false
 		}
 
-		return e.complexity.Query.UserByAddress(childComplexity, args["address"].(persist.Address)), true
-
-	case "Query.userById":
-		if e.complexity.Query.UserByID == nil {
-			break
-		}
-
-		args, err := ec.field_Query_userById_args(context.TODO(), rawArgs)
-		if err != nil {
-			return 0, false
-		}
-
-		return e.complexity.Query.UserByID(childComplexity, args["id"].(model.GqlID)), true
+		return e.complexity.Query.User(childComplexity, args["id"].(*model.GqlID), args["address"].(*persist.Address)), true
 
 	case "Query.usersByRole":
 		if e.complexity.Query.UsersByRole == nil {
@@ -1800,7 +2031,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Query.UsersByRole(childComplexity, args["role"].(persist.Role), args["before"].(*string), args["after"].(*string), args["first"].(*int), args["last"].(*int)), true
+		return e.complexity.Query.UsersByRole(childComplexity, args["role"].(persist.Role), args["first"].(*int), args["after"].(*string)), true
 
 	case "Query.viewer":
 		if e.complexity.Query.Viewer == nil {
@@ -1815,6 +2046,27 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Query.__resolve__service(childComplexity), true
+
+	case "Quote.currency":
+		if e.complexity.Quote.Currency == nil {
+			break
+		}
+
+		return e.complexity.Quote.Currency(childComplexity), true
+
+	case "Quote.lastUpdatedAt":
+		if e.complexity.Quote.LastUpdatedAt == nil {
+			break
+		}
+
+		return e.complexity.Quote.LastUpdatedAt(childComplexity), true
+
+	case "Quote.value":
+		if e.complexity.Quote.Value == nil {
+			break
+		}
+
+		return e.complexity.Quote.Value(childComplexity), true
 
 	case "RemoveUserWalletsPayload.viewer":
 		if e.complexity.RemoveUserWalletsPayload.Viewer == nil {
@@ -1851,13 +2103,6 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Token.Address(childComplexity), true
 
-	case "Token.chainId":
-		if e.complexity.Token.ChainID == nil {
-			break
-		}
-
-		return e.complexity.Token.ChainID(childComplexity), true
-
 	case "Token.createdAt":
 		if e.complexity.Token.CreatedAt == nil {
 			break
@@ -1893,12 +2138,26 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Token.Name(childComplexity), true
 
+	case "Token.network":
+		if e.complexity.Token.Network == nil {
+			break
+		}
+
+		return e.complexity.Token.Network(childComplexity), true
+
 	case "Token.possibleSpam":
 		if e.complexity.Token.PossibleSpam == nil {
 			break
 		}
 
 		return e.complexity.Token.PossibleSpam(childComplexity), true
+
+	case "Token.quotes":
+		if e.complexity.Token.Quotes == nil {
+			break
+		}
+
+		return e.complexity.Token.Quotes(childComplexity), true
 
 	case "Token.symbol":
 		if e.complexity.Token.Symbol == nil {
@@ -1942,19 +2201,19 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.TokenBalance.Amount(childComplexity), true
 
-	case "TokenBalance.chainId":
-		if e.complexity.TokenBalance.ChainID == nil {
-			break
-		}
-
-		return e.complexity.TokenBalance.ChainID(childComplexity), true
-
 	case "TokenBalance.createdAt":
 		if e.complexity.TokenBalance.CreatedAt == nil {
 			break
 		}
 
 		return e.complexity.TokenBalance.CreatedAt(childComplexity), true
+
+	case "TokenBalance.formattedAmount":
+		if e.complexity.TokenBalance.FormattedAmount == nil {
+			break
+		}
+
+		return e.complexity.TokenBalance.FormattedAmount(childComplexity), true
 
 	case "TokenBalance.holder":
 		if e.complexity.TokenBalance.Holder == nil {
@@ -1970,6 +2229,20 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.TokenBalance.ID(childComplexity), true
 
+	case "TokenBalance.network":
+		if e.complexity.TokenBalance.Network == nil {
+			break
+		}
+
+		return e.complexity.TokenBalance.Network(childComplexity), true
+
+	case "TokenBalance.quotes":
+		if e.complexity.TokenBalance.Quotes == nil {
+			break
+		}
+
+		return e.complexity.TokenBalance.Quotes(childComplexity), true
+
 	case "TokenBalance.token":
 		if e.complexity.TokenBalance.Token == nil {
 			break
@@ -1984,6 +2257,34 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.TokenBalance.UpdatedAt(childComplexity), true
 
+	case "TokenBalanceConnection.edges":
+		if e.complexity.TokenBalanceConnection.Edges == nil {
+			break
+		}
+
+		return e.complexity.TokenBalanceConnection.Edges(childComplexity), true
+
+	case "TokenBalanceConnection.pageInfo":
+		if e.complexity.TokenBalanceConnection.PageInfo == nil {
+			break
+		}
+
+		return e.complexity.TokenBalanceConnection.PageInfo(childComplexity), true
+
+	case "TokenBalanceEdge.cursor":
+		if e.complexity.TokenBalanceEdge.Cursor == nil {
+			break
+		}
+
+		return e.complexity.TokenBalanceEdge.Cursor(childComplexity), true
+
+	case "TokenBalanceEdge.node":
+		if e.complexity.TokenBalanceEdge.Node == nil {
+			break
+		}
+
+		return e.complexity.TokenBalanceEdge.Node(childComplexity), true
+
 	case "Tx.createdAt":
 		if e.complexity.Tx.CreatedAt == nil {
 			break
@@ -1996,7 +2297,12 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			break
 		}
 
-		return e.complexity.Tx.Deposits(childComplexity), true
+		args, err := ec.field_Tx_deposits_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Tx.Deposits(childComplexity, args["first"].(*int), args["after"].(*string)), true
 
 	case "Tx.gasPrice":
 		if e.complexity.Tx.GasPrice == nil {
@@ -2031,7 +2337,12 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			break
 		}
 
-		return e.complexity.Tx.Withdrawals(childComplexity), true
+		args, err := ec.field_Tx_withdrawals_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Tx.Withdrawals(childComplexity, args["first"].(*int), args["after"].(*string)), true
 
 	case "User.id":
 		if e.complexity.User.ID == nil {
@@ -2045,7 +2356,12 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			break
 		}
 
-		return e.complexity.User.Pools(childComplexity), true
+		args, err := ec.field_User_pools_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.User.Pools(childComplexity, args["first"].(*int), args["after"].(*string)), true
 
 	case "User.roles":
 		if e.complexity.User.Roles == nil {
@@ -2053,6 +2369,20 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.User.Roles(childComplexity), true
+
+	case "UserConnection.edges":
+		if e.complexity.UserConnection.Edges == nil {
+			break
+		}
+
+		return e.complexity.UserConnection.Edges(childComplexity), true
+
+	case "UserConnection.pageInfo":
+		if e.complexity.UserConnection.PageInfo == nil {
+			break
+		}
+
+		return e.complexity.UserConnection.PageInfo(childComplexity), true
 
 	case "UserDeletePayload.user":
 		if e.complexity.UserDeletePayload.User == nil {
@@ -2089,33 +2419,12 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.UserRegisterPayload.User(childComplexity), true
 
-	case "UserSearchResult.user":
-		if e.complexity.UserSearchResult.User == nil {
-			break
-		}
-
-		return e.complexity.UserSearchResult.User(childComplexity), true
-
 	case "UserUpdatePayload.user":
 		if e.complexity.UserUpdatePayload.User == nil {
 			break
 		}
 
 		return e.complexity.UserUpdatePayload.User(childComplexity), true
-
-	case "UsersConnection.edges":
-		if e.complexity.UsersConnection.Edges == nil {
-			break
-		}
-
-		return e.complexity.UsersConnection.Edges(childComplexity), true
-
-	case "UsersConnection.pageInfo":
-		if e.complexity.UsersConnection.PageInfo == nil {
-			break
-		}
-
-		return e.complexity.UsersConnection.PageInfo(childComplexity), true
 
 	case "VerifyTokenPayload.isValid":
 		if e.complexity.VerifyTokenPayload.IsValid == nil {
@@ -2207,6 +2516,34 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Withdrawal.UpdatedAt(childComplexity), true
+
+	case "WithdrawalConnection.edges":
+		if e.complexity.WithdrawalConnection.Edges == nil {
+			break
+		}
+
+		return e.complexity.WithdrawalConnection.Edges(childComplexity), true
+
+	case "WithdrawalConnection.pageInfo":
+		if e.complexity.WithdrawalConnection.PageInfo == nil {
+			break
+		}
+
+		return e.complexity.WithdrawalConnection.PageInfo(childComplexity), true
+
+	case "WithdrawalEdge.cursor":
+		if e.complexity.WithdrawalEdge.Cursor == nil {
+			break
+		}
+
+		return e.complexity.WithdrawalEdge.Cursor(childComplexity), true
+
+	case "WithdrawalEdge.node":
+		if e.complexity.WithdrawalEdge.Node == nil {
+			break
+		}
+
+		return e.complexity.WithdrawalEdge.Node(childComplexity), true
 
 	case "_Service.sdl":
 		if e.complexity._Service.SDL == nil {
@@ -2328,688 +2665,751 @@ func (ec *executionContext) introspectType(name string) (*introspection.Type, er
 }
 
 var sources = []*ast.Source{
-	{Name: "../schema/schema.graphql", Input: `"""
-Any field decorated with the @experimental directive should not be used in production.
-It will not conform to our rules around breaking changes.
-"""
-directive @experimental on FIELD_DEFINITION
-
-directive @goField(
-  forceResolver: Boolean
-  name: String
-) on INPUT_FIELD_DEFINITION | FIELD_DEFINITION
-
+	{Name: "../schema/schema.graphql", Input: `directive @experimental on FIELD_DEFINITION
+directive @goField(forceResolver: Boolean, name: String) on INPUT_FIELD_DEFINITION | FIELD_DEFINITION
 directive @authRequired on FIELD_DEFINITION | INPUT_FIELD_DEFINITION
-
 directive @basicAuth(allowed: [BasicAuthType!]!) on FIELD_DEFINITION | INPUT_FIELD_DEFINITION
-
 directive @frontendBuildAuth on FIELD_DEFINITION | INPUT_FIELD_DEFINITION
-
 directive @scrub on INPUT_FIELD_DEFINITION
+directive @restrictEnvironment(allowed: [String!]!) on INPUT_FIELD_DEFINITION | INPUT_OBJECT | FIELD_DEFINITION | OBJECT
 
-directive @restrictEnvironment(
-  allowed: [String!]!
-) on INPUT_FIELD_DEFINITION | INPUT_OBJECT | FIELD_DEFINITION | OBJECT
+#-------------------------------------------------------------------------------
+# SHARED / COMMON
+#-------------------------------------------------------------------------------
 
 scalar Time
 scalar Address
 scalar PubKey
 scalar HexString
 scalar JSON
+scalar UInt256
+scalar Network
+scalar Currency
 
 enum ErrorPolicyEnum {
-  IGNORE_FAILED
-  REJECT_EVERYTHING
-  REJECT_FAILED_ROWS
+    IGNORE_FAILED
+    REJECT_EVERYTHING
+    REJECT_FAILED_ROWS
 }
 
 enum BasicAuthType {
-  Retool
-  Monitoring
+    Retool
+    Monitoring
+}
+
+enum ReportWindow {
+    LAST_5_DAYS
+    LAST_7_DAYS
+    ALL_TIME
 }
 
 interface Node {
-  id: ID!
+    id: ID!
 }
 
 type DeletedNode implements Node {
-  id: ID!
+    id: ID!
 }
 
 interface Error {
-  message: String!
+    message: String!
 }
-
-#-------------------------------------------------------------------------------
-# PAGINATION
-#-------------------------------------------------------------------------------
 
 type PageInfo {
-  total: Int
-  size: Int!
-  hasPreviousPage: Boolean!
-  hasNextPage: Boolean!
-  startCursor: String!
-  endCursor: String!
+    total: Int
+    size: Int!
+    hasPreviousPage: Boolean!
+    hasNextPage: Boolean!
+    startCursor: String
+    endCursor: String
+}
+
+type Quote {
+    currency: Currency!
+    value: Float!
+    lastUpdatedAt: Time!
+}
+
+type ErrInvalidInput implements Error {
+    message: String!
+    parameters: [String!]!
+    reasons: [String!]!
+}
+
+type ErrSyncFailed implements Error {
+    message: String!
 }
 
 #-------------------------------------------------------------------------------
-# ACCOUNT AND CONTRACTS
+# AUTHENTICATION
+#-------------------------------------------------------------------------------
+
+type ErrAuthenticationFailed implements Error {
+    message: String!
+}
+
+type ErrNoCookie implements Error {
+    message: String!
+}
+
+type ErrInvalidToken implements Error {
+    message: String!
+}
+
+type ErrSessionInvalidated implements Error {
+    message: String!
+}
+
+type ErrDoesNotOwnRequiredToken implements Error {
+    message: String!
+}
+
+union AuthorizationError = ErrNoCookie | ErrInvalidToken | ErrSessionInvalidated | ErrDoesNotOwnRequiredToken
+
+type ErrNotAuthorized implements Error {
+    message: String!
+    cause: AuthorizationError!
+}
+
+type LoginPayload {
+    viewer: User!
+}
+
+union LoginResult = LoginPayload | ErrUserNotFound | ErrAuthenticationFailed | ErrDoesNotOwnRequiredToken
+
+type LogoutPayload {
+    viewer: User
+}
+
+type VerifyTokenPayload {
+    user: User!
+    isValid: Boolean!
+}
+
+union VerifyTokenResult = VerifyTokenPayload | ErrNotAuthorized | ErrInvalidInput
+
+#-------------------------------------------------------------------------------
+# ACCOUNT & WALLET
 #-------------------------------------------------------------------------------
 
 enum EVMAccountType {
-  EOA
-  Contract
+    EOA
+    Contract
 }
 
 type EVMAccount implements Node {
-  id: ID!
-  address: Address!
-  accountType: EVMAccountType!
-  selfPools: [Pool!] @goField(forceResolver: true)
-  balances: [TokenBalance!] @goField(forceResolver: true)
-  createdAt: Time!
-  updatedAt: Time!
+    id: ID!
+    address: Address!
+    accountType: EVMAccountType!
+    selfPools(first: Int, after: String): PoolConnection! @goField(forceResolver: true)
+    balances(first: Int, after: String): TokenBalanceConnection! @goField(forceResolver: true)
+    createdAt: Time!
+    updatedAt: Time!
 }
 
-type PoolFactory implements Node {
-  id: ID!
-  address: Address!
-  chainId: Int!
-  poolCount: Int!
-  owner: EVMAccount!
-  createdAt: Time!
-  updatedAt: Time!
+union PoolOrUserOrEVMAccount = Pool | User | EVMAccount
+
+type ErrAddressOwnedByUser implements Error {
+    message: String!
 }
 
-type ModuleRegistry implements Node {
-  id: ID!
-  address: Address!
-  chainId: Int!
-  moduleCount: Int!
-  owner: EVMAccount! @goField(forceResolver: true)
-  createdAt: Time!
-  updatedAt: Time!
+type AddUserWalletPayload {
+    viewer: User!
 }
+
+union AddUserWalletResult = AddUserWalletPayload | ErrAuthenticationFailed | ErrNotAuthorized | ErrInvalidInput | ErrAddressOwnedByUser
+
+type RemoveUserWalletsPayload {
+    viewer: User!
+}
+
+union RemoveUserWalletsResult = RemoveUserWalletsPayload | ErrNotAuthorized | ErrInvalidInput
 
 #-------------------------------------------------------------------------------
 # USER
 #-------------------------------------------------------------------------------
 
 enum Role {
-  ADMIN
-  BETA_TESTER
-  EARLY_ACCESS
+    ADMIN
+    BETA_TESTER
+    EARLY_ACCESS
 }
 
 type User implements Node {
-  id: ID!
-  roles: [Role] @goField(forceResolver: true)
-  pools: [Pool] @goField(forceResolver: true)
+    id: ID!
+    roles: [Role!]! @goField(forceResolver: true)
+    pools(first: Int, after: String): PoolConnection! @goField(forceResolver: true)
 }
 
 union UserOrEVMAccount = User | EVMAccount
 
 type UserEdge {
-  node: User
-  cursor: String
+    node: User!
+    cursor: String!
 }
 
-type UsersConnection {
-  edges: [UserEdge]
-  pageInfo: PageInfo!
+type UserConnection {
+    edges: [UserEdge!]!
+    pageInfo: PageInfo!
 }
 
-# -------------------------------------------------------------------------------
+type SearchUsersPayload {
+    results: [User!]!
+}
+
+union SearchUsersResult = SearchUsersPayload | ErrInvalidInput
+
+union UserResult = User | ErrNotAuthorized | ErrUserNotFound | ErrInvalidInput
+
+type ErrUserAlreadyExists implements Error {
+    message: String!
+}
+
+type ErrUsernameNotAvailable implements Error {
+    message: String!
+}
+
+type ErrUserNotFound implements Error {
+    message: String!
+}
+
+# --- CREATE ---
+
+type UserRegisterPayload {
+    user: User!
+    requiresConfirmation: Boolean
+}
+
+union UserRegisterResult = UserRegisterPayload | ErrAuthenticationFailed | ErrUserAlreadyExists | ErrInvalidInput | ErrDoesNotOwnRequiredToken
+
+# --- UPDATE ---
+
+input UserUpdateInput {
+    username: String
+}
+
+type UserUpdatePayload {
+    user: User!
+}
+
+union UserUpdateResult = UserUpdatePayload | ErrNotAuthorized | ErrUsernameNotAvailable | ErrInvalidInput
+
+input RoleUpdateInput {
+    addRoles: [Role!]
+    removeRoles: [Role!]
+}
+
+type RoleUpdatePayload {
+    user: User!
+}
+
+union RoleUpdateResult = RoleUpdatePayload | ErrNotAuthorized | ErrInvalidInput
+
+# --- DELETE ---
+
+type UserDeletePayload {
+    user: User
+}
+
+union UserDeleteResult = UserDeletePayload | ErrNotAuthorized | ErrInvalidInput
+
+#-------------------------------------------------------------------------------
 # TOKEN
 #-------------------------------------------------------------------------------
 
 enum TokenType {
-  ERC20
-  ERC721
-  ERC1155
+    ERC20
+    ERC721
+    ERC1155
+    NATIVE
 }
 
 type Token implements Node {
-  id: ID!
-  address: Address!
-  chainId: Int!
-  tokenType: TokenType!
-  symbol: String!
-  name: String!
-  decimals: Int!
-  logo: String
-  thumbnail: String
-  validated: Int
-  possibleSpam: Boolean
-  createdAt: Time!
-  updatedAt: Time!
+    id: ID!
+    address: Address!
+    network: Network!
+    tokenType: TokenType!
+    symbol: String!
+    name: String!
+    decimals: Int!
+    logo: String
+    thumbnail: String
+    validated: Int
+    possibleSpam: Boolean
+    quotes: [Quote!]!
+    createdAt: Time!
+    updatedAt: Time!
+}
+
+type TokenBalanceEdge {
+    node: TokenBalance!
+    cursor: String!
+}
+
+type TokenBalanceConnection {
+    edges: [TokenBalanceEdge!]!
+    pageInfo: PageInfo!
 }
 
 type TokenBalance implements Node {
-  id: ID!
-  chainId: Int!
-  token: Token! @goField(forceResolver: true)
-  holder: PoolOrUserOrEVMAccount! @goField(forceResolver: true)
-  amount: HexString!
-  createdAt: Time!
-  updatedAt: Time!
+    id: ID!
+    network: Network!
+    token: Token! @goField(forceResolver: true)
+    holder: PoolOrUserOrEVMAccount! @goField(forceResolver: true)
+    amount: UInt256!
+    formattedAmount: Float!
+    quotes: [Quote!]!
+    createdAt: Time!
+    updatedAt: Time!
+}
+
+type ErrTokenNotFound implements Error {
+    message: String!
 }
 
 #-------------------------------------------------------------------------------
-# MODULES
+# MODULES & CLAIMS
 #-------------------------------------------------------------------------------
 
 enum ModuleType {
-  Validation
-  Distribution
+    Validation
+    Distribution
+}
+
+type ModuleRegistry implements Node {
+    id: ID!
+    address: Address!
+    network: Network!
+    moduleCount: Int!
+    owner: EVMAccount! @goField(forceResolver: true)
+    createdAt: Time!
+    updatedAt: Time!
 }
 
 type Module implements Node {
-  id: ID!
-  address: Address!
-  chainId: Int!
-  moduleRegistry: ModuleRegistry! @goField(forceResolver: true)
-  moduleId: String!
-  moduleType: ModuleType!
-  permissions: [String!]
-  data: JSON
-  name: String!
-  description: String!
-  createdAt: Time!
-  updatedAt: Time!
+    id: ID!
+    address: Address!
+    network: Network!
+    moduleRegistry: ModuleRegistry! @goField(forceResolver: true)
+    moduleId: String!
+    moduleType: ModuleType!
+    permissions: [String!]!
+    data: JSON
+    name: String!
+    description: String!
+    createdAt: Time!
+    updatedAt: Time!
 }
 
 type Claim implements Node {
-  id: ID!
-  label: String!
-  path: String!
-  parent: Claim @goField(forceResolver: true)
-  children: [Claim!] @goField(forceResolver: true)
-  pool: Pool! @goField(forceResolver: true)
-  validation: Module! @goField(forceResolver: true)
-  validationData: JSON
-  distribution: Module! @goField(forceResolver: true)
-  distributionData: JSON
-  createdAt: Time!
-  updatedAt: Time!
+    id: ID!
+    label: String!
+    path: String!
+    parent: Claim @goField(forceResolver: true)
+    children: [Claim!]! @goField(forceResolver: true)
+    pool: Pool! @goField(forceResolver: true)
+    validation: Module! @goField(forceResolver: true)
+    validationData: JSON
+    distribution: Module! @goField(forceResolver: true)
+    distributionData: JSON
+    createdAt: Time!
+    updatedAt: Time!
 }
+
+# --- CREATE ---
+
+input ClaimCreateInput {
+    label: String!
+    validationData: JSON
+    distributionData: JSON
+    parent: String
+    children: [String!]
+    validationId: String!
+    distributionId: String!
+}
+
+type ClaimCreatePayload {
+    claim: Claim!
+}
+
+union ClaimCreateResult = ClaimCreatePayload | ErrNotAuthorized | ErrInvalidInput | ErrPoolNotFound
+
+input ClaimBulkCreateInput {
+    validationData: JSON
+    distributionData: JSON
+    parent: ID
+    children: [ID!]
+    validationId: String!
+    distributionId: String!
+}
+
+type ClaimBulkCreatePayload {
+    count: Int!
+    claims: [Claim!]!
+}
+
+union ClaimBulkCreateResult = ClaimBulkCreatePayload | ErrNotAuthorized | ErrInvalidInput | ErrPoolNotFound
+
+# --- UPDATE ---
+
+input ClaimUpdateInput {
+    claimId: ID!
+    validationData: JSON
+    distributionData: JSON
+    parent: ID
+    children: [ID!]
+    validationId: String
+    distributionId: String
+}
+
+type ClaimUpdatePayload {
+    claim: Claim!
+}
+
+union ClaimUpdateResult = ClaimUpdatePayload | ErrNotAuthorized | ErrInvalidInput | ErrPoolNotFound
+
+input ClaimBulkUpdateInput {
+    claimId: ID!
+    validationData: JSON
+    distributionData: JSON
+    parent: ID
+    children: [ID!]
+    validationId: String
+    distributionId: String
+}
+
+type ClaimBulkUpdatePayload {
+    count: Int!
+    claims: [Claim!]!
+}
+
+union ClaimBulkUpdateResult = ClaimBulkUpdatePayload | ErrNotAuthorized | ErrInvalidInput | ErrPoolNotFound
+
+# --- DELETE ---
+
+type ClaimDeletePayload {
+    claim: Claim!
+}
+
+union ClaimDeleteResult = ClaimDeletePayload | ErrNotAuthorized | ErrInvalidInput | ErrPoolNotFound
+
+type ClaimBulkDeletePayload {
+    count: Int!
+}
+
+union ClaimBulkDeleteResult = ClaimBulkDeletePayload | ErrNotAuthorized | ErrInvalidInput | ErrPoolNotFound
 
 #-------------------------------------------------------------------------------
 # POOL
 #-------------------------------------------------------------------------------
 
 enum PoolStatus {
-  Draft
-  Active
-  Paused
+    Draft
+    Active
+    Paused
+}
+
+type PoolFactory implements Node {
+    id: ID!
+    address: Address!
+    network: Network!
+    poolCount: Int!
+    owner: EVMAccount!
+    createdAt: Time!
+    updatedAt: Time!
+}
+
+type PoolEdge {
+    node: Pool!
+    cursor: String!
+}
+
+type PoolConnection {
+    edges: [PoolEdge!]!
+    pageInfo: PageInfo!
 }
 
 type PoolBalance {
-  totalIncome: Float!
-  balance: Float!
-  withdrawals: Float!
+    totalIncome: [Quote!]!
+    balance: [Quote!]!
+    withdrawals: [Quote!]!
+    tokens(first: Int, after: String): TokenBalanceConnection! @goField(forceResolver: true)
 }
 
 type Pool implements Node {
-  id: ID!
-  name: String!
-  description: String!
-  image: String!
-  donationBps: Int!
-  slug: String!
-  status: PoolStatus!
-  owner: UserOrEVMAccount! @goField(forceResolver: true)
-  contract: PoolContract @goField(forceResolver: true)
-  claims: [Claim!] @goField(forceResolver: true)
-  balance: PoolBalance! @goField(forceResolver: true)
-  createdAt: Time!
-  updatedAt: Time!
+    id: ID!
+    name: String!
+    description: String!
+    image: String!
+    donationBps: Int!
+    slug: String!
+    status: PoolStatus!
+    owner: UserOrEVMAccount! @goField(forceResolver: true)
+    contract: PoolContract @goField(forceResolver: true)
+    claims: [Claim!]! @goField(forceResolver: true)
+    balance: PoolBalance! @goField(forceResolver: true)
+    createdAt: Time!
+    updatedAt: Time!
 }
 
-union PoolOrUserOrEVMAccount = Pool | User | EVMAccount
-
 type PoolContract implements Node {
-  id: ID!
-  address: Address!
-  chainId: Int!
-  status: PoolStatus!
-  poolFactory: PoolFactory! @goField(forceResolver: true)
-  account: EVMAccount! @goField(forceResolver: true)
-  owner: EVMAccount! @goField(forceResolver: true)
-  dayBalance: [PoolDayBalance!]! @goField(forceResolver: true)
-  hourBalance: [PoolHourBalance!]! @goField(forceResolver: true)
-  deposits: [Deposit!]! @goField(forceResolver: true)
-  withdrawals: [Withdrawal!]! @goField(forceResolver: true)
-  createdAt: Time!
-  updatedAt: Time!
+    id: ID!
+    address: Address!
+    network: Network!
+    status: PoolStatus!
+    poolFactory: PoolFactory! @goField(forceResolver: true)
+    account: EVMAccount! @goField(forceResolver: true)
+    owner: EVMAccount! @goField(forceResolver: true)
+    dayBalances(first: Int, after: String): PoolDayBalanceConnection! @goField(forceResolver: true)
+    hourBalances(first: Int, after: String): PoolHourBalanceConnection! @goField(forceResolver: true)
+    deposits(first: Int, after: String): DepositConnection! @goField(forceResolver: true)
+    withdrawals(first: Int, after: String): WithdrawalConnection! @goField(forceResolver: true)
+    createdAt: Time!
+    updatedAt: Time!
+}
+
+type PoolDayBalanceEdge {
+    node: PoolDayBalance!
+    cursor: String!
+}
+
+type PoolDayBalanceConnection {
+    edges: [PoolDayBalanceEdge!]!
+    pageInfo: PageInfo!
 }
 
 type PoolDayBalance implements Node {
-  id: ID!
-  chainId: Int!
-  date: Time!
-  pool: Pool! @goField(forceResolver: true)
-  token: Token! @goField(forceResolver: true)
-  amount: HexString!
-  createdAt: Time!
-  updatedAt: Time!
+    id: ID!
+    network: Network!
+    date: Time!
+    pool: Pool! @goField(forceResolver: true)
+    token: Token! @goField(forceResolver: true)
+    amount: UInt256!
+    formattedAmount: Float!
+    quotes: [Quote!]!
+    createdAt: Time!
+    updatedAt: Time!
+}
+
+type PoolHourBalanceEdge {
+    node: PoolHourBalance!
+    cursor: String!
+}
+
+type PoolHourBalanceConnection {
+    edges: [PoolHourBalanceEdge!]!
+    pageInfo: PageInfo!
 }
 
 type PoolHourBalance implements Node {
-  id: ID!
-  chainId: Int!
-  date: Time!
-  pool: Pool! @goField(forceResolver: true)
-  token: Token! @goField(forceResolver: true)
-  amount: HexString!
-  createdAt: Time!
-  updatedAt: Time!
+    id: ID!
+    network: Network!
+    date: Time!
+    pool: Pool! @goField(forceResolver: true)
+    token: Token! @goField(forceResolver: true)
+    amount: UInt256!
+    formattedAmount: Float!
+    quotes: [Quote!]!
+    createdAt: Time!
+    updatedAt: Time!
+}
+
+type SearchPoolsPayload {
+    results: [Pool!]!
+}
+
+union SearchPoolsResult = SearchPoolsPayload | ErrInvalidInput
+
+type ErrPoolNotFound implements Error {
+    message: String!
 }
 
 
-#-------------------------------------------------------------------------------
-# POOL
+union PoolResult = Pool | ErrPoolNotFound | ErrInvalidInput
+
+# --- CREATE ---
+
+input PoolCreateInput {
+    owner: String
+    private: Boolean
+    name: String!
+    description: String!
+    image: String
+    donationBps: Int
+    slug: String!
+    addClaims: [ClaimCreateInput!]
+}
+
+type PoolCreatePayload {
+    pool: Pool!
+}
+
+union PoolCreateResult = PoolCreatePayload | ErrNotAuthorized | ErrInvalidInput
+
+# --- UPDATE ---
+
+input PoolUpdateInput {
+    private: Boolean
+    name: String
+    description: String
+    image: String
+    donationBps: Int
+    slug: String
+    addClaims: [ClaimCreateInput!]
+    updateClaims: [ClaimUpdateInput!]
+    removeClaims: [ID!]
+}
+
+type PoolUpdatePayload {
+    pool: Pool!
+}
+
+union PoolUpdateResult = PoolUpdatePayload | ErrNotAuthorized | ErrInvalidInput | ErrPoolNotFound
+
+# --- DELETE ---
+
+type PoolDeletePayload {
+    pool: Pool!
+}
+
+union PoolDeleteResult = PoolDeletePayload | ErrNotAuthorized | ErrInvalidInput | ErrPoolNotFound
+
 #-------------------------------------------------------------------------------
 # EVENT
 #-------------------------------------------------------------------------------
 
-enum ReportWindow {
-  LAST_5_DAYS
-  LAST_7_DAYS
-  ALL_TIME
+type Tx implements Node {
+    id: ID!
+    gasUsed: UInt256!
+    gasPrice: UInt256!
+    createdAt: Time!
+    updatedAt: Time!
+    deposits(first: Int, after: String): DepositConnection! @goField(forceResolver: true)
+    withdrawals(first: Int, after: String): WithdrawalConnection! @goField(forceResolver: true)
 }
 
-type Tx implements Node {
-  id: ID!
-  gasUsed: HexString!
-  gasPrice: HexString!
-  createdAt: Time!
-  updatedAt: Time!
-  deposits: [Deposit]! @goField(forceResolver: true)
-  withdrawals: [Withdrawal]! @goField(forceResolver: true)
+type DepositEdge {
+    node: Deposit!
+    cursor: String!
+}
+
+type DepositConnection {
+    edges: [DepositEdge!]!
+    pageInfo: PageInfo!
 }
 
 type Deposit implements Node {
-  id: ID!
-  transaction: Tx! @goField(forceResolver: true)
-  pool: Pool! @goField(forceResolver: true)
-  token: Token! @goField(forceResolver: true)
-  from: Address!
-  to: Address!
-  origin: String!
-  amount: HexString!
-  logIndex: Int
-  createdAt: Time!
-  updatedAt: Time!
+    id: ID!
+    transaction: Tx! @goField(forceResolver: true)
+    pool: Pool! @goField(forceResolver: true)
+    token: Token! @goField(forceResolver: true)
+    from: Address!
+    to: Address!
+    origin: String!
+    amount: UInt256!
+    logIndex: Int
+    createdAt: Time!
+    updatedAt: Time!
+}
+
+type WithdrawalEdge {
+    node: Withdrawal!
+    cursor: String!
+}
+
+type WithdrawalConnection {
+    edges: [WithdrawalEdge!]!
+    pageInfo: PageInfo!
 }
 
 type Withdrawal implements Node {
-  id: ID!
-  transaction: Tx! @goField(forceResolver: true)
-  pool: Pool! @goField(forceResolver: true)
-  token: Token! @goField(forceResolver: true)
-  from: Address!
-  to: Address!
-  origin: String!
-  amount: HexString!
-  logIndex: Int
-  createdAt: Time!
-  updatedAt: Time!
+    id: ID!
+    transaction: Tx! @goField(forceResolver: true)
+    pool: Pool! @goField(forceResolver: true)
+    token: Token! @goField(forceResolver: true)
+    from: Address!
+    to: Address!
+    origin: String!
+    amount: UInt256!
+    logIndex: Int
+    createdAt: Time!
+    updatedAt: Time!
 }
-
-#-------------------------------------------------------------------------------
-# SEARCH
-#-------------------------------------------------------------------------------
-
-type UserSearchResult {
-  user: User
-}
-
-type SearchUsersPayload {
-  results: [UserSearchResult!]
-}
-
-type PoolSearchResult {
-  pool: Pool
-}
-
-type SearchPoolsPayload {
-  results: [PoolSearchResult!]
-}
-
-#-------------------------------------------------------------------------------
-# ERRORS
-#-------------------------------------------------------------------------------
-
-type ErrAuthenticationFailed implements Error {
-  message: String!
-}
-
-type ErrUserAlreadyExists implements Error {
-  message: String!
-}
-
-type ErrUsernameNotAvailable implements Error {
-  message: String!
-}
-
-type ErrAddressOwnedByUser implements Error {
-  message: String!
-}
-
-type ErrUserNotFound implements Error {
-  message: String!
-}
-
-type ErrPoolNotFound implements Error {
-  message: String!
-}
-
-type ErrTokenNotFound implements Error {
-  message: String!
-}
-
-type ErrInvalidInput implements Error {
-  message: String!
-  parameters: [String!]!
-  reasons: [String!]!
-}
-
-type ErrNoCookie implements Error {
-  message: String!
-}
-
-type ErrInvalidToken implements Error {
-  message: String!
-}
-
-type ErrSessionInvalidated implements Error {
-  message: String!
-}
-
-type ErrDoesNotOwnRequiredToken implements Error {
-  message: String!
-}
-
-union AuthorizationError =
-  ErrNoCookie
-  | ErrInvalidToken
-  | ErrSessionInvalidated
-  | ErrDoesNotOwnRequiredToken
-
-type ErrNotAuthorized implements Error {
-  message: String!
-  cause: AuthorizationError!
-}
-
-type ErrSyncFailed implements Error {
-  message: String!
-}
-
 
 #-------------------------------------------------------------------------------
 # QUERY
 #-------------------------------------------------------------------------------
 
-union UserResult = User | ErrNotAuthorized | ErrUserNotFound | ErrInvalidInput
-union PoolResult = Pool | ErrPoolNotFound | ErrInvalidInput
-union SearchUsersResult = SearchUsersPayload | ErrInvalidInput
-union SearchPoolsResult = SearchPoolsPayload | ErrInvalidInput
-
 type Query {
-  node(id: ID!): Node
-  viewer: UserResult @authRequired
-  userById(id: ID!): UserResult!
-  userByAddress(address: Address!): UserResult!
+    """Fetches an object given its globally unique ID."""
+    node(id: ID!): Node
 
-  """Look up a pool by ID, slug, or contract ID."""
-  pool(
-    id: ID
-    slug: String
-    contractId: ID
-  ): PoolResult!
+    """Returns the currently authenticated user based on the session or token."""
+    viewer: UserResult @authRequired
 
-  searchUsers(
-    query: String!
-    limit: Int
-    usernameWeight: Float
-  ): SearchUsersResult!
+    """Combined lookup for a user by either their ID or their Ethereum address."""
+    user(id: ID, address: Address): UserResult!
 
-  searchPools(
-    query: String!
-    limit: Int
-    nameWeight: Float
-    descriptionWeight: Float
-  ): SearchPoolsResult!
+    """Look up a pool by ID, slug, or contract ID."""
+    pool(id: ID, slug: String, contractId: ID): PoolResult!
 
+    """Searches for users based on a query string, with optional weighting for username matches."""
+    searchUsers(query: String!, limit: Int, usernameWeight: Float): SearchUsersResult!
 
-  usersByRole(role: Role!, before: String, after: String, first: Int, last: Int): UsersConnection
-  @basicAuth(allowed: [Retool])
+    """Searches for pools based on a query string, with optional weighting for name and description matches."""
+    searchPools(query: String!, limit: Int, nameWeight: Float, descriptionWeight: Float): SearchPoolsResult!
+
+    """Fetches a paginated list of users filtered by a specific role. Restricted to internal Retool basic auth."""
+    usersByRole(role: Role!, first: Int, after: String): UserConnection! @basicAuth(allowed: [Retool])
 }
 
 #-------------------------------------------------------------------------------
-# MUTATIONS
+# MUTATION
 #-------------------------------------------------------------------------------
-
-# USER MUTATIONS
-
-type UserRegisterPayload {
-  user: User!
-  requiresConfirmation: Boolean
-}
-
-union UserRegisterResult = UserRegisterPayload | ErrAuthenticationFailed | ErrUserAlreadyExists | ErrInvalidInput | ErrDoesNotOwnRequiredToken
-
-type UserUpdatePayload {
-  user: User!
-}
-
-input UserUpdateInput {
-  username: String
-}
-
-union UserUpdateResult = UserUpdatePayload | ErrNotAuthorized | ErrUsernameNotAvailable | ErrInvalidInput
-
-type UserDeletePayload {
-  user: User
-}
-
-union UserDeleteResult = UserDeletePayload | ErrNotAuthorized | ErrInvalidInput
-
-# WALLET MUTATIONS
-
-type AddUserWalletPayload {
-  viewer: User!
-}
-
-union AddUserWalletResult = AddUserWalletPayload | ErrAuthenticationFailed | ErrNotAuthorized | ErrInvalidInput | ErrAddressOwnedByUser
-
-type RemoveUserWalletsPayload {
-  viewer: User!
-}
-
-union RemoveUserWalletsResult = RemoveUserWalletsPayload | ErrNotAuthorized | ErrInvalidInput
-
-# AUTH MUTATIONS
-
-type LoginPayload {
-  viewer: User!
-}
-
-union LoginResult = LoginPayload | ErrUserNotFound | ErrAuthenticationFailed | ErrDoesNotOwnRequiredToken
-
-type LogoutPayload {
-  viewer: User
-}
-
-type VerifyTokenPayload {
-  user: User!
-  isValid: Boolean!
-}
-
-union VerifyTokenResult = VerifyTokenPayload | ErrNotAuthorized | ErrInvalidInput
-
-
-# ROLE MUTATIONS
-
-type RoleUpdatePayload {
-  user: User!
-}
-
-input RoleUpdateInput {
-  addRoles: [Role!]
-  removeRoles: [Role!]
-}
-
-union RoleUpdateResult = RoleUpdatePayload | ErrNotAuthorized | ErrInvalidInput
-
-# CLAIM MUTATIONS
-
-type ClaimCreatePayload {
-  claim: Claim!
-}
-
-input ClaimCreateInput {
-  label: String!
-  validationData: JSON
-  distributionData: JSON
-  parent: String
-  children: [String!]
-  validationId: String!
-  distributionId: String!
-}
-
-union ClaimCreateResult = ClaimCreatePayload | ErrNotAuthorized | ErrInvalidInput | ErrPoolNotFound
-
-type ClaimUpdatePayload {
-  claim: Claim!
-}
-
-input ClaimUpdateInput {
-  claimId: ID!
-  validationData: JSON
-  distributionData: JSON
-  parent: ID
-  children: [ID!]
-  validationId: String
-  distributionId: String
-}
-
-union ClaimUpdateResult = ClaimUpdatePayload | ErrNotAuthorized | ErrInvalidInput | ErrPoolNotFound
-
-type ClaimDeletePayload {
-  claim: Claim!
-}
-
-union ClaimDeleteResult = ClaimDeletePayload | ErrNotAuthorized | ErrInvalidInput | ErrPoolNotFound
-
-type ClaimBulkCreatePayload {
-  count: Int!
-  claims: [Claim!]!
-}
-
-input ClaimBulkCreateInput {
-  validationData: JSON
-  distributionData: JSON
-  parent: ID
-  children: [ID!]
-  validationId: String!
-  distributionId: String!
-}
-
-union ClaimBulkCreateResult = ClaimBulkCreatePayload | ErrNotAuthorized | ErrInvalidInput | ErrPoolNotFound
-
-type ClaimBulkUpdatePayload {
-  count: Int!
-  claims: [Claim!]!
-}
-
-input ClaimBulkUpdateInput {
-  claimId: ID!
-  validationData: JSON
-  distributionData: JSON
-  parent: ID
-  children: [ID!]
-  validationId: String
-  distributionId: String
-}
-
-union ClaimBulkUpdateResult = ClaimBulkUpdatePayload | ErrNotAuthorized | ErrInvalidInput | ErrPoolNotFound
-
-type ClaimBulkDeletePayload {
-  count: Int!
-}
-
-union ClaimBulkDeleteResult = ClaimBulkDeletePayload | ErrNotAuthorized | ErrInvalidInput | ErrPoolNotFound
-
-# POOL MUTATIONS
-
-type PoolCreatePayload {
-  pool: Pool!
-}
-
-input PoolCreateInput {
-  owner: String
-  private: Boolean
-  name: String!
-  description: String!
-  image: String
-  donationBps: Int
-  slug: String!
-  addClaims: [ClaimCreateInput!]
-}
-
-union PoolCreateResult = PoolCreatePayload | ErrNotAuthorized | ErrInvalidInput
-
-type PoolUpdatePayload {
-  pool: Pool!
-}
-
-input PoolUpdateInput {
-  private: Boolean
-  name: String
-  description: String
-  image: String
-  donationBps: Int
-  slug: String
-  addClaims: [ClaimCreateInput!]
-  updateClaims: [ClaimUpdateInput!]
-  removeClaims: [ID!]
-}
-
-union PoolUpdateResult = PoolUpdatePayload | ErrNotAuthorized | ErrInvalidInput | ErrPoolNotFound
-
-type PoolDeletePayload {
-  pool: Pool!
-}
-
-union PoolDeleteResult = PoolDeletePayload | ErrNotAuthorized | ErrInvalidInput | ErrPoolNotFound
 
 type Mutation {
-  # User
-  userRegister: UserRegisterResult! @authRequired
-  userUpdate(input: UserUpdateInput!): UserUpdateResult! @authRequired
-  userRequestDeletion(redirectUrl: String!): UserDeleteResult! @authRequired
-  userDelete(token: String!): UserDeleteResult! @authRequired
+    """Registers a new user and returns the user object or validation errors."""
+    userRegister: UserRegisterResult! @authRequired
 
-  # Roles
-  roleUpdate(role: Role!, input: RoleUpdateInput!): RoleUpdateResult! @authRequired
+    """Updates the profile information of the currently authenticated user."""
+    userUpdate(input: UserUpdateInput!): UserUpdateResult! @authRequired
 
-  # Claims
-  poolClaimCreate(poolId: ID!, input: ClaimCreateInput!): ClaimCreateResult! @authRequired
-  poolClaimUpdate(poolId: ID!, input: ClaimUpdateInput!): ClaimUpdateResult! @authRequired
-  poolClaimDelete(poolId: ID!, claimId: ID!): ClaimDeleteResult! @authRequired
-  poolClaimBulkCreate(errorPolicy: ErrorPolicyEnum, poolId: ID!, claims: [ClaimBulkCreateInput!]!): ClaimBulkCreateResult! @authRequired
-  poolClaimBulkUpdate(errorPolicy: ErrorPolicyEnum, poolId: ID!, claims: [ClaimBulkUpdateInput!]!): ClaimBulkUpdateResult! @authRequired
-  poolClaimBulkDelete(poolId: ID!, claimIds: [ID!]!): ClaimBulkDeleteResult! @authRequired
+    """Initiates the account deletion process for the authenticated user and returns a redirect URL."""
+    userRequestDeletion(redirectUrl: String!): UserDeleteResult! @authRequired
 
-  # Pools
-  poolCreate(input: PoolCreateInput!): PoolCreateResult!
-  poolUpdate(id: ID!, input: PoolUpdateInput!): PoolUpdateResult! @authRequired
-  poolDelete(id: ID!): PoolDeleteResult! @authRequired
-}
-`, BuiltIn: false},
+    """Completes the account deletion process using a provided confirmation token."""
+    userDelete(token: String!): UserDeleteResult! @authRequired
+
+    """Adds or removes administrative roles for a specific user."""
+    roleUpdate(role: Role!, input: RoleUpdateInput!): RoleUpdateResult! @authRequired
+
+    """Creates a new claim definition for a specific pool."""
+    poolClaimCreate(poolId: ID!, input: ClaimCreateInput!): ClaimCreateResult! @authRequired
+
+    """Updates an existing claim definition within a pool."""
+    poolClaimUpdate(poolId: ID!, input: ClaimUpdateInput!): ClaimUpdateResult! @authRequired
+
+    """Deletes a specific claim definition from a pool."""
+    poolClaimDelete(poolId: ID!, claimId: ID!): ClaimDeleteResult! @authRequired
+
+    """Creates multiple claim definitions for a pool in a single bulk operation."""
+    poolClaimBulkCreate(errorPolicy: ErrorPolicyEnum, poolId: ID!, claims: [ClaimBulkCreateInput!]!): ClaimBulkCreateResult! @authRequired
+
+    """Updates multiple existing claim definitions within a pool in a single bulk operation."""
+    poolClaimBulkUpdate(errorPolicy: ErrorPolicyEnum, poolId: ID!, claims: [ClaimBulkUpdateInput!]!): ClaimBulkUpdateResult! @authRequired
+
+    """Deletes multiple claim definitions from a pool in a single bulk operation."""
+    poolClaimBulkDelete(poolId: ID!, claimIds: [ID!]!): ClaimBulkDeleteResult! @authRequired
+
+    """Creates a new pool."""
+    poolCreate(input: PoolCreateInput!): PoolCreateResult!
+
+    """Updates the details, configuration, or claims of an existing pool."""
+    poolUpdate(id: ID!, input: PoolUpdateInput!): PoolUpdateResult! @authRequired
+
+    """Soft-deletes or archives an existing pool."""
+    poolDelete(id: ID!): PoolDeleteResult! @authRequired
+}`, BuiltIn: false},
 	{Name: "../../federation/directives.graphql", Input: `
 	directive @authenticated on FIELD_DEFINITION | OBJECT | INTERFACE | SCALAR | ENUM
 	directive @composeDirective(name: String!) repeatable on SCHEMA
@@ -3138,6 +3538,124 @@ func (ec *executionContext) dir_restrictEnvironment_argsAllowed(
 	}
 
 	var zeroVal []string
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_EVMAccount_balances_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	arg0, err := ec.field_EVMAccount_balances_argsFirst(ctx, rawArgs)
+	if err != nil {
+		return nil, err
+	}
+	args["first"] = arg0
+	arg1, err := ec.field_EVMAccount_balances_argsAfter(ctx, rawArgs)
+	if err != nil {
+		return nil, err
+	}
+	args["after"] = arg1
+	return args, nil
+}
+func (ec *executionContext) field_EVMAccount_balances_argsFirst(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) (*int, error) {
+	// We won't call the directive if the argument is null.
+	// Set call_argument_directives_with_null to true to call directives
+	// even if the argument is null.
+	_, ok := rawArgs["first"]
+	if !ok {
+		var zeroVal *int
+		return zeroVal, nil
+	}
+
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("first"))
+	if tmp, ok := rawArgs["first"]; ok {
+		return ec.unmarshalOInt2ᚖint(ctx, tmp)
+	}
+
+	var zeroVal *int
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_EVMAccount_balances_argsAfter(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) (*string, error) {
+	// We won't call the directive if the argument is null.
+	// Set call_argument_directives_with_null to true to call directives
+	// even if the argument is null.
+	_, ok := rawArgs["after"]
+	if !ok {
+		var zeroVal *string
+		return zeroVal, nil
+	}
+
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("after"))
+	if tmp, ok := rawArgs["after"]; ok {
+		return ec.unmarshalOString2ᚖstring(ctx, tmp)
+	}
+
+	var zeroVal *string
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_EVMAccount_selfPools_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	arg0, err := ec.field_EVMAccount_selfPools_argsFirst(ctx, rawArgs)
+	if err != nil {
+		return nil, err
+	}
+	args["first"] = arg0
+	arg1, err := ec.field_EVMAccount_selfPools_argsAfter(ctx, rawArgs)
+	if err != nil {
+		return nil, err
+	}
+	args["after"] = arg1
+	return args, nil
+}
+func (ec *executionContext) field_EVMAccount_selfPools_argsFirst(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) (*int, error) {
+	// We won't call the directive if the argument is null.
+	// Set call_argument_directives_with_null to true to call directives
+	// even if the argument is null.
+	_, ok := rawArgs["first"]
+	if !ok {
+		var zeroVal *int
+		return zeroVal, nil
+	}
+
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("first"))
+	if tmp, ok := rawArgs["first"]; ok {
+		return ec.unmarshalOInt2ᚖint(ctx, tmp)
+	}
+
+	var zeroVal *int
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_EVMAccount_selfPools_argsAfter(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) (*string, error) {
+	// We won't call the directive if the argument is null.
+	// Set call_argument_directives_with_null to true to call directives
+	// even if the argument is null.
+	_, ok := rawArgs["after"]
+	if !ok {
+		var zeroVal *string
+		return zeroVal, nil
+	}
+
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("after"))
+	if tmp, ok := rawArgs["after"]; ok {
+		return ec.unmarshalOString2ᚖstring(ctx, tmp)
+	}
+
+	var zeroVal *string
 	return zeroVal, nil
 }
 
@@ -3827,6 +4345,301 @@ func (ec *executionContext) field_Mutation_userUpdate_argsInput(
 	return zeroVal, nil
 }
 
+func (ec *executionContext) field_PoolBalance_tokens_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	arg0, err := ec.field_PoolBalance_tokens_argsFirst(ctx, rawArgs)
+	if err != nil {
+		return nil, err
+	}
+	args["first"] = arg0
+	arg1, err := ec.field_PoolBalance_tokens_argsAfter(ctx, rawArgs)
+	if err != nil {
+		return nil, err
+	}
+	args["after"] = arg1
+	return args, nil
+}
+func (ec *executionContext) field_PoolBalance_tokens_argsFirst(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) (*int, error) {
+	// We won't call the directive if the argument is null.
+	// Set call_argument_directives_with_null to true to call directives
+	// even if the argument is null.
+	_, ok := rawArgs["first"]
+	if !ok {
+		var zeroVal *int
+		return zeroVal, nil
+	}
+
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("first"))
+	if tmp, ok := rawArgs["first"]; ok {
+		return ec.unmarshalOInt2ᚖint(ctx, tmp)
+	}
+
+	var zeroVal *int
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_PoolBalance_tokens_argsAfter(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) (*string, error) {
+	// We won't call the directive if the argument is null.
+	// Set call_argument_directives_with_null to true to call directives
+	// even if the argument is null.
+	_, ok := rawArgs["after"]
+	if !ok {
+		var zeroVal *string
+		return zeroVal, nil
+	}
+
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("after"))
+	if tmp, ok := rawArgs["after"]; ok {
+		return ec.unmarshalOString2ᚖstring(ctx, tmp)
+	}
+
+	var zeroVal *string
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_PoolContract_dayBalances_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	arg0, err := ec.field_PoolContract_dayBalances_argsFirst(ctx, rawArgs)
+	if err != nil {
+		return nil, err
+	}
+	args["first"] = arg0
+	arg1, err := ec.field_PoolContract_dayBalances_argsAfter(ctx, rawArgs)
+	if err != nil {
+		return nil, err
+	}
+	args["after"] = arg1
+	return args, nil
+}
+func (ec *executionContext) field_PoolContract_dayBalances_argsFirst(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) (*int, error) {
+	// We won't call the directive if the argument is null.
+	// Set call_argument_directives_with_null to true to call directives
+	// even if the argument is null.
+	_, ok := rawArgs["first"]
+	if !ok {
+		var zeroVal *int
+		return zeroVal, nil
+	}
+
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("first"))
+	if tmp, ok := rawArgs["first"]; ok {
+		return ec.unmarshalOInt2ᚖint(ctx, tmp)
+	}
+
+	var zeroVal *int
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_PoolContract_dayBalances_argsAfter(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) (*string, error) {
+	// We won't call the directive if the argument is null.
+	// Set call_argument_directives_with_null to true to call directives
+	// even if the argument is null.
+	_, ok := rawArgs["after"]
+	if !ok {
+		var zeroVal *string
+		return zeroVal, nil
+	}
+
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("after"))
+	if tmp, ok := rawArgs["after"]; ok {
+		return ec.unmarshalOString2ᚖstring(ctx, tmp)
+	}
+
+	var zeroVal *string
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_PoolContract_deposits_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	arg0, err := ec.field_PoolContract_deposits_argsFirst(ctx, rawArgs)
+	if err != nil {
+		return nil, err
+	}
+	args["first"] = arg0
+	arg1, err := ec.field_PoolContract_deposits_argsAfter(ctx, rawArgs)
+	if err != nil {
+		return nil, err
+	}
+	args["after"] = arg1
+	return args, nil
+}
+func (ec *executionContext) field_PoolContract_deposits_argsFirst(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) (*int, error) {
+	// We won't call the directive if the argument is null.
+	// Set call_argument_directives_with_null to true to call directives
+	// even if the argument is null.
+	_, ok := rawArgs["first"]
+	if !ok {
+		var zeroVal *int
+		return zeroVal, nil
+	}
+
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("first"))
+	if tmp, ok := rawArgs["first"]; ok {
+		return ec.unmarshalOInt2ᚖint(ctx, tmp)
+	}
+
+	var zeroVal *int
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_PoolContract_deposits_argsAfter(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) (*string, error) {
+	// We won't call the directive if the argument is null.
+	// Set call_argument_directives_with_null to true to call directives
+	// even if the argument is null.
+	_, ok := rawArgs["after"]
+	if !ok {
+		var zeroVal *string
+		return zeroVal, nil
+	}
+
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("after"))
+	if tmp, ok := rawArgs["after"]; ok {
+		return ec.unmarshalOString2ᚖstring(ctx, tmp)
+	}
+
+	var zeroVal *string
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_PoolContract_hourBalances_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	arg0, err := ec.field_PoolContract_hourBalances_argsFirst(ctx, rawArgs)
+	if err != nil {
+		return nil, err
+	}
+	args["first"] = arg0
+	arg1, err := ec.field_PoolContract_hourBalances_argsAfter(ctx, rawArgs)
+	if err != nil {
+		return nil, err
+	}
+	args["after"] = arg1
+	return args, nil
+}
+func (ec *executionContext) field_PoolContract_hourBalances_argsFirst(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) (*int, error) {
+	// We won't call the directive if the argument is null.
+	// Set call_argument_directives_with_null to true to call directives
+	// even if the argument is null.
+	_, ok := rawArgs["first"]
+	if !ok {
+		var zeroVal *int
+		return zeroVal, nil
+	}
+
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("first"))
+	if tmp, ok := rawArgs["first"]; ok {
+		return ec.unmarshalOInt2ᚖint(ctx, tmp)
+	}
+
+	var zeroVal *int
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_PoolContract_hourBalances_argsAfter(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) (*string, error) {
+	// We won't call the directive if the argument is null.
+	// Set call_argument_directives_with_null to true to call directives
+	// even if the argument is null.
+	_, ok := rawArgs["after"]
+	if !ok {
+		var zeroVal *string
+		return zeroVal, nil
+	}
+
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("after"))
+	if tmp, ok := rawArgs["after"]; ok {
+		return ec.unmarshalOString2ᚖstring(ctx, tmp)
+	}
+
+	var zeroVal *string
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_PoolContract_withdrawals_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	arg0, err := ec.field_PoolContract_withdrawals_argsFirst(ctx, rawArgs)
+	if err != nil {
+		return nil, err
+	}
+	args["first"] = arg0
+	arg1, err := ec.field_PoolContract_withdrawals_argsAfter(ctx, rawArgs)
+	if err != nil {
+		return nil, err
+	}
+	args["after"] = arg1
+	return args, nil
+}
+func (ec *executionContext) field_PoolContract_withdrawals_argsFirst(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) (*int, error) {
+	// We won't call the directive if the argument is null.
+	// Set call_argument_directives_with_null to true to call directives
+	// even if the argument is null.
+	_, ok := rawArgs["first"]
+	if !ok {
+		var zeroVal *int
+		return zeroVal, nil
+	}
+
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("first"))
+	if tmp, ok := rawArgs["first"]; ok {
+		return ec.unmarshalOInt2ᚖint(ctx, tmp)
+	}
+
+	var zeroVal *int
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_PoolContract_withdrawals_argsAfter(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) (*string, error) {
+	// We won't call the directive if the argument is null.
+	// Set call_argument_directives_with_null to true to call directives
+	// even if the argument is null.
+	_, ok := rawArgs["after"]
+	if !ok {
+		var zeroVal *string
+		return zeroVal, nil
+	}
+
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("after"))
+	if tmp, ok := rawArgs["after"]; ok {
+		return ec.unmarshalOString2ᚖstring(ctx, tmp)
+	}
+
+	var zeroVal *string
+	return zeroVal, nil
+}
+
 func (ec *executionContext) field_Query___type_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
@@ -4176,67 +4989,62 @@ func (ec *executionContext) field_Query_searchUsers_argsUsernameWeight(
 	return zeroVal, nil
 }
 
-func (ec *executionContext) field_Query_userByAddress_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+func (ec *executionContext) field_Query_user_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
-	arg0, err := ec.field_Query_userByAddress_argsAddress(ctx, rawArgs)
-	if err != nil {
-		return nil, err
-	}
-	args["address"] = arg0
-	return args, nil
-}
-func (ec *executionContext) field_Query_userByAddress_argsAddress(
-	ctx context.Context,
-	rawArgs map[string]interface{},
-) (persist.Address, error) {
-	// We won't call the directive if the argument is null.
-	// Set call_argument_directives_with_null to true to call directives
-	// even if the argument is null.
-	_, ok := rawArgs["address"]
-	if !ok {
-		var zeroVal persist.Address
-		return zeroVal, nil
-	}
-
-	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("address"))
-	if tmp, ok := rawArgs["address"]; ok {
-		return ec.unmarshalNAddress2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋserviceᚋpersistᚐAddress(ctx, tmp)
-	}
-
-	var zeroVal persist.Address
-	return zeroVal, nil
-}
-
-func (ec *executionContext) field_Query_userById_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
-	var err error
-	args := map[string]interface{}{}
-	arg0, err := ec.field_Query_userById_argsID(ctx, rawArgs)
+	arg0, err := ec.field_Query_user_argsID(ctx, rawArgs)
 	if err != nil {
 		return nil, err
 	}
 	args["id"] = arg0
+	arg1, err := ec.field_Query_user_argsAddress(ctx, rawArgs)
+	if err != nil {
+		return nil, err
+	}
+	args["address"] = arg1
 	return args, nil
 }
-func (ec *executionContext) field_Query_userById_argsID(
+func (ec *executionContext) field_Query_user_argsID(
 	ctx context.Context,
 	rawArgs map[string]interface{},
-) (model.GqlID, error) {
+) (*model.GqlID, error) {
 	// We won't call the directive if the argument is null.
 	// Set call_argument_directives_with_null to true to call directives
 	// even if the argument is null.
 	_, ok := rawArgs["id"]
 	if !ok {
-		var zeroVal model.GqlID
+		var zeroVal *model.GqlID
 		return zeroVal, nil
 	}
 
 	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("id"))
 	if tmp, ok := rawArgs["id"]; ok {
-		return ec.unmarshalNID2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐGqlID(ctx, tmp)
+		return ec.unmarshalOID2ᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐGqlID(ctx, tmp)
 	}
 
-	var zeroVal model.GqlID
+	var zeroVal *model.GqlID
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_Query_user_argsAddress(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) (*persist.Address, error) {
+	// We won't call the directive if the argument is null.
+	// Set call_argument_directives_with_null to true to call directives
+	// even if the argument is null.
+	_, ok := rawArgs["address"]
+	if !ok {
+		var zeroVal *persist.Address
+		return zeroVal, nil
+	}
+
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("address"))
+	if tmp, ok := rawArgs["address"]; ok {
+		return ec.unmarshalOAddress2ᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋserviceᚋpersistᚐAddress(ctx, tmp)
+	}
+
+	var zeroVal *persist.Address
 	return zeroVal, nil
 }
 
@@ -4248,26 +5056,16 @@ func (ec *executionContext) field_Query_usersByRole_args(ctx context.Context, ra
 		return nil, err
 	}
 	args["role"] = arg0
-	arg1, err := ec.field_Query_usersByRole_argsBefore(ctx, rawArgs)
+	arg1, err := ec.field_Query_usersByRole_argsFirst(ctx, rawArgs)
 	if err != nil {
 		return nil, err
 	}
-	args["before"] = arg1
+	args["first"] = arg1
 	arg2, err := ec.field_Query_usersByRole_argsAfter(ctx, rawArgs)
 	if err != nil {
 		return nil, err
 	}
 	args["after"] = arg2
-	arg3, err := ec.field_Query_usersByRole_argsFirst(ctx, rawArgs)
-	if err != nil {
-		return nil, err
-	}
-	args["first"] = arg3
-	arg4, err := ec.field_Query_usersByRole_argsLast(ctx, rawArgs)
-	if err != nil {
-		return nil, err
-	}
-	args["last"] = arg4
 	return args, nil
 }
 func (ec *executionContext) field_Query_usersByRole_argsRole(
@@ -4289,50 +5087,6 @@ func (ec *executionContext) field_Query_usersByRole_argsRole(
 	}
 
 	var zeroVal persist.Role
-	return zeroVal, nil
-}
-
-func (ec *executionContext) field_Query_usersByRole_argsBefore(
-	ctx context.Context,
-	rawArgs map[string]interface{},
-) (*string, error) {
-	// We won't call the directive if the argument is null.
-	// Set call_argument_directives_with_null to true to call directives
-	// even if the argument is null.
-	_, ok := rawArgs["before"]
-	if !ok {
-		var zeroVal *string
-		return zeroVal, nil
-	}
-
-	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("before"))
-	if tmp, ok := rawArgs["before"]; ok {
-		return ec.unmarshalOString2ᚖstring(ctx, tmp)
-	}
-
-	var zeroVal *string
-	return zeroVal, nil
-}
-
-func (ec *executionContext) field_Query_usersByRole_argsAfter(
-	ctx context.Context,
-	rawArgs map[string]interface{},
-) (*string, error) {
-	// We won't call the directive if the argument is null.
-	// Set call_argument_directives_with_null to true to call directives
-	// even if the argument is null.
-	_, ok := rawArgs["after"]
-	if !ok {
-		var zeroVal *string
-		return zeroVal, nil
-	}
-
-	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("after"))
-	if tmp, ok := rawArgs["after"]; ok {
-		return ec.unmarshalOString2ᚖstring(ctx, tmp)
-	}
-
-	var zeroVal *string
 	return zeroVal, nil
 }
 
@@ -4358,25 +5112,202 @@ func (ec *executionContext) field_Query_usersByRole_argsFirst(
 	return zeroVal, nil
 }
 
-func (ec *executionContext) field_Query_usersByRole_argsLast(
+func (ec *executionContext) field_Query_usersByRole_argsAfter(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) (*string, error) {
+	// We won't call the directive if the argument is null.
+	// Set call_argument_directives_with_null to true to call directives
+	// even if the argument is null.
+	_, ok := rawArgs["after"]
+	if !ok {
+		var zeroVal *string
+		return zeroVal, nil
+	}
+
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("after"))
+	if tmp, ok := rawArgs["after"]; ok {
+		return ec.unmarshalOString2ᚖstring(ctx, tmp)
+	}
+
+	var zeroVal *string
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_Tx_deposits_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	arg0, err := ec.field_Tx_deposits_argsFirst(ctx, rawArgs)
+	if err != nil {
+		return nil, err
+	}
+	args["first"] = arg0
+	arg1, err := ec.field_Tx_deposits_argsAfter(ctx, rawArgs)
+	if err != nil {
+		return nil, err
+	}
+	args["after"] = arg1
+	return args, nil
+}
+func (ec *executionContext) field_Tx_deposits_argsFirst(
 	ctx context.Context,
 	rawArgs map[string]interface{},
 ) (*int, error) {
 	// We won't call the directive if the argument is null.
 	// Set call_argument_directives_with_null to true to call directives
 	// even if the argument is null.
-	_, ok := rawArgs["last"]
+	_, ok := rawArgs["first"]
 	if !ok {
 		var zeroVal *int
 		return zeroVal, nil
 	}
 
-	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("last"))
-	if tmp, ok := rawArgs["last"]; ok {
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("first"))
+	if tmp, ok := rawArgs["first"]; ok {
 		return ec.unmarshalOInt2ᚖint(ctx, tmp)
 	}
 
 	var zeroVal *int
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_Tx_deposits_argsAfter(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) (*string, error) {
+	// We won't call the directive if the argument is null.
+	// Set call_argument_directives_with_null to true to call directives
+	// even if the argument is null.
+	_, ok := rawArgs["after"]
+	if !ok {
+		var zeroVal *string
+		return zeroVal, nil
+	}
+
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("after"))
+	if tmp, ok := rawArgs["after"]; ok {
+		return ec.unmarshalOString2ᚖstring(ctx, tmp)
+	}
+
+	var zeroVal *string
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_Tx_withdrawals_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	arg0, err := ec.field_Tx_withdrawals_argsFirst(ctx, rawArgs)
+	if err != nil {
+		return nil, err
+	}
+	args["first"] = arg0
+	arg1, err := ec.field_Tx_withdrawals_argsAfter(ctx, rawArgs)
+	if err != nil {
+		return nil, err
+	}
+	args["after"] = arg1
+	return args, nil
+}
+func (ec *executionContext) field_Tx_withdrawals_argsFirst(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) (*int, error) {
+	// We won't call the directive if the argument is null.
+	// Set call_argument_directives_with_null to true to call directives
+	// even if the argument is null.
+	_, ok := rawArgs["first"]
+	if !ok {
+		var zeroVal *int
+		return zeroVal, nil
+	}
+
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("first"))
+	if tmp, ok := rawArgs["first"]; ok {
+		return ec.unmarshalOInt2ᚖint(ctx, tmp)
+	}
+
+	var zeroVal *int
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_Tx_withdrawals_argsAfter(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) (*string, error) {
+	// We won't call the directive if the argument is null.
+	// Set call_argument_directives_with_null to true to call directives
+	// even if the argument is null.
+	_, ok := rawArgs["after"]
+	if !ok {
+		var zeroVal *string
+		return zeroVal, nil
+	}
+
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("after"))
+	if tmp, ok := rawArgs["after"]; ok {
+		return ec.unmarshalOString2ᚖstring(ctx, tmp)
+	}
+
+	var zeroVal *string
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_User_pools_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	arg0, err := ec.field_User_pools_argsFirst(ctx, rawArgs)
+	if err != nil {
+		return nil, err
+	}
+	args["first"] = arg0
+	arg1, err := ec.field_User_pools_argsAfter(ctx, rawArgs)
+	if err != nil {
+		return nil, err
+	}
+	args["after"] = arg1
+	return args, nil
+}
+func (ec *executionContext) field_User_pools_argsFirst(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) (*int, error) {
+	// We won't call the directive if the argument is null.
+	// Set call_argument_directives_with_null to true to call directives
+	// even if the argument is null.
+	_, ok := rawArgs["first"]
+	if !ok {
+		var zeroVal *int
+		return zeroVal, nil
+	}
+
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("first"))
+	if tmp, ok := rawArgs["first"]; ok {
+		return ec.unmarshalOInt2ᚖint(ctx, tmp)
+	}
+
+	var zeroVal *int
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_User_pools_argsAfter(
+	ctx context.Context,
+	rawArgs map[string]interface{},
+) (*string, error) {
+	// We won't call the directive if the argument is null.
+	// Set call_argument_directives_with_null to true to call directives
+	// even if the argument is null.
+	_, ok := rawArgs["after"]
+	if !ok {
+		var zeroVal *string
+		return zeroVal, nil
+	}
+
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("after"))
+	if tmp, ok := rawArgs["after"]; ok {
+		return ec.unmarshalOString2ᚖstring(ctx, tmp)
+	}
+
+	var zeroVal *string
 	return zeroVal, nil
 }
 
@@ -4724,11 +5655,14 @@ func (ec *executionContext) _Claim_children(ctx context.Context, field graphql.C
 		return graphql.Null
 	}
 	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
 		return graphql.Null
 	}
 	res := resTmp.([]*model.Claim)
 	fc.Result = res
-	return ec.marshalOClaim2ᚕᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐClaimᚄ(ctx, field.Selections, res)
+	return ec.marshalNClaim2ᚕᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐClaimᚄ(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Claim_children(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -4885,8 +5819,8 @@ func (ec *executionContext) fieldContext_Claim_validation(_ context.Context, fie
 				return ec.fieldContext_Module_id(ctx, field)
 			case "address":
 				return ec.fieldContext_Module_address(ctx, field)
-			case "chainId":
-				return ec.fieldContext_Module_chainId(ctx, field)
+			case "network":
+				return ec.fieldContext_Module_network(ctx, field)
 			case "moduleRegistry":
 				return ec.fieldContext_Module_moduleRegistry(ctx, field)
 			case "moduleId":
@@ -4996,8 +5930,8 @@ func (ec *executionContext) fieldContext_Claim_distribution(_ context.Context, f
 				return ec.fieldContext_Module_id(ctx, field)
 			case "address":
 				return ec.fieldContext_Module_address(ctx, field)
-			case "chainId":
-				return ec.fieldContext_Module_chainId(ctx, field)
+			case "network":
+				return ec.fieldContext_Module_network(ctx, field)
 			case "moduleRegistry":
 				return ec.fieldContext_Module_moduleRegistry(ctx, field)
 			case "moduleId":
@@ -5897,8 +6831,8 @@ func (ec *executionContext) fieldContext_Deposit_token(_ context.Context, field 
 				return ec.fieldContext_Token_id(ctx, field)
 			case "address":
 				return ec.fieldContext_Token_address(ctx, field)
-			case "chainId":
-				return ec.fieldContext_Token_chainId(ctx, field)
+			case "network":
+				return ec.fieldContext_Token_network(ctx, field)
 			case "tokenType":
 				return ec.fieldContext_Token_tokenType(ctx, field)
 			case "symbol":
@@ -5915,6 +6849,8 @@ func (ec *executionContext) fieldContext_Deposit_token(_ context.Context, field 
 				return ec.fieldContext_Token_validated(ctx, field)
 			case "possibleSpam":
 				return ec.fieldContext_Token_possibleSpam(ctx, field)
+			case "quotes":
+				return ec.fieldContext_Token_quotes(ctx, field)
 			case "createdAt":
 				return ec.fieldContext_Token_createdAt(ctx, field)
 			case "updatedAt":
@@ -6084,9 +7020,9 @@ func (ec *executionContext) _Deposit_amount(ctx context.Context, field graphql.C
 		}
 		return graphql.Null
 	}
-	res := resTmp.(persist.HexString)
+	res := resTmp.(persist.UInt256)
 	fc.Result = res
-	return ec.marshalNHexString2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋserviceᚋpersistᚐHexString(ctx, field.Selections, res)
+	return ec.marshalNUInt2562githubᚗcomᚋmutualsᚋgoᚑmutualsᚋserviceᚋpersistᚐUInt256(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Deposit_amount(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -6096,7 +7032,7 @@ func (ec *executionContext) fieldContext_Deposit_amount(_ context.Context, field
 		IsMethod:   false,
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type HexString does not have child fields")
+			return nil, errors.New("field of type UInt256 does not have child fields")
 		},
 	}
 	return fc, nil
@@ -6226,6 +7162,226 @@ func (ec *executionContext) fieldContext_Deposit_updatedAt(_ context.Context, fi
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			return nil, errors.New("field of type Time does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _DepositConnection_edges(ctx context.Context, field graphql.CollectedField, obj *model.DepositConnection) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_DepositConnection_edges(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Edges, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.([]*model.DepositEdge)
+	fc.Result = res
+	return ec.marshalNDepositEdge2ᚕᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐDepositEdgeᚄ(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_DepositConnection_edges(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "DepositConnection",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "node":
+				return ec.fieldContext_DepositEdge_node(ctx, field)
+			case "cursor":
+				return ec.fieldContext_DepositEdge_cursor(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type DepositEdge", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _DepositConnection_pageInfo(ctx context.Context, field graphql.CollectedField, obj *model.DepositConnection) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_DepositConnection_pageInfo(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.PageInfo, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*model.PageInfo)
+	fc.Result = res
+	return ec.marshalNPageInfo2ᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐPageInfo(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_DepositConnection_pageInfo(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "DepositConnection",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "total":
+				return ec.fieldContext_PageInfo_total(ctx, field)
+			case "size":
+				return ec.fieldContext_PageInfo_size(ctx, field)
+			case "hasPreviousPage":
+				return ec.fieldContext_PageInfo_hasPreviousPage(ctx, field)
+			case "hasNextPage":
+				return ec.fieldContext_PageInfo_hasNextPage(ctx, field)
+			case "startCursor":
+				return ec.fieldContext_PageInfo_startCursor(ctx, field)
+			case "endCursor":
+				return ec.fieldContext_PageInfo_endCursor(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type PageInfo", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _DepositEdge_node(ctx context.Context, field graphql.CollectedField, obj *model.DepositEdge) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_DepositEdge_node(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Node, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*model.Deposit)
+	fc.Result = res
+	return ec.marshalNDeposit2ᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐDeposit(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_DepositEdge_node(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "DepositEdge",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_Deposit_id(ctx, field)
+			case "transaction":
+				return ec.fieldContext_Deposit_transaction(ctx, field)
+			case "pool":
+				return ec.fieldContext_Deposit_pool(ctx, field)
+			case "token":
+				return ec.fieldContext_Deposit_token(ctx, field)
+			case "from":
+				return ec.fieldContext_Deposit_from(ctx, field)
+			case "to":
+				return ec.fieldContext_Deposit_to(ctx, field)
+			case "origin":
+				return ec.fieldContext_Deposit_origin(ctx, field)
+			case "amount":
+				return ec.fieldContext_Deposit_amount(ctx, field)
+			case "logIndex":
+				return ec.fieldContext_Deposit_logIndex(ctx, field)
+			case "createdAt":
+				return ec.fieldContext_Deposit_createdAt(ctx, field)
+			case "updatedAt":
+				return ec.fieldContext_Deposit_updatedAt(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Deposit", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _DepositEdge_cursor(ctx context.Context, field graphql.CollectedField, obj *model.DepositEdge) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_DepositEdge_cursor(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Cursor, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_DepositEdge_cursor(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "DepositEdge",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
 		},
 	}
 	return fc, nil
@@ -6377,21 +7533,24 @@ func (ec *executionContext) _EVMAccount_selfPools(ctx context.Context, field gra
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.EVMAccount().SelfPools(rctx, obj)
+		return ec.resolvers.EVMAccount().SelfPools(rctx, obj, fc.Args["first"].(*int), fc.Args["after"].(*string))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
 		return graphql.Null
 	}
 	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
 		return graphql.Null
 	}
-	res := resTmp.([]*model.Pool)
+	res := resTmp.(*model.PoolConnection)
 	fc.Result = res
-	return ec.marshalOPool2ᚕᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐPoolᚄ(ctx, field.Selections, res)
+	return ec.marshalNPoolConnection2ᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐPoolConnection(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_EVMAccount_selfPools(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_EVMAccount_selfPools(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "EVMAccount",
 		Field:      field,
@@ -6399,35 +7558,24 @@ func (ec *executionContext) fieldContext_EVMAccount_selfPools(_ context.Context,
 		IsResolver: true,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
-			case "id":
-				return ec.fieldContext_Pool_id(ctx, field)
-			case "name":
-				return ec.fieldContext_Pool_name(ctx, field)
-			case "description":
-				return ec.fieldContext_Pool_description(ctx, field)
-			case "image":
-				return ec.fieldContext_Pool_image(ctx, field)
-			case "donationBps":
-				return ec.fieldContext_Pool_donationBps(ctx, field)
-			case "slug":
-				return ec.fieldContext_Pool_slug(ctx, field)
-			case "status":
-				return ec.fieldContext_Pool_status(ctx, field)
-			case "owner":
-				return ec.fieldContext_Pool_owner(ctx, field)
-			case "contract":
-				return ec.fieldContext_Pool_contract(ctx, field)
-			case "claims":
-				return ec.fieldContext_Pool_claims(ctx, field)
-			case "balance":
-				return ec.fieldContext_Pool_balance(ctx, field)
-			case "createdAt":
-				return ec.fieldContext_Pool_createdAt(ctx, field)
-			case "updatedAt":
-				return ec.fieldContext_Pool_updatedAt(ctx, field)
+			case "edges":
+				return ec.fieldContext_PoolConnection_edges(ctx, field)
+			case "pageInfo":
+				return ec.fieldContext_PoolConnection_pageInfo(ctx, field)
 			}
-			return nil, fmt.Errorf("no field named %q was found under type Pool", field.Name)
+			return nil, fmt.Errorf("no field named %q was found under type PoolConnection", field.Name)
 		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_EVMAccount_selfPools_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
 	}
 	return fc, nil
 }
@@ -6446,21 +7594,24 @@ func (ec *executionContext) _EVMAccount_balances(ctx context.Context, field grap
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.EVMAccount().Balances(rctx, obj)
+		return ec.resolvers.EVMAccount().Balances(rctx, obj, fc.Args["first"].(*int), fc.Args["after"].(*string))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
 		return graphql.Null
 	}
 	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
 		return graphql.Null
 	}
-	res := resTmp.([]*model.TokenBalance)
+	res := resTmp.(*model.TokenBalanceConnection)
 	fc.Result = res
-	return ec.marshalOTokenBalance2ᚕᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐTokenBalanceᚄ(ctx, field.Selections, res)
+	return ec.marshalNTokenBalanceConnection2ᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐTokenBalanceConnection(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_EVMAccount_balances(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_EVMAccount_balances(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "EVMAccount",
 		Field:      field,
@@ -6468,23 +7619,24 @@ func (ec *executionContext) fieldContext_EVMAccount_balances(_ context.Context, 
 		IsResolver: true,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
-			case "id":
-				return ec.fieldContext_TokenBalance_id(ctx, field)
-			case "chainId":
-				return ec.fieldContext_TokenBalance_chainId(ctx, field)
-			case "token":
-				return ec.fieldContext_TokenBalance_token(ctx, field)
-			case "holder":
-				return ec.fieldContext_TokenBalance_holder(ctx, field)
-			case "amount":
-				return ec.fieldContext_TokenBalance_amount(ctx, field)
-			case "createdAt":
-				return ec.fieldContext_TokenBalance_createdAt(ctx, field)
-			case "updatedAt":
-				return ec.fieldContext_TokenBalance_updatedAt(ctx, field)
+			case "edges":
+				return ec.fieldContext_TokenBalanceConnection_edges(ctx, field)
+			case "pageInfo":
+				return ec.fieldContext_TokenBalanceConnection_pageInfo(ctx, field)
 			}
-			return nil, fmt.Errorf("no field named %q was found under type TokenBalance", field.Name)
+			return nil, fmt.Errorf("no field named %q was found under type TokenBalanceConnection", field.Name)
 		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_EVMAccount_balances_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
 	}
 	return fc, nil
 }
@@ -7514,8 +8666,8 @@ func (ec *executionContext) fieldContext_Module_address(_ context.Context, field
 	return fc, nil
 }
 
-func (ec *executionContext) _Module_chainId(ctx context.Context, field graphql.CollectedField, obj *model.Module) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Module_chainId(ctx, field)
+func (ec *executionContext) _Module_network(ctx context.Context, field graphql.CollectedField, obj *model.Module) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Module_network(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -7528,7 +8680,7 @@ func (ec *executionContext) _Module_chainId(ctx context.Context, field graphql.C
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.ChainID, nil
+		return obj.Network, nil
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -7540,19 +8692,19 @@ func (ec *executionContext) _Module_chainId(ctx context.Context, field graphql.C
 		}
 		return graphql.Null
 	}
-	res := resTmp.(int)
+	res := resTmp.(persist.Chain)
 	fc.Result = res
-	return ec.marshalNInt2int(ctx, field.Selections, res)
+	return ec.marshalNNetwork2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋserviceᚋpersistᚐChain(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Module_chainId(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Module_network(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Module",
 		Field:      field,
 		IsMethod:   false,
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type Int does not have child fields")
+			return nil, errors.New("field of type Network does not have child fields")
 		},
 	}
 	return fc, nil
@@ -7601,8 +8753,8 @@ func (ec *executionContext) fieldContext_Module_moduleRegistry(_ context.Context
 				return ec.fieldContext_ModuleRegistry_id(ctx, field)
 			case "address":
 				return ec.fieldContext_ModuleRegistry_address(ctx, field)
-			case "chainId":
-				return ec.fieldContext_ModuleRegistry_chainId(ctx, field)
+			case "network":
+				return ec.fieldContext_ModuleRegistry_network(ctx, field)
 			case "moduleCount":
 				return ec.fieldContext_ModuleRegistry_moduleCount(ctx, field)
 			case "owner":
@@ -7727,11 +8879,14 @@ func (ec *executionContext) _Module_permissions(ctx context.Context, field graph
 		return graphql.Null
 	}
 	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
 		return graphql.Null
 	}
 	res := resTmp.([]string)
 	fc.Result = res
-	return ec.marshalOString2ᚕstringᚄ(ctx, field.Selections, res)
+	return ec.marshalNString2ᚕstringᚄ(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Module_permissions(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -8052,8 +9207,8 @@ func (ec *executionContext) fieldContext_ModuleRegistry_address(_ context.Contex
 	return fc, nil
 }
 
-func (ec *executionContext) _ModuleRegistry_chainId(ctx context.Context, field graphql.CollectedField, obj *model.ModuleRegistry) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_ModuleRegistry_chainId(ctx, field)
+func (ec *executionContext) _ModuleRegistry_network(ctx context.Context, field graphql.CollectedField, obj *model.ModuleRegistry) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_ModuleRegistry_network(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -8066,7 +9221,7 @@ func (ec *executionContext) _ModuleRegistry_chainId(ctx context.Context, field g
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.ChainID, nil
+		return obj.Network, nil
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -8078,19 +9233,19 @@ func (ec *executionContext) _ModuleRegistry_chainId(ctx context.Context, field g
 		}
 		return graphql.Null
 	}
-	res := resTmp.(int)
+	res := resTmp.(persist.Chain)
 	fc.Result = res
-	return ec.marshalNInt2int(ctx, field.Selections, res)
+	return ec.marshalNNetwork2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋserviceᚋpersistᚐChain(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_ModuleRegistry_chainId(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_ModuleRegistry_network(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "ModuleRegistry",
 		Field:      field,
 		IsMethod:   false,
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type Int does not have child fields")
+			return nil, errors.New("field of type Network does not have child fields")
 		},
 	}
 	return fc, nil
@@ -9527,14 +10682,11 @@ func (ec *executionContext) _PageInfo_startCursor(ctx context.Context, field gra
 		return graphql.Null
 	}
 	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
 		return graphql.Null
 	}
-	res := resTmp.(string)
+	res := resTmp.(*string)
 	fc.Result = res
-	return ec.marshalNString2string(ctx, field.Selections, res)
+	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_PageInfo_startCursor(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -9571,14 +10723,11 @@ func (ec *executionContext) _PageInfo_endCursor(ctx context.Context, field graph
 		return graphql.Null
 	}
 	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
 		return graphql.Null
 	}
-	res := resTmp.(string)
+	res := resTmp.(*string)
 	fc.Result = res
-	return ec.marshalNString2string(ctx, field.Selections, res)
+	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_PageInfo_endCursor(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -9986,8 +11135,8 @@ func (ec *executionContext) fieldContext_Pool_contract(_ context.Context, field 
 				return ec.fieldContext_PoolContract_id(ctx, field)
 			case "address":
 				return ec.fieldContext_PoolContract_address(ctx, field)
-			case "chainId":
-				return ec.fieldContext_PoolContract_chainId(ctx, field)
+			case "network":
+				return ec.fieldContext_PoolContract_network(ctx, field)
 			case "status":
 				return ec.fieldContext_PoolContract_status(ctx, field)
 			case "poolFactory":
@@ -9996,10 +11145,10 @@ func (ec *executionContext) fieldContext_Pool_contract(_ context.Context, field 
 				return ec.fieldContext_PoolContract_account(ctx, field)
 			case "owner":
 				return ec.fieldContext_PoolContract_owner(ctx, field)
-			case "dayBalance":
-				return ec.fieldContext_PoolContract_dayBalance(ctx, field)
-			case "hourBalance":
-				return ec.fieldContext_PoolContract_hourBalance(ctx, field)
+			case "dayBalances":
+				return ec.fieldContext_PoolContract_dayBalances(ctx, field)
+			case "hourBalances":
+				return ec.fieldContext_PoolContract_hourBalances(ctx, field)
 			case "deposits":
 				return ec.fieldContext_PoolContract_deposits(ctx, field)
 			case "withdrawals":
@@ -10036,11 +11185,14 @@ func (ec *executionContext) _Pool_claims(ctx context.Context, field graphql.Coll
 		return graphql.Null
 	}
 	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
 		return graphql.Null
 	}
 	res := resTmp.([]*model.Claim)
 	fc.Result = res
-	return ec.marshalOClaim2ᚕᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐClaimᚄ(ctx, field.Selections, res)
+	return ec.marshalNClaim2ᚕᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐClaimᚄ(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Pool_claims(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -10127,6 +11279,8 @@ func (ec *executionContext) fieldContext_Pool_balance(_ context.Context, field g
 				return ec.fieldContext_PoolBalance_balance(ctx, field)
 			case "withdrawals":
 				return ec.fieldContext_PoolBalance_withdrawals(ctx, field)
+			case "tokens":
+				return ec.fieldContext_PoolBalance_tokens(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type PoolBalance", field.Name)
 		},
@@ -10248,9 +11402,9 @@ func (ec *executionContext) _PoolBalance_totalIncome(ctx context.Context, field 
 		}
 		return graphql.Null
 	}
-	res := resTmp.(float64)
+	res := resTmp.([]*model.Quote)
 	fc.Result = res
-	return ec.marshalNFloat2float64(ctx, field.Selections, res)
+	return ec.marshalNQuote2ᚕᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐQuoteᚄ(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_PoolBalance_totalIncome(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -10260,7 +11414,15 @@ func (ec *executionContext) fieldContext_PoolBalance_totalIncome(_ context.Conte
 		IsMethod:   false,
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type Float does not have child fields")
+			switch field.Name {
+			case "currency":
+				return ec.fieldContext_Quote_currency(ctx, field)
+			case "value":
+				return ec.fieldContext_Quote_value(ctx, field)
+			case "lastUpdatedAt":
+				return ec.fieldContext_Quote_lastUpdatedAt(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Quote", field.Name)
 		},
 	}
 	return fc, nil
@@ -10292,9 +11454,9 @@ func (ec *executionContext) _PoolBalance_balance(ctx context.Context, field grap
 		}
 		return graphql.Null
 	}
-	res := resTmp.(float64)
+	res := resTmp.([]*model.Quote)
 	fc.Result = res
-	return ec.marshalNFloat2float64(ctx, field.Selections, res)
+	return ec.marshalNQuote2ᚕᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐQuoteᚄ(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_PoolBalance_balance(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -10304,7 +11466,15 @@ func (ec *executionContext) fieldContext_PoolBalance_balance(_ context.Context, 
 		IsMethod:   false,
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type Float does not have child fields")
+			switch field.Name {
+			case "currency":
+				return ec.fieldContext_Quote_currency(ctx, field)
+			case "value":
+				return ec.fieldContext_Quote_value(ctx, field)
+			case "lastUpdatedAt":
+				return ec.fieldContext_Quote_lastUpdatedAt(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Quote", field.Name)
 		},
 	}
 	return fc, nil
@@ -10336,9 +11506,9 @@ func (ec *executionContext) _PoolBalance_withdrawals(ctx context.Context, field 
 		}
 		return graphql.Null
 	}
-	res := resTmp.(float64)
+	res := resTmp.([]*model.Quote)
 	fc.Result = res
-	return ec.marshalNFloat2float64(ctx, field.Selections, res)
+	return ec.marshalNQuote2ᚕᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐQuoteᚄ(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_PoolBalance_withdrawals(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -10348,7 +11518,184 @@ func (ec *executionContext) fieldContext_PoolBalance_withdrawals(_ context.Conte
 		IsMethod:   false,
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type Float does not have child fields")
+			switch field.Name {
+			case "currency":
+				return ec.fieldContext_Quote_currency(ctx, field)
+			case "value":
+				return ec.fieldContext_Quote_value(ctx, field)
+			case "lastUpdatedAt":
+				return ec.fieldContext_Quote_lastUpdatedAt(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Quote", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _PoolBalance_tokens(ctx context.Context, field graphql.CollectedField, obj *model.PoolBalance) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_PoolBalance_tokens(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.PoolBalance().Tokens(rctx, obj, fc.Args["first"].(*int), fc.Args["after"].(*string))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*model.TokenBalanceConnection)
+	fc.Result = res
+	return ec.marshalNTokenBalanceConnection2ᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐTokenBalanceConnection(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_PoolBalance_tokens(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "PoolBalance",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "edges":
+				return ec.fieldContext_TokenBalanceConnection_edges(ctx, field)
+			case "pageInfo":
+				return ec.fieldContext_TokenBalanceConnection_pageInfo(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type TokenBalanceConnection", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_PoolBalance_tokens_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _PoolConnection_edges(ctx context.Context, field graphql.CollectedField, obj *model.PoolConnection) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_PoolConnection_edges(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Edges, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.([]*model.PoolEdge)
+	fc.Result = res
+	return ec.marshalNPoolEdge2ᚕᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐPoolEdgeᚄ(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_PoolConnection_edges(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "PoolConnection",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "node":
+				return ec.fieldContext_PoolEdge_node(ctx, field)
+			case "cursor":
+				return ec.fieldContext_PoolEdge_cursor(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type PoolEdge", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _PoolConnection_pageInfo(ctx context.Context, field graphql.CollectedField, obj *model.PoolConnection) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_PoolConnection_pageInfo(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.PageInfo, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*model.PageInfo)
+	fc.Result = res
+	return ec.marshalNPageInfo2ᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐPageInfo(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_PoolConnection_pageInfo(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "PoolConnection",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "total":
+				return ec.fieldContext_PageInfo_total(ctx, field)
+			case "size":
+				return ec.fieldContext_PageInfo_size(ctx, field)
+			case "hasPreviousPage":
+				return ec.fieldContext_PageInfo_hasPreviousPage(ctx, field)
+			case "hasNextPage":
+				return ec.fieldContext_PageInfo_hasNextPage(ctx, field)
+			case "startCursor":
+				return ec.fieldContext_PageInfo_startCursor(ctx, field)
+			case "endCursor":
+				return ec.fieldContext_PageInfo_endCursor(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type PageInfo", field.Name)
 		},
 	}
 	return fc, nil
@@ -10442,8 +11789,8 @@ func (ec *executionContext) fieldContext_PoolContract_address(_ context.Context,
 	return fc, nil
 }
 
-func (ec *executionContext) _PoolContract_chainId(ctx context.Context, field graphql.CollectedField, obj *model.PoolContract) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_PoolContract_chainId(ctx, field)
+func (ec *executionContext) _PoolContract_network(ctx context.Context, field graphql.CollectedField, obj *model.PoolContract) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_PoolContract_network(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -10456,7 +11803,7 @@ func (ec *executionContext) _PoolContract_chainId(ctx context.Context, field gra
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.ChainID, nil
+		return obj.Network, nil
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -10468,19 +11815,19 @@ func (ec *executionContext) _PoolContract_chainId(ctx context.Context, field gra
 		}
 		return graphql.Null
 	}
-	res := resTmp.(int)
+	res := resTmp.(persist.Chain)
 	fc.Result = res
-	return ec.marshalNInt2int(ctx, field.Selections, res)
+	return ec.marshalNNetwork2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋserviceᚋpersistᚐChain(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_PoolContract_chainId(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_PoolContract_network(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "PoolContract",
 		Field:      field,
 		IsMethod:   false,
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type Int does not have child fields")
+			return nil, errors.New("field of type Network does not have child fields")
 		},
 	}
 	return fc, nil
@@ -10573,8 +11920,8 @@ func (ec *executionContext) fieldContext_PoolContract_poolFactory(_ context.Cont
 				return ec.fieldContext_PoolFactory_id(ctx, field)
 			case "address":
 				return ec.fieldContext_PoolFactory_address(ctx, field)
-			case "chainId":
-				return ec.fieldContext_PoolFactory_chainId(ctx, field)
+			case "network":
+				return ec.fieldContext_PoolFactory_network(ctx, field)
 			case "poolCount":
 				return ec.fieldContext_PoolFactory_poolCount(ctx, field)
 			case "owner":
@@ -10710,8 +12057,8 @@ func (ec *executionContext) fieldContext_PoolContract_owner(_ context.Context, f
 	return fc, nil
 }
 
-func (ec *executionContext) _PoolContract_dayBalance(ctx context.Context, field graphql.CollectedField, obj *model.PoolContract) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_PoolContract_dayBalance(ctx, field)
+func (ec *executionContext) _PoolContract_dayBalances(ctx context.Context, field graphql.CollectedField, obj *model.PoolContract) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_PoolContract_dayBalances(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -10724,7 +12071,7 @@ func (ec *executionContext) _PoolContract_dayBalance(ctx context.Context, field 
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.PoolContract().DayBalance(rctx, obj)
+		return ec.resolvers.PoolContract().DayBalances(rctx, obj, fc.Args["first"].(*int), fc.Args["after"].(*string))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -10736,12 +12083,12 @@ func (ec *executionContext) _PoolContract_dayBalance(ctx context.Context, field 
 		}
 		return graphql.Null
 	}
-	res := resTmp.([]*model.PoolDayBalance)
+	res := resTmp.(*model.PoolDayBalanceConnection)
 	fc.Result = res
-	return ec.marshalNPoolDayBalance2ᚕᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐPoolDayBalanceᚄ(ctx, field.Selections, res)
+	return ec.marshalNPoolDayBalanceConnection2ᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐPoolDayBalanceConnection(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_PoolContract_dayBalance(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_PoolContract_dayBalances(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "PoolContract",
 		Field:      field,
@@ -10749,31 +12096,30 @@ func (ec *executionContext) fieldContext_PoolContract_dayBalance(_ context.Conte
 		IsResolver: true,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
-			case "id":
-				return ec.fieldContext_PoolDayBalance_id(ctx, field)
-			case "chainId":
-				return ec.fieldContext_PoolDayBalance_chainId(ctx, field)
-			case "date":
-				return ec.fieldContext_PoolDayBalance_date(ctx, field)
-			case "pool":
-				return ec.fieldContext_PoolDayBalance_pool(ctx, field)
-			case "token":
-				return ec.fieldContext_PoolDayBalance_token(ctx, field)
-			case "amount":
-				return ec.fieldContext_PoolDayBalance_amount(ctx, field)
-			case "createdAt":
-				return ec.fieldContext_PoolDayBalance_createdAt(ctx, field)
-			case "updatedAt":
-				return ec.fieldContext_PoolDayBalance_updatedAt(ctx, field)
+			case "edges":
+				return ec.fieldContext_PoolDayBalanceConnection_edges(ctx, field)
+			case "pageInfo":
+				return ec.fieldContext_PoolDayBalanceConnection_pageInfo(ctx, field)
 			}
-			return nil, fmt.Errorf("no field named %q was found under type PoolDayBalance", field.Name)
+			return nil, fmt.Errorf("no field named %q was found under type PoolDayBalanceConnection", field.Name)
 		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_PoolContract_dayBalances_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
 	}
 	return fc, nil
 }
 
-func (ec *executionContext) _PoolContract_hourBalance(ctx context.Context, field graphql.CollectedField, obj *model.PoolContract) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_PoolContract_hourBalance(ctx, field)
+func (ec *executionContext) _PoolContract_hourBalances(ctx context.Context, field graphql.CollectedField, obj *model.PoolContract) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_PoolContract_hourBalances(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -10786,7 +12132,7 @@ func (ec *executionContext) _PoolContract_hourBalance(ctx context.Context, field
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.PoolContract().HourBalance(rctx, obj)
+		return ec.resolvers.PoolContract().HourBalances(rctx, obj, fc.Args["first"].(*int), fc.Args["after"].(*string))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -10798,12 +12144,12 @@ func (ec *executionContext) _PoolContract_hourBalance(ctx context.Context, field
 		}
 		return graphql.Null
 	}
-	res := resTmp.([]*model.PoolHourBalance)
+	res := resTmp.(*model.PoolHourBalanceConnection)
 	fc.Result = res
-	return ec.marshalNPoolHourBalance2ᚕᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐPoolHourBalanceᚄ(ctx, field.Selections, res)
+	return ec.marshalNPoolHourBalanceConnection2ᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐPoolHourBalanceConnection(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_PoolContract_hourBalance(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_PoolContract_hourBalances(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "PoolContract",
 		Field:      field,
@@ -10811,25 +12157,24 @@ func (ec *executionContext) fieldContext_PoolContract_hourBalance(_ context.Cont
 		IsResolver: true,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
-			case "id":
-				return ec.fieldContext_PoolHourBalance_id(ctx, field)
-			case "chainId":
-				return ec.fieldContext_PoolHourBalance_chainId(ctx, field)
-			case "date":
-				return ec.fieldContext_PoolHourBalance_date(ctx, field)
-			case "pool":
-				return ec.fieldContext_PoolHourBalance_pool(ctx, field)
-			case "token":
-				return ec.fieldContext_PoolHourBalance_token(ctx, field)
-			case "amount":
-				return ec.fieldContext_PoolHourBalance_amount(ctx, field)
-			case "createdAt":
-				return ec.fieldContext_PoolHourBalance_createdAt(ctx, field)
-			case "updatedAt":
-				return ec.fieldContext_PoolHourBalance_updatedAt(ctx, field)
+			case "edges":
+				return ec.fieldContext_PoolHourBalanceConnection_edges(ctx, field)
+			case "pageInfo":
+				return ec.fieldContext_PoolHourBalanceConnection_pageInfo(ctx, field)
 			}
-			return nil, fmt.Errorf("no field named %q was found under type PoolHourBalance", field.Name)
+			return nil, fmt.Errorf("no field named %q was found under type PoolHourBalanceConnection", field.Name)
 		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_PoolContract_hourBalances_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
 	}
 	return fc, nil
 }
@@ -10848,7 +12193,7 @@ func (ec *executionContext) _PoolContract_deposits(ctx context.Context, field gr
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.PoolContract().Deposits(rctx, obj)
+		return ec.resolvers.PoolContract().Deposits(rctx, obj, fc.Args["first"].(*int), fc.Args["after"].(*string))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -10860,12 +12205,12 @@ func (ec *executionContext) _PoolContract_deposits(ctx context.Context, field gr
 		}
 		return graphql.Null
 	}
-	res := resTmp.([]*model.Deposit)
+	res := resTmp.(*model.DepositConnection)
 	fc.Result = res
-	return ec.marshalNDeposit2ᚕᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐDepositᚄ(ctx, field.Selections, res)
+	return ec.marshalNDepositConnection2ᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐDepositConnection(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_PoolContract_deposits(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_PoolContract_deposits(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "PoolContract",
 		Field:      field,
@@ -10873,31 +12218,24 @@ func (ec *executionContext) fieldContext_PoolContract_deposits(_ context.Context
 		IsResolver: true,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
-			case "id":
-				return ec.fieldContext_Deposit_id(ctx, field)
-			case "transaction":
-				return ec.fieldContext_Deposit_transaction(ctx, field)
-			case "pool":
-				return ec.fieldContext_Deposit_pool(ctx, field)
-			case "token":
-				return ec.fieldContext_Deposit_token(ctx, field)
-			case "from":
-				return ec.fieldContext_Deposit_from(ctx, field)
-			case "to":
-				return ec.fieldContext_Deposit_to(ctx, field)
-			case "origin":
-				return ec.fieldContext_Deposit_origin(ctx, field)
-			case "amount":
-				return ec.fieldContext_Deposit_amount(ctx, field)
-			case "logIndex":
-				return ec.fieldContext_Deposit_logIndex(ctx, field)
-			case "createdAt":
-				return ec.fieldContext_Deposit_createdAt(ctx, field)
-			case "updatedAt":
-				return ec.fieldContext_Deposit_updatedAt(ctx, field)
+			case "edges":
+				return ec.fieldContext_DepositConnection_edges(ctx, field)
+			case "pageInfo":
+				return ec.fieldContext_DepositConnection_pageInfo(ctx, field)
 			}
-			return nil, fmt.Errorf("no field named %q was found under type Deposit", field.Name)
+			return nil, fmt.Errorf("no field named %q was found under type DepositConnection", field.Name)
 		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_PoolContract_deposits_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
 	}
 	return fc, nil
 }
@@ -10916,7 +12254,7 @@ func (ec *executionContext) _PoolContract_withdrawals(ctx context.Context, field
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.PoolContract().Withdrawals(rctx, obj)
+		return ec.resolvers.PoolContract().Withdrawals(rctx, obj, fc.Args["first"].(*int), fc.Args["after"].(*string))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -10928,12 +12266,12 @@ func (ec *executionContext) _PoolContract_withdrawals(ctx context.Context, field
 		}
 		return graphql.Null
 	}
-	res := resTmp.([]*model.Withdrawal)
+	res := resTmp.(*model.WithdrawalConnection)
 	fc.Result = res
-	return ec.marshalNWithdrawal2ᚕᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐWithdrawalᚄ(ctx, field.Selections, res)
+	return ec.marshalNWithdrawalConnection2ᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐWithdrawalConnection(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_PoolContract_withdrawals(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_PoolContract_withdrawals(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "PoolContract",
 		Field:      field,
@@ -10941,31 +12279,24 @@ func (ec *executionContext) fieldContext_PoolContract_withdrawals(_ context.Cont
 		IsResolver: true,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
-			case "id":
-				return ec.fieldContext_Withdrawal_id(ctx, field)
-			case "transaction":
-				return ec.fieldContext_Withdrawal_transaction(ctx, field)
-			case "pool":
-				return ec.fieldContext_Withdrawal_pool(ctx, field)
-			case "token":
-				return ec.fieldContext_Withdrawal_token(ctx, field)
-			case "from":
-				return ec.fieldContext_Withdrawal_from(ctx, field)
-			case "to":
-				return ec.fieldContext_Withdrawal_to(ctx, field)
-			case "origin":
-				return ec.fieldContext_Withdrawal_origin(ctx, field)
-			case "amount":
-				return ec.fieldContext_Withdrawal_amount(ctx, field)
-			case "logIndex":
-				return ec.fieldContext_Withdrawal_logIndex(ctx, field)
-			case "createdAt":
-				return ec.fieldContext_Withdrawal_createdAt(ctx, field)
-			case "updatedAt":
-				return ec.fieldContext_Withdrawal_updatedAt(ctx, field)
+			case "edges":
+				return ec.fieldContext_WithdrawalConnection_edges(ctx, field)
+			case "pageInfo":
+				return ec.fieldContext_WithdrawalConnection_pageInfo(ctx, field)
 			}
-			return nil, fmt.Errorf("no field named %q was found under type Withdrawal", field.Name)
+			return nil, fmt.Errorf("no field named %q was found under type WithdrawalConnection", field.Name)
 		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_PoolContract_withdrawals_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
 	}
 	return fc, nil
 }
@@ -11174,8 +12505,8 @@ func (ec *executionContext) fieldContext_PoolDayBalance_id(_ context.Context, fi
 	return fc, nil
 }
 
-func (ec *executionContext) _PoolDayBalance_chainId(ctx context.Context, field graphql.CollectedField, obj *model.PoolDayBalance) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_PoolDayBalance_chainId(ctx, field)
+func (ec *executionContext) _PoolDayBalance_network(ctx context.Context, field graphql.CollectedField, obj *model.PoolDayBalance) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_PoolDayBalance_network(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -11188,7 +12519,7 @@ func (ec *executionContext) _PoolDayBalance_chainId(ctx context.Context, field g
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.ChainID, nil
+		return obj.Network, nil
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -11200,19 +12531,19 @@ func (ec *executionContext) _PoolDayBalance_chainId(ctx context.Context, field g
 		}
 		return graphql.Null
 	}
-	res := resTmp.(int)
+	res := resTmp.(persist.Chain)
 	fc.Result = res
-	return ec.marshalNInt2int(ctx, field.Selections, res)
+	return ec.marshalNNetwork2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋserviceᚋpersistᚐChain(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_PoolDayBalance_chainId(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_PoolDayBalance_network(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "PoolDayBalance",
 		Field:      field,
 		IsMethod:   false,
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type Int does not have child fields")
+			return nil, errors.New("field of type Network does not have child fields")
 		},
 	}
 	return fc, nil
@@ -11377,8 +12708,8 @@ func (ec *executionContext) fieldContext_PoolDayBalance_token(_ context.Context,
 				return ec.fieldContext_Token_id(ctx, field)
 			case "address":
 				return ec.fieldContext_Token_address(ctx, field)
-			case "chainId":
-				return ec.fieldContext_Token_chainId(ctx, field)
+			case "network":
+				return ec.fieldContext_Token_network(ctx, field)
 			case "tokenType":
 				return ec.fieldContext_Token_tokenType(ctx, field)
 			case "symbol":
@@ -11395,6 +12726,8 @@ func (ec *executionContext) fieldContext_PoolDayBalance_token(_ context.Context,
 				return ec.fieldContext_Token_validated(ctx, field)
 			case "possibleSpam":
 				return ec.fieldContext_Token_possibleSpam(ctx, field)
+			case "quotes":
+				return ec.fieldContext_Token_quotes(ctx, field)
 			case "createdAt":
 				return ec.fieldContext_Token_createdAt(ctx, field)
 			case "updatedAt":
@@ -11432,9 +12765,9 @@ func (ec *executionContext) _PoolDayBalance_amount(ctx context.Context, field gr
 		}
 		return graphql.Null
 	}
-	res := resTmp.(persist.HexString)
+	res := resTmp.(persist.UInt256)
 	fc.Result = res
-	return ec.marshalNHexString2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋserviceᚋpersistᚐHexString(ctx, field.Selections, res)
+	return ec.marshalNUInt2562githubᚗcomᚋmutualsᚋgoᚑmutualsᚋserviceᚋpersistᚐUInt256(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_PoolDayBalance_amount(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -11444,7 +12777,103 @@ func (ec *executionContext) fieldContext_PoolDayBalance_amount(_ context.Context
 		IsMethod:   false,
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type HexString does not have child fields")
+			return nil, errors.New("field of type UInt256 does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _PoolDayBalance_formattedAmount(ctx context.Context, field graphql.CollectedField, obj *model.PoolDayBalance) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_PoolDayBalance_formattedAmount(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.FormattedAmount, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(float64)
+	fc.Result = res
+	return ec.marshalNFloat2float64(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_PoolDayBalance_formattedAmount(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "PoolDayBalance",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Float does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _PoolDayBalance_quotes(ctx context.Context, field graphql.CollectedField, obj *model.PoolDayBalance) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_PoolDayBalance_quotes(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Quotes, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.([]*model.Quote)
+	fc.Result = res
+	return ec.marshalNQuote2ᚕᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐQuoteᚄ(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_PoolDayBalance_quotes(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "PoolDayBalance",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "currency":
+				return ec.fieldContext_Quote_currency(ctx, field)
+			case "value":
+				return ec.fieldContext_Quote_value(ctx, field)
+			case "lastUpdatedAt":
+				return ec.fieldContext_Quote_lastUpdatedAt(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Quote", field.Name)
 		},
 	}
 	return fc, nil
@@ -11538,6 +12967,224 @@ func (ec *executionContext) fieldContext_PoolDayBalance_updatedAt(_ context.Cont
 	return fc, nil
 }
 
+func (ec *executionContext) _PoolDayBalanceConnection_edges(ctx context.Context, field graphql.CollectedField, obj *model.PoolDayBalanceConnection) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_PoolDayBalanceConnection_edges(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Edges, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.([]*model.PoolDayBalanceEdge)
+	fc.Result = res
+	return ec.marshalNPoolDayBalanceEdge2ᚕᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐPoolDayBalanceEdgeᚄ(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_PoolDayBalanceConnection_edges(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "PoolDayBalanceConnection",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "node":
+				return ec.fieldContext_PoolDayBalanceEdge_node(ctx, field)
+			case "cursor":
+				return ec.fieldContext_PoolDayBalanceEdge_cursor(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type PoolDayBalanceEdge", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _PoolDayBalanceConnection_pageInfo(ctx context.Context, field graphql.CollectedField, obj *model.PoolDayBalanceConnection) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_PoolDayBalanceConnection_pageInfo(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.PageInfo, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*model.PageInfo)
+	fc.Result = res
+	return ec.marshalNPageInfo2ᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐPageInfo(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_PoolDayBalanceConnection_pageInfo(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "PoolDayBalanceConnection",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "total":
+				return ec.fieldContext_PageInfo_total(ctx, field)
+			case "size":
+				return ec.fieldContext_PageInfo_size(ctx, field)
+			case "hasPreviousPage":
+				return ec.fieldContext_PageInfo_hasPreviousPage(ctx, field)
+			case "hasNextPage":
+				return ec.fieldContext_PageInfo_hasNextPage(ctx, field)
+			case "startCursor":
+				return ec.fieldContext_PageInfo_startCursor(ctx, field)
+			case "endCursor":
+				return ec.fieldContext_PageInfo_endCursor(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type PageInfo", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _PoolDayBalanceEdge_node(ctx context.Context, field graphql.CollectedField, obj *model.PoolDayBalanceEdge) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_PoolDayBalanceEdge_node(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Node, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*model.PoolDayBalance)
+	fc.Result = res
+	return ec.marshalNPoolDayBalance2ᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐPoolDayBalance(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_PoolDayBalanceEdge_node(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "PoolDayBalanceEdge",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_PoolDayBalance_id(ctx, field)
+			case "network":
+				return ec.fieldContext_PoolDayBalance_network(ctx, field)
+			case "date":
+				return ec.fieldContext_PoolDayBalance_date(ctx, field)
+			case "pool":
+				return ec.fieldContext_PoolDayBalance_pool(ctx, field)
+			case "token":
+				return ec.fieldContext_PoolDayBalance_token(ctx, field)
+			case "amount":
+				return ec.fieldContext_PoolDayBalance_amount(ctx, field)
+			case "formattedAmount":
+				return ec.fieldContext_PoolDayBalance_formattedAmount(ctx, field)
+			case "quotes":
+				return ec.fieldContext_PoolDayBalance_quotes(ctx, field)
+			case "createdAt":
+				return ec.fieldContext_PoolDayBalance_createdAt(ctx, field)
+			case "updatedAt":
+				return ec.fieldContext_PoolDayBalance_updatedAt(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type PoolDayBalance", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _PoolDayBalanceEdge_cursor(ctx context.Context, field graphql.CollectedField, obj *model.PoolDayBalanceEdge) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_PoolDayBalanceEdge_cursor(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Cursor, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_PoolDayBalanceEdge_cursor(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "PoolDayBalanceEdge",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _PoolDeletePayload_pool(ctx context.Context, field graphql.CollectedField, obj *model.PoolDeletePayload) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_PoolDeletePayload_pool(ctx, field)
 	if err != nil {
@@ -11605,6 +13252,122 @@ func (ec *executionContext) fieldContext_PoolDeletePayload_pool(_ context.Contex
 				return ec.fieldContext_Pool_updatedAt(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Pool", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _PoolEdge_node(ctx context.Context, field graphql.CollectedField, obj *model.PoolEdge) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_PoolEdge_node(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Node, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*model.Pool)
+	fc.Result = res
+	return ec.marshalNPool2ᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐPool(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_PoolEdge_node(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "PoolEdge",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_Pool_id(ctx, field)
+			case "name":
+				return ec.fieldContext_Pool_name(ctx, field)
+			case "description":
+				return ec.fieldContext_Pool_description(ctx, field)
+			case "image":
+				return ec.fieldContext_Pool_image(ctx, field)
+			case "donationBps":
+				return ec.fieldContext_Pool_donationBps(ctx, field)
+			case "slug":
+				return ec.fieldContext_Pool_slug(ctx, field)
+			case "status":
+				return ec.fieldContext_Pool_status(ctx, field)
+			case "owner":
+				return ec.fieldContext_Pool_owner(ctx, field)
+			case "contract":
+				return ec.fieldContext_Pool_contract(ctx, field)
+			case "claims":
+				return ec.fieldContext_Pool_claims(ctx, field)
+			case "balance":
+				return ec.fieldContext_Pool_balance(ctx, field)
+			case "createdAt":
+				return ec.fieldContext_Pool_createdAt(ctx, field)
+			case "updatedAt":
+				return ec.fieldContext_Pool_updatedAt(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Pool", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _PoolEdge_cursor(ctx context.Context, field graphql.CollectedField, obj *model.PoolEdge) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_PoolEdge_cursor(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Cursor, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_PoolEdge_cursor(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "PoolEdge",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
 		},
 	}
 	return fc, nil
@@ -11698,8 +13461,8 @@ func (ec *executionContext) fieldContext_PoolFactory_address(_ context.Context, 
 	return fc, nil
 }
 
-func (ec *executionContext) _PoolFactory_chainId(ctx context.Context, field graphql.CollectedField, obj *model.PoolFactory) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_PoolFactory_chainId(ctx, field)
+func (ec *executionContext) _PoolFactory_network(ctx context.Context, field graphql.CollectedField, obj *model.PoolFactory) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_PoolFactory_network(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -11712,7 +13475,7 @@ func (ec *executionContext) _PoolFactory_chainId(ctx context.Context, field grap
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.ChainID, nil
+		return obj.Network, nil
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -11724,19 +13487,19 @@ func (ec *executionContext) _PoolFactory_chainId(ctx context.Context, field grap
 		}
 		return graphql.Null
 	}
-	res := resTmp.(int)
+	res := resTmp.(persist.Chain)
 	fc.Result = res
-	return ec.marshalNInt2int(ctx, field.Selections, res)
+	return ec.marshalNNetwork2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋserviceᚋpersistᚐChain(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_PoolFactory_chainId(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_PoolFactory_network(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "PoolFactory",
 		Field:      field,
 		IsMethod:   false,
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type Int does not have child fields")
+			return nil, errors.New("field of type Network does not have child fields")
 		},
 	}
 	return fc, nil
@@ -11978,8 +13741,8 @@ func (ec *executionContext) fieldContext_PoolHourBalance_id(_ context.Context, f
 	return fc, nil
 }
 
-func (ec *executionContext) _PoolHourBalance_chainId(ctx context.Context, field graphql.CollectedField, obj *model.PoolHourBalance) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_PoolHourBalance_chainId(ctx, field)
+func (ec *executionContext) _PoolHourBalance_network(ctx context.Context, field graphql.CollectedField, obj *model.PoolHourBalance) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_PoolHourBalance_network(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -11992,7 +13755,7 @@ func (ec *executionContext) _PoolHourBalance_chainId(ctx context.Context, field 
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.ChainID, nil
+		return obj.Network, nil
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -12004,19 +13767,19 @@ func (ec *executionContext) _PoolHourBalance_chainId(ctx context.Context, field 
 		}
 		return graphql.Null
 	}
-	res := resTmp.(int)
+	res := resTmp.(persist.Chain)
 	fc.Result = res
-	return ec.marshalNInt2int(ctx, field.Selections, res)
+	return ec.marshalNNetwork2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋserviceᚋpersistᚐChain(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_PoolHourBalance_chainId(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_PoolHourBalance_network(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "PoolHourBalance",
 		Field:      field,
 		IsMethod:   false,
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type Int does not have child fields")
+			return nil, errors.New("field of type Network does not have child fields")
 		},
 	}
 	return fc, nil
@@ -12181,8 +13944,8 @@ func (ec *executionContext) fieldContext_PoolHourBalance_token(_ context.Context
 				return ec.fieldContext_Token_id(ctx, field)
 			case "address":
 				return ec.fieldContext_Token_address(ctx, field)
-			case "chainId":
-				return ec.fieldContext_Token_chainId(ctx, field)
+			case "network":
+				return ec.fieldContext_Token_network(ctx, field)
 			case "tokenType":
 				return ec.fieldContext_Token_tokenType(ctx, field)
 			case "symbol":
@@ -12199,6 +13962,8 @@ func (ec *executionContext) fieldContext_PoolHourBalance_token(_ context.Context
 				return ec.fieldContext_Token_validated(ctx, field)
 			case "possibleSpam":
 				return ec.fieldContext_Token_possibleSpam(ctx, field)
+			case "quotes":
+				return ec.fieldContext_Token_quotes(ctx, field)
 			case "createdAt":
 				return ec.fieldContext_Token_createdAt(ctx, field)
 			case "updatedAt":
@@ -12236,9 +14001,9 @@ func (ec *executionContext) _PoolHourBalance_amount(ctx context.Context, field g
 		}
 		return graphql.Null
 	}
-	res := resTmp.(persist.HexString)
+	res := resTmp.(persist.UInt256)
 	fc.Result = res
-	return ec.marshalNHexString2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋserviceᚋpersistᚐHexString(ctx, field.Selections, res)
+	return ec.marshalNUInt2562githubᚗcomᚋmutualsᚋgoᚑmutualsᚋserviceᚋpersistᚐUInt256(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_PoolHourBalance_amount(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -12248,7 +14013,103 @@ func (ec *executionContext) fieldContext_PoolHourBalance_amount(_ context.Contex
 		IsMethod:   false,
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type HexString does not have child fields")
+			return nil, errors.New("field of type UInt256 does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _PoolHourBalance_formattedAmount(ctx context.Context, field graphql.CollectedField, obj *model.PoolHourBalance) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_PoolHourBalance_formattedAmount(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.FormattedAmount, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(float64)
+	fc.Result = res
+	return ec.marshalNFloat2float64(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_PoolHourBalance_formattedAmount(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "PoolHourBalance",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Float does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _PoolHourBalance_quotes(ctx context.Context, field graphql.CollectedField, obj *model.PoolHourBalance) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_PoolHourBalance_quotes(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Quotes, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.([]*model.Quote)
+	fc.Result = res
+	return ec.marshalNQuote2ᚕᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐQuoteᚄ(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_PoolHourBalance_quotes(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "PoolHourBalance",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "currency":
+				return ec.fieldContext_Quote_currency(ctx, field)
+			case "value":
+				return ec.fieldContext_Quote_value(ctx, field)
+			case "lastUpdatedAt":
+				return ec.fieldContext_Quote_lastUpdatedAt(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Quote", field.Name)
 		},
 	}
 	return fc, nil
@@ -12342,8 +14203,8 @@ func (ec *executionContext) fieldContext_PoolHourBalance_updatedAt(_ context.Con
 	return fc, nil
 }
 
-func (ec *executionContext) _PoolSearchResult_pool(ctx context.Context, field graphql.CollectedField, obj *model.PoolSearchResult) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_PoolSearchResult_pool(ctx, field)
+func (ec *executionContext) _PoolHourBalanceConnection_edges(ctx context.Context, field graphql.CollectedField, obj *model.PoolHourBalanceConnection) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_PoolHourBalanceConnection_edges(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -12356,56 +14217,205 @@ func (ec *executionContext) _PoolSearchResult_pool(ctx context.Context, field gr
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.Pool, nil
+		return obj.Edges, nil
 	})
 	if err != nil {
 		ec.Error(ctx, err)
 		return graphql.Null
 	}
 	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
 		return graphql.Null
 	}
-	res := resTmp.(*model.Pool)
+	res := resTmp.([]*model.PoolHourBalanceEdge)
 	fc.Result = res
-	return ec.marshalOPool2ᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐPool(ctx, field.Selections, res)
+	return ec.marshalNPoolHourBalanceEdge2ᚕᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐPoolHourBalanceEdgeᚄ(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_PoolSearchResult_pool(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_PoolHourBalanceConnection_edges(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
-		Object:     "PoolSearchResult",
+		Object:     "PoolHourBalanceConnection",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "node":
+				return ec.fieldContext_PoolHourBalanceEdge_node(ctx, field)
+			case "cursor":
+				return ec.fieldContext_PoolHourBalanceEdge_cursor(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type PoolHourBalanceEdge", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _PoolHourBalanceConnection_pageInfo(ctx context.Context, field graphql.CollectedField, obj *model.PoolHourBalanceConnection) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_PoolHourBalanceConnection_pageInfo(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.PageInfo, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*model.PageInfo)
+	fc.Result = res
+	return ec.marshalNPageInfo2ᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐPageInfo(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_PoolHourBalanceConnection_pageInfo(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "PoolHourBalanceConnection",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "total":
+				return ec.fieldContext_PageInfo_total(ctx, field)
+			case "size":
+				return ec.fieldContext_PageInfo_size(ctx, field)
+			case "hasPreviousPage":
+				return ec.fieldContext_PageInfo_hasPreviousPage(ctx, field)
+			case "hasNextPage":
+				return ec.fieldContext_PageInfo_hasNextPage(ctx, field)
+			case "startCursor":
+				return ec.fieldContext_PageInfo_startCursor(ctx, field)
+			case "endCursor":
+				return ec.fieldContext_PageInfo_endCursor(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type PageInfo", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _PoolHourBalanceEdge_node(ctx context.Context, field graphql.CollectedField, obj *model.PoolHourBalanceEdge) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_PoolHourBalanceEdge_node(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Node, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*model.PoolHourBalance)
+	fc.Result = res
+	return ec.marshalNPoolHourBalance2ᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐPoolHourBalance(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_PoolHourBalanceEdge_node(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "PoolHourBalanceEdge",
 		Field:      field,
 		IsMethod:   false,
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
 			case "id":
-				return ec.fieldContext_Pool_id(ctx, field)
-			case "name":
-				return ec.fieldContext_Pool_name(ctx, field)
-			case "description":
-				return ec.fieldContext_Pool_description(ctx, field)
-			case "image":
-				return ec.fieldContext_Pool_image(ctx, field)
-			case "donationBps":
-				return ec.fieldContext_Pool_donationBps(ctx, field)
-			case "slug":
-				return ec.fieldContext_Pool_slug(ctx, field)
-			case "status":
-				return ec.fieldContext_Pool_status(ctx, field)
-			case "owner":
-				return ec.fieldContext_Pool_owner(ctx, field)
-			case "contract":
-				return ec.fieldContext_Pool_contract(ctx, field)
-			case "claims":
-				return ec.fieldContext_Pool_claims(ctx, field)
-			case "balance":
-				return ec.fieldContext_Pool_balance(ctx, field)
+				return ec.fieldContext_PoolHourBalance_id(ctx, field)
+			case "network":
+				return ec.fieldContext_PoolHourBalance_network(ctx, field)
+			case "date":
+				return ec.fieldContext_PoolHourBalance_date(ctx, field)
+			case "pool":
+				return ec.fieldContext_PoolHourBalance_pool(ctx, field)
+			case "token":
+				return ec.fieldContext_PoolHourBalance_token(ctx, field)
+			case "amount":
+				return ec.fieldContext_PoolHourBalance_amount(ctx, field)
+			case "formattedAmount":
+				return ec.fieldContext_PoolHourBalance_formattedAmount(ctx, field)
+			case "quotes":
+				return ec.fieldContext_PoolHourBalance_quotes(ctx, field)
 			case "createdAt":
-				return ec.fieldContext_Pool_createdAt(ctx, field)
+				return ec.fieldContext_PoolHourBalance_createdAt(ctx, field)
 			case "updatedAt":
-				return ec.fieldContext_Pool_updatedAt(ctx, field)
+				return ec.fieldContext_PoolHourBalance_updatedAt(ctx, field)
 			}
-			return nil, fmt.Errorf("no field named %q was found under type Pool", field.Name)
+			return nil, fmt.Errorf("no field named %q was found under type PoolHourBalance", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _PoolHourBalanceEdge_cursor(ctx context.Context, field graphql.CollectedField, obj *model.PoolHourBalanceEdge) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_PoolHourBalanceEdge_cursor(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Cursor, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_PoolHourBalanceEdge_cursor(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "PoolHourBalanceEdge",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
 		},
 	}
 	return fc, nil
@@ -12598,8 +14608,8 @@ func (ec *executionContext) fieldContext_Query_viewer(_ context.Context, field g
 	return fc, nil
 }
 
-func (ec *executionContext) _Query_userById(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Query_userById(ctx, field)
+func (ec *executionContext) _Query_user(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Query_user(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -12612,7 +14622,7 @@ func (ec *executionContext) _Query_userById(ctx context.Context, field graphql.C
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Query().UserByID(rctx, fc.Args["id"].(model.GqlID))
+		return ec.resolvers.Query().User(rctx, fc.Args["id"].(*model.GqlID), fc.Args["address"].(*persist.Address))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -12629,7 +14639,7 @@ func (ec *executionContext) _Query_userById(ctx context.Context, field graphql.C
 	return ec.marshalNUserResult2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐUserResult(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Query_userById(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Query_user(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Query",
 		Field:      field,
@@ -12646,62 +14656,7 @@ func (ec *executionContext) fieldContext_Query_userById(ctx context.Context, fie
 		}
 	}()
 	ctx = graphql.WithFieldContext(ctx, fc)
-	if fc.Args, err = ec.field_Query_userById_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
-		ec.Error(ctx, err)
-		return fc, err
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _Query_userByAddress(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Query_userByAddress(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Query().UserByAddress(rctx, fc.Args["address"].(persist.Address))
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(model.UserResult)
-	fc.Result = res
-	return ec.marshalNUserResult2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐUserResult(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_Query_userByAddress(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Query",
-		Field:      field,
-		IsMethod:   true,
-		IsResolver: true,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type UserResult does not have child fields")
-		},
-	}
-	defer func() {
-		if r := recover(); r != nil {
-			err = ec.Recover(ctx, r)
-			ec.Error(ctx, err)
-		}
-	}()
-	ctx = graphql.WithFieldContext(ctx, fc)
-	if fc.Args, err = ec.field_Query_userByAddress_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+	if fc.Args, err = ec.field_Query_user_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return fc, err
 	}
@@ -12888,17 +14843,17 @@ func (ec *executionContext) _Query_usersByRole(ctx context.Context, field graphq
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		directive0 := func(rctx context.Context) (interface{}, error) {
 			ctx = rctx // use context from middleware stack in children
-			return ec.resolvers.Query().UsersByRole(rctx, fc.Args["role"].(persist.Role), fc.Args["before"].(*string), fc.Args["after"].(*string), fc.Args["first"].(*int), fc.Args["last"].(*int))
+			return ec.resolvers.Query().UsersByRole(rctx, fc.Args["role"].(persist.Role), fc.Args["first"].(*int), fc.Args["after"].(*string))
 		}
 
 		directive1 := func(ctx context.Context) (interface{}, error) {
 			allowed, err := ec.unmarshalNBasicAuthType2ᚕgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋserviceᚋauthᚋbasicauthᚐAuthTokenTypeᚄ(ctx, []interface{}{"Retool"})
 			if err != nil {
-				var zeroVal *model.UsersConnection
+				var zeroVal *model.UserConnection
 				return zeroVal, err
 			}
 			if ec.directives.BasicAuth == nil {
-				var zeroVal *model.UsersConnection
+				var zeroVal *model.UserConnection
 				return zeroVal, errors.New("directive basicAuth is not implemented")
 			}
 			return ec.directives.BasicAuth(ctx, nil, directive0, allowed)
@@ -12911,21 +14866,24 @@ func (ec *executionContext) _Query_usersByRole(ctx context.Context, field graphq
 		if tmp == nil {
 			return nil, nil
 		}
-		if data, ok := tmp.(*model.UsersConnection); ok {
+		if data, ok := tmp.(*model.UserConnection); ok {
 			return data, nil
 		}
-		return nil, fmt.Errorf(`unexpected type %T from directive, should be *github.com/mutuals/go-mutuals/graphql/model.UsersConnection`, tmp)
+		return nil, fmt.Errorf(`unexpected type %T from directive, should be *github.com/mutuals/go-mutuals/graphql/model.UserConnection`, tmp)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
 		return graphql.Null
 	}
 	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
 		return graphql.Null
 	}
-	res := resTmp.(*model.UsersConnection)
+	res := resTmp.(*model.UserConnection)
 	fc.Result = res
-	return ec.marshalOUsersConnection2ᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐUsersConnection(ctx, field.Selections, res)
+	return ec.marshalNUserConnection2ᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐUserConnection(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Query_usersByRole(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -12937,11 +14895,11 @@ func (ec *executionContext) fieldContext_Query_usersByRole(ctx context.Context, 
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
 			case "edges":
-				return ec.fieldContext_UsersConnection_edges(ctx, field)
+				return ec.fieldContext_UserConnection_edges(ctx, field)
 			case "pageInfo":
-				return ec.fieldContext_UsersConnection_pageInfo(ctx, field)
+				return ec.fieldContext_UserConnection_pageInfo(ctx, field)
 			}
-			return nil, fmt.Errorf("no field named %q was found under type UsersConnection", field.Name)
+			return nil, fmt.Errorf("no field named %q was found under type UserConnection", field.Name)
 		},
 	}
 	defer func() {
@@ -13135,6 +15093,138 @@ func (ec *executionContext) fieldContext_Query___schema(_ context.Context, field
 	return fc, nil
 }
 
+func (ec *executionContext) _Quote_currency(ctx context.Context, field graphql.CollectedField, obj *model.Quote) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Quote_currency(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Currency, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(persist.Currency)
+	fc.Result = res
+	return ec.marshalNCurrency2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋserviceᚋpersistᚐCurrency(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Quote_currency(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Quote",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Currency does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Quote_value(ctx context.Context, field graphql.CollectedField, obj *model.Quote) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Quote_value(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Value, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(float64)
+	fc.Result = res
+	return ec.marshalNFloat2float64(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Quote_value(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Quote",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Float does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Quote_lastUpdatedAt(ctx context.Context, field graphql.CollectedField, obj *model.Quote) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Quote_lastUpdatedAt(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.LastUpdatedAt, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(time.Time)
+	fc.Result = res
+	return ec.marshalNTime2timeᚐTime(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Quote_lastUpdatedAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Quote",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Time does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _RemoveUserWalletsPayload_viewer(ctx context.Context, field graphql.CollectedField, obj *model.RemoveUserWalletsPayload) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_RemoveUserWalletsPayload_viewer(ctx, field)
 	if err != nil {
@@ -13260,11 +15350,14 @@ func (ec *executionContext) _SearchPoolsPayload_results(ctx context.Context, fie
 		return graphql.Null
 	}
 	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
 		return graphql.Null
 	}
-	res := resTmp.([]*model.PoolSearchResult)
+	res := resTmp.([]*model.Pool)
 	fc.Result = res
-	return ec.marshalOPoolSearchResult2ᚕᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐPoolSearchResultᚄ(ctx, field.Selections, res)
+	return ec.marshalNPool2ᚕᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐPoolᚄ(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_SearchPoolsPayload_results(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -13275,10 +15368,34 @@ func (ec *executionContext) fieldContext_SearchPoolsPayload_results(_ context.Co
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
-			case "pool":
-				return ec.fieldContext_PoolSearchResult_pool(ctx, field)
+			case "id":
+				return ec.fieldContext_Pool_id(ctx, field)
+			case "name":
+				return ec.fieldContext_Pool_name(ctx, field)
+			case "description":
+				return ec.fieldContext_Pool_description(ctx, field)
+			case "image":
+				return ec.fieldContext_Pool_image(ctx, field)
+			case "donationBps":
+				return ec.fieldContext_Pool_donationBps(ctx, field)
+			case "slug":
+				return ec.fieldContext_Pool_slug(ctx, field)
+			case "status":
+				return ec.fieldContext_Pool_status(ctx, field)
+			case "owner":
+				return ec.fieldContext_Pool_owner(ctx, field)
+			case "contract":
+				return ec.fieldContext_Pool_contract(ctx, field)
+			case "claims":
+				return ec.fieldContext_Pool_claims(ctx, field)
+			case "balance":
+				return ec.fieldContext_Pool_balance(ctx, field)
+			case "createdAt":
+				return ec.fieldContext_Pool_createdAt(ctx, field)
+			case "updatedAt":
+				return ec.fieldContext_Pool_updatedAt(ctx, field)
 			}
-			return nil, fmt.Errorf("no field named %q was found under type PoolSearchResult", field.Name)
+			return nil, fmt.Errorf("no field named %q was found under type Pool", field.Name)
 		},
 	}
 	return fc, nil
@@ -13305,11 +15422,14 @@ func (ec *executionContext) _SearchUsersPayload_results(ctx context.Context, fie
 		return graphql.Null
 	}
 	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
 		return graphql.Null
 	}
-	res := resTmp.([]*model.UserSearchResult)
+	res := resTmp.([]*model.User)
 	fc.Result = res
-	return ec.marshalOUserSearchResult2ᚕᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐUserSearchResultᚄ(ctx, field.Selections, res)
+	return ec.marshalNUser2ᚕᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐUserᚄ(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_SearchUsersPayload_results(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -13320,10 +15440,14 @@ func (ec *executionContext) fieldContext_SearchUsersPayload_results(_ context.Co
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
-			case "user":
-				return ec.fieldContext_UserSearchResult_user(ctx, field)
+			case "id":
+				return ec.fieldContext_User_id(ctx, field)
+			case "roles":
+				return ec.fieldContext_User_roles(ctx, field)
+			case "pools":
+				return ec.fieldContext_User_pools(ctx, field)
 			}
-			return nil, fmt.Errorf("no field named %q was found under type UserSearchResult", field.Name)
+			return nil, fmt.Errorf("no field named %q was found under type User", field.Name)
 		},
 	}
 	return fc, nil
@@ -13417,8 +15541,8 @@ func (ec *executionContext) fieldContext_Token_address(_ context.Context, field 
 	return fc, nil
 }
 
-func (ec *executionContext) _Token_chainId(ctx context.Context, field graphql.CollectedField, obj *model.Token) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Token_chainId(ctx, field)
+func (ec *executionContext) _Token_network(ctx context.Context, field graphql.CollectedField, obj *model.Token) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Token_network(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -13431,7 +15555,7 @@ func (ec *executionContext) _Token_chainId(ctx context.Context, field graphql.Co
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.ChainID, nil
+		return obj.Network, nil
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -13443,19 +15567,19 @@ func (ec *executionContext) _Token_chainId(ctx context.Context, field graphql.Co
 		}
 		return graphql.Null
 	}
-	res := resTmp.(int)
+	res := resTmp.(persist.Chain)
 	fc.Result = res
-	return ec.marshalNInt2int(ctx, field.Selections, res)
+	return ec.marshalNNetwork2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋserviceᚋpersistᚐChain(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Token_chainId(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Token_network(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Token",
 		Field:      field,
 		IsMethod:   false,
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type Int does not have child fields")
+			return nil, errors.New("field of type Network does not have child fields")
 		},
 	}
 	return fc, nil
@@ -13801,6 +15925,58 @@ func (ec *executionContext) fieldContext_Token_possibleSpam(_ context.Context, f
 	return fc, nil
 }
 
+func (ec *executionContext) _Token_quotes(ctx context.Context, field graphql.CollectedField, obj *model.Token) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Token_quotes(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Quotes, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.([]*model.Quote)
+	fc.Result = res
+	return ec.marshalNQuote2ᚕᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐQuoteᚄ(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Token_quotes(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Token",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "currency":
+				return ec.fieldContext_Quote_currency(ctx, field)
+			case "value":
+				return ec.fieldContext_Quote_value(ctx, field)
+			case "lastUpdatedAt":
+				return ec.fieldContext_Quote_lastUpdatedAt(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Quote", field.Name)
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _Token_createdAt(ctx context.Context, field graphql.CollectedField, obj *model.Token) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Token_createdAt(ctx, field)
 	if err != nil {
@@ -13933,8 +16109,8 @@ func (ec *executionContext) fieldContext_TokenBalance_id(_ context.Context, fiel
 	return fc, nil
 }
 
-func (ec *executionContext) _TokenBalance_chainId(ctx context.Context, field graphql.CollectedField, obj *model.TokenBalance) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_TokenBalance_chainId(ctx, field)
+func (ec *executionContext) _TokenBalance_network(ctx context.Context, field graphql.CollectedField, obj *model.TokenBalance) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_TokenBalance_network(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -13947,7 +16123,7 @@ func (ec *executionContext) _TokenBalance_chainId(ctx context.Context, field gra
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.ChainID, nil
+		return obj.Network, nil
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -13959,19 +16135,19 @@ func (ec *executionContext) _TokenBalance_chainId(ctx context.Context, field gra
 		}
 		return graphql.Null
 	}
-	res := resTmp.(int)
+	res := resTmp.(persist.Chain)
 	fc.Result = res
-	return ec.marshalNInt2int(ctx, field.Selections, res)
+	return ec.marshalNNetwork2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋserviceᚋpersistᚐChain(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_TokenBalance_chainId(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_TokenBalance_network(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "TokenBalance",
 		Field:      field,
 		IsMethod:   false,
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type Int does not have child fields")
+			return nil, errors.New("field of type Network does not have child fields")
 		},
 	}
 	return fc, nil
@@ -14020,8 +16196,8 @@ func (ec *executionContext) fieldContext_TokenBalance_token(_ context.Context, f
 				return ec.fieldContext_Token_id(ctx, field)
 			case "address":
 				return ec.fieldContext_Token_address(ctx, field)
-			case "chainId":
-				return ec.fieldContext_Token_chainId(ctx, field)
+			case "network":
+				return ec.fieldContext_Token_network(ctx, field)
 			case "tokenType":
 				return ec.fieldContext_Token_tokenType(ctx, field)
 			case "symbol":
@@ -14038,6 +16214,8 @@ func (ec *executionContext) fieldContext_TokenBalance_token(_ context.Context, f
 				return ec.fieldContext_Token_validated(ctx, field)
 			case "possibleSpam":
 				return ec.fieldContext_Token_possibleSpam(ctx, field)
+			case "quotes":
+				return ec.fieldContext_Token_quotes(ctx, field)
 			case "createdAt":
 				return ec.fieldContext_Token_createdAt(ctx, field)
 			case "updatedAt":
@@ -14119,9 +16297,9 @@ func (ec *executionContext) _TokenBalance_amount(ctx context.Context, field grap
 		}
 		return graphql.Null
 	}
-	res := resTmp.(persist.HexString)
+	res := resTmp.(persist.UInt256)
 	fc.Result = res
-	return ec.marshalNHexString2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋserviceᚋpersistᚐHexString(ctx, field.Selections, res)
+	return ec.marshalNUInt2562githubᚗcomᚋmutualsᚋgoᚑmutualsᚋserviceᚋpersistᚐUInt256(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_TokenBalance_amount(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -14131,7 +16309,103 @@ func (ec *executionContext) fieldContext_TokenBalance_amount(_ context.Context, 
 		IsMethod:   false,
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type HexString does not have child fields")
+			return nil, errors.New("field of type UInt256 does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _TokenBalance_formattedAmount(ctx context.Context, field graphql.CollectedField, obj *model.TokenBalance) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_TokenBalance_formattedAmount(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.FormattedAmount, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(float64)
+	fc.Result = res
+	return ec.marshalNFloat2float64(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_TokenBalance_formattedAmount(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "TokenBalance",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Float does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _TokenBalance_quotes(ctx context.Context, field graphql.CollectedField, obj *model.TokenBalance) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_TokenBalance_quotes(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Quotes, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.([]*model.Quote)
+	fc.Result = res
+	return ec.marshalNQuote2ᚕᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐQuoteᚄ(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_TokenBalance_quotes(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "TokenBalance",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "currency":
+				return ec.fieldContext_Quote_currency(ctx, field)
+			case "value":
+				return ec.fieldContext_Quote_value(ctx, field)
+			case "lastUpdatedAt":
+				return ec.fieldContext_Quote_lastUpdatedAt(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Quote", field.Name)
 		},
 	}
 	return fc, nil
@@ -14225,6 +16499,222 @@ func (ec *executionContext) fieldContext_TokenBalance_updatedAt(_ context.Contex
 	return fc, nil
 }
 
+func (ec *executionContext) _TokenBalanceConnection_edges(ctx context.Context, field graphql.CollectedField, obj *model.TokenBalanceConnection) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_TokenBalanceConnection_edges(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Edges, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.([]*model.TokenBalanceEdge)
+	fc.Result = res
+	return ec.marshalNTokenBalanceEdge2ᚕᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐTokenBalanceEdgeᚄ(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_TokenBalanceConnection_edges(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "TokenBalanceConnection",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "node":
+				return ec.fieldContext_TokenBalanceEdge_node(ctx, field)
+			case "cursor":
+				return ec.fieldContext_TokenBalanceEdge_cursor(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type TokenBalanceEdge", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _TokenBalanceConnection_pageInfo(ctx context.Context, field graphql.CollectedField, obj *model.TokenBalanceConnection) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_TokenBalanceConnection_pageInfo(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.PageInfo, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*model.PageInfo)
+	fc.Result = res
+	return ec.marshalNPageInfo2ᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐPageInfo(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_TokenBalanceConnection_pageInfo(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "TokenBalanceConnection",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "total":
+				return ec.fieldContext_PageInfo_total(ctx, field)
+			case "size":
+				return ec.fieldContext_PageInfo_size(ctx, field)
+			case "hasPreviousPage":
+				return ec.fieldContext_PageInfo_hasPreviousPage(ctx, field)
+			case "hasNextPage":
+				return ec.fieldContext_PageInfo_hasNextPage(ctx, field)
+			case "startCursor":
+				return ec.fieldContext_PageInfo_startCursor(ctx, field)
+			case "endCursor":
+				return ec.fieldContext_PageInfo_endCursor(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type PageInfo", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _TokenBalanceEdge_node(ctx context.Context, field graphql.CollectedField, obj *model.TokenBalanceEdge) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_TokenBalanceEdge_node(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Node, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*model.TokenBalance)
+	fc.Result = res
+	return ec.marshalNTokenBalance2ᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐTokenBalance(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_TokenBalanceEdge_node(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "TokenBalanceEdge",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_TokenBalance_id(ctx, field)
+			case "network":
+				return ec.fieldContext_TokenBalance_network(ctx, field)
+			case "token":
+				return ec.fieldContext_TokenBalance_token(ctx, field)
+			case "holder":
+				return ec.fieldContext_TokenBalance_holder(ctx, field)
+			case "amount":
+				return ec.fieldContext_TokenBalance_amount(ctx, field)
+			case "formattedAmount":
+				return ec.fieldContext_TokenBalance_formattedAmount(ctx, field)
+			case "quotes":
+				return ec.fieldContext_TokenBalance_quotes(ctx, field)
+			case "createdAt":
+				return ec.fieldContext_TokenBalance_createdAt(ctx, field)
+			case "updatedAt":
+				return ec.fieldContext_TokenBalance_updatedAt(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type TokenBalance", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _TokenBalanceEdge_cursor(ctx context.Context, field graphql.CollectedField, obj *model.TokenBalanceEdge) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_TokenBalanceEdge_cursor(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Cursor, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_TokenBalanceEdge_cursor(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "TokenBalanceEdge",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _Tx_id(ctx context.Context, field graphql.CollectedField, obj *model.Tx) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Tx_id(ctx, field)
 	if err != nil {
@@ -14295,9 +16785,9 @@ func (ec *executionContext) _Tx_gasUsed(ctx context.Context, field graphql.Colle
 		}
 		return graphql.Null
 	}
-	res := resTmp.(persist.HexString)
+	res := resTmp.(persist.UInt256)
 	fc.Result = res
-	return ec.marshalNHexString2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋserviceᚋpersistᚐHexString(ctx, field.Selections, res)
+	return ec.marshalNUInt2562githubᚗcomᚋmutualsᚋgoᚑmutualsᚋserviceᚋpersistᚐUInt256(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Tx_gasUsed(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -14307,7 +16797,7 @@ func (ec *executionContext) fieldContext_Tx_gasUsed(_ context.Context, field gra
 		IsMethod:   false,
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type HexString does not have child fields")
+			return nil, errors.New("field of type UInt256 does not have child fields")
 		},
 	}
 	return fc, nil
@@ -14339,9 +16829,9 @@ func (ec *executionContext) _Tx_gasPrice(ctx context.Context, field graphql.Coll
 		}
 		return graphql.Null
 	}
-	res := resTmp.(persist.HexString)
+	res := resTmp.(persist.UInt256)
 	fc.Result = res
-	return ec.marshalNHexString2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋserviceᚋpersistᚐHexString(ctx, field.Selections, res)
+	return ec.marshalNUInt2562githubᚗcomᚋmutualsᚋgoᚑmutualsᚋserviceᚋpersistᚐUInt256(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Tx_gasPrice(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -14351,7 +16841,7 @@ func (ec *executionContext) fieldContext_Tx_gasPrice(_ context.Context, field gr
 		IsMethod:   false,
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type HexString does not have child fields")
+			return nil, errors.New("field of type UInt256 does not have child fields")
 		},
 	}
 	return fc, nil
@@ -14459,7 +16949,7 @@ func (ec *executionContext) _Tx_deposits(ctx context.Context, field graphql.Coll
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Tx().Deposits(rctx, obj)
+		return ec.resolvers.Tx().Deposits(rctx, obj, fc.Args["first"].(*int), fc.Args["after"].(*string))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -14471,12 +16961,12 @@ func (ec *executionContext) _Tx_deposits(ctx context.Context, field graphql.Coll
 		}
 		return graphql.Null
 	}
-	res := resTmp.([]*model.Deposit)
+	res := resTmp.(*model.DepositConnection)
 	fc.Result = res
-	return ec.marshalNDeposit2ᚕᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐDeposit(ctx, field.Selections, res)
+	return ec.marshalNDepositConnection2ᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐDepositConnection(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Tx_deposits(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Tx_deposits(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Tx",
 		Field:      field,
@@ -14484,31 +16974,24 @@ func (ec *executionContext) fieldContext_Tx_deposits(_ context.Context, field gr
 		IsResolver: true,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
-			case "id":
-				return ec.fieldContext_Deposit_id(ctx, field)
-			case "transaction":
-				return ec.fieldContext_Deposit_transaction(ctx, field)
-			case "pool":
-				return ec.fieldContext_Deposit_pool(ctx, field)
-			case "token":
-				return ec.fieldContext_Deposit_token(ctx, field)
-			case "from":
-				return ec.fieldContext_Deposit_from(ctx, field)
-			case "to":
-				return ec.fieldContext_Deposit_to(ctx, field)
-			case "origin":
-				return ec.fieldContext_Deposit_origin(ctx, field)
-			case "amount":
-				return ec.fieldContext_Deposit_amount(ctx, field)
-			case "logIndex":
-				return ec.fieldContext_Deposit_logIndex(ctx, field)
-			case "createdAt":
-				return ec.fieldContext_Deposit_createdAt(ctx, field)
-			case "updatedAt":
-				return ec.fieldContext_Deposit_updatedAt(ctx, field)
+			case "edges":
+				return ec.fieldContext_DepositConnection_edges(ctx, field)
+			case "pageInfo":
+				return ec.fieldContext_DepositConnection_pageInfo(ctx, field)
 			}
-			return nil, fmt.Errorf("no field named %q was found under type Deposit", field.Name)
+			return nil, fmt.Errorf("no field named %q was found under type DepositConnection", field.Name)
 		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Tx_deposits_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
 	}
 	return fc, nil
 }
@@ -14527,7 +17010,7 @@ func (ec *executionContext) _Tx_withdrawals(ctx context.Context, field graphql.C
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Tx().Withdrawals(rctx, obj)
+		return ec.resolvers.Tx().Withdrawals(rctx, obj, fc.Args["first"].(*int), fc.Args["after"].(*string))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -14539,12 +17022,12 @@ func (ec *executionContext) _Tx_withdrawals(ctx context.Context, field graphql.C
 		}
 		return graphql.Null
 	}
-	res := resTmp.([]*model.Withdrawal)
+	res := resTmp.(*model.WithdrawalConnection)
 	fc.Result = res
-	return ec.marshalNWithdrawal2ᚕᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐWithdrawal(ctx, field.Selections, res)
+	return ec.marshalNWithdrawalConnection2ᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐWithdrawalConnection(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Tx_withdrawals(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Tx_withdrawals(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Tx",
 		Field:      field,
@@ -14552,31 +17035,24 @@ func (ec *executionContext) fieldContext_Tx_withdrawals(_ context.Context, field
 		IsResolver: true,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
-			case "id":
-				return ec.fieldContext_Withdrawal_id(ctx, field)
-			case "transaction":
-				return ec.fieldContext_Withdrawal_transaction(ctx, field)
-			case "pool":
-				return ec.fieldContext_Withdrawal_pool(ctx, field)
-			case "token":
-				return ec.fieldContext_Withdrawal_token(ctx, field)
-			case "from":
-				return ec.fieldContext_Withdrawal_from(ctx, field)
-			case "to":
-				return ec.fieldContext_Withdrawal_to(ctx, field)
-			case "origin":
-				return ec.fieldContext_Withdrawal_origin(ctx, field)
-			case "amount":
-				return ec.fieldContext_Withdrawal_amount(ctx, field)
-			case "logIndex":
-				return ec.fieldContext_Withdrawal_logIndex(ctx, field)
-			case "createdAt":
-				return ec.fieldContext_Withdrawal_createdAt(ctx, field)
-			case "updatedAt":
-				return ec.fieldContext_Withdrawal_updatedAt(ctx, field)
+			case "edges":
+				return ec.fieldContext_WithdrawalConnection_edges(ctx, field)
+			case "pageInfo":
+				return ec.fieldContext_WithdrawalConnection_pageInfo(ctx, field)
 			}
-			return nil, fmt.Errorf("no field named %q was found under type Withdrawal", field.Name)
+			return nil, fmt.Errorf("no field named %q was found under type WithdrawalConnection", field.Name)
 		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Tx_withdrawals_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
 	}
 	return fc, nil
 }
@@ -14646,11 +17122,14 @@ func (ec *executionContext) _User_roles(ctx context.Context, field graphql.Colle
 		return graphql.Null
 	}
 	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
 		return graphql.Null
 	}
-	res := resTmp.([]*persist.Role)
+	res := resTmp.([]persist.Role)
 	fc.Result = res
-	return ec.marshalORole2ᚕᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋserviceᚋpersistᚐRole(ctx, field.Selections, res)
+	return ec.marshalNRole2ᚕgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋserviceᚋpersistᚐRoleᚄ(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_User_roles(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -14680,21 +17159,24 @@ func (ec *executionContext) _User_pools(ctx context.Context, field graphql.Colle
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.User().Pools(rctx, obj)
+		return ec.resolvers.User().Pools(rctx, obj, fc.Args["first"].(*int), fc.Args["after"].(*string))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
 		return graphql.Null
 	}
 	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
 		return graphql.Null
 	}
-	res := resTmp.([]*model.Pool)
+	res := resTmp.(*model.PoolConnection)
 	fc.Result = res
-	return ec.marshalOPool2ᚕᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐPool(ctx, field.Selections, res)
+	return ec.marshalNPoolConnection2ᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐPoolConnection(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_User_pools(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_User_pools(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "User",
 		Field:      field,
@@ -14702,34 +17184,131 @@ func (ec *executionContext) fieldContext_User_pools(_ context.Context, field gra
 		IsResolver: true,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
-			case "id":
-				return ec.fieldContext_Pool_id(ctx, field)
-			case "name":
-				return ec.fieldContext_Pool_name(ctx, field)
-			case "description":
-				return ec.fieldContext_Pool_description(ctx, field)
-			case "image":
-				return ec.fieldContext_Pool_image(ctx, field)
-			case "donationBps":
-				return ec.fieldContext_Pool_donationBps(ctx, field)
-			case "slug":
-				return ec.fieldContext_Pool_slug(ctx, field)
-			case "status":
-				return ec.fieldContext_Pool_status(ctx, field)
-			case "owner":
-				return ec.fieldContext_Pool_owner(ctx, field)
-			case "contract":
-				return ec.fieldContext_Pool_contract(ctx, field)
-			case "claims":
-				return ec.fieldContext_Pool_claims(ctx, field)
-			case "balance":
-				return ec.fieldContext_Pool_balance(ctx, field)
-			case "createdAt":
-				return ec.fieldContext_Pool_createdAt(ctx, field)
-			case "updatedAt":
-				return ec.fieldContext_Pool_updatedAt(ctx, field)
+			case "edges":
+				return ec.fieldContext_PoolConnection_edges(ctx, field)
+			case "pageInfo":
+				return ec.fieldContext_PoolConnection_pageInfo(ctx, field)
 			}
-			return nil, fmt.Errorf("no field named %q was found under type Pool", field.Name)
+			return nil, fmt.Errorf("no field named %q was found under type PoolConnection", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_User_pools_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _UserConnection_edges(ctx context.Context, field graphql.CollectedField, obj *model.UserConnection) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_UserConnection_edges(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Edges, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.([]*model.UserEdge)
+	fc.Result = res
+	return ec.marshalNUserEdge2ᚕᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐUserEdgeᚄ(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_UserConnection_edges(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "UserConnection",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "node":
+				return ec.fieldContext_UserEdge_node(ctx, field)
+			case "cursor":
+				return ec.fieldContext_UserEdge_cursor(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type UserEdge", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _UserConnection_pageInfo(ctx context.Context, field graphql.CollectedField, obj *model.UserConnection) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_UserConnection_pageInfo(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.PageInfo, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*model.PageInfo)
+	fc.Result = res
+	return ec.marshalNPageInfo2ᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐPageInfo(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_UserConnection_pageInfo(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "UserConnection",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "total":
+				return ec.fieldContext_PageInfo_total(ctx, field)
+			case "size":
+				return ec.fieldContext_PageInfo_size(ctx, field)
+			case "hasPreviousPage":
+				return ec.fieldContext_PageInfo_hasPreviousPage(ctx, field)
+			case "hasNextPage":
+				return ec.fieldContext_PageInfo_hasNextPage(ctx, field)
+			case "startCursor":
+				return ec.fieldContext_PageInfo_startCursor(ctx, field)
+			case "endCursor":
+				return ec.fieldContext_PageInfo_endCursor(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type PageInfo", field.Name)
 		},
 	}
 	return fc, nil
@@ -14805,11 +17384,14 @@ func (ec *executionContext) _UserEdge_node(ctx context.Context, field graphql.Co
 		return graphql.Null
 	}
 	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
 		return graphql.Null
 	}
 	res := resTmp.(*model.User)
 	fc.Result = res
-	return ec.marshalOUser2ᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐUser(ctx, field.Selections, res)
+	return ec.marshalNUser2ᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐUser(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_UserEdge_node(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -14854,11 +17436,14 @@ func (ec *executionContext) _UserEdge_cursor(ctx context.Context, field graphql.
 		return graphql.Null
 	}
 	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
 		return graphql.Null
 	}
-	res := resTmp.(*string)
+	res := resTmp.(string)
 	fc.Result = res
-	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
+	return ec.marshalNString2string(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_UserEdge_cursor(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -14967,55 +17552,6 @@ func (ec *executionContext) fieldContext_UserRegisterPayload_requiresConfirmatio
 	return fc, nil
 }
 
-func (ec *executionContext) _UserSearchResult_user(ctx context.Context, field graphql.CollectedField, obj *model.UserSearchResult) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_UserSearchResult_user(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.User, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		return graphql.Null
-	}
-	res := resTmp.(*model.User)
-	fc.Result = res
-	return ec.marshalOUser2ᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐUser(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_UserSearchResult_user(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "UserSearchResult",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			switch field.Name {
-			case "id":
-				return ec.fieldContext_User_id(ctx, field)
-			case "roles":
-				return ec.fieldContext_User_roles(ctx, field)
-			case "pools":
-				return ec.fieldContext_User_pools(ctx, field)
-			}
-			return nil, fmt.Errorf("no field named %q was found under type User", field.Name)
-		},
-	}
-	return fc, nil
-}
-
 func (ec *executionContext) _UserUpdatePayload_user(ctx context.Context, field graphql.CollectedField, obj *model.UserUpdatePayload) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_UserUpdatePayload_user(ctx, field)
 	if err != nil {
@@ -15063,111 +17599,6 @@ func (ec *executionContext) fieldContext_UserUpdatePayload_user(_ context.Contex
 				return ec.fieldContext_User_pools(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type User", field.Name)
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _UsersConnection_edges(ctx context.Context, field graphql.CollectedField, obj *model.UsersConnection) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_UsersConnection_edges(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.Edges, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		return graphql.Null
-	}
-	res := resTmp.([]*model.UserEdge)
-	fc.Result = res
-	return ec.marshalOUserEdge2ᚕᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐUserEdge(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_UsersConnection_edges(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "UsersConnection",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			switch field.Name {
-			case "node":
-				return ec.fieldContext_UserEdge_node(ctx, field)
-			case "cursor":
-				return ec.fieldContext_UserEdge_cursor(ctx, field)
-			}
-			return nil, fmt.Errorf("no field named %q was found under type UserEdge", field.Name)
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _UsersConnection_pageInfo(ctx context.Context, field graphql.CollectedField, obj *model.UsersConnection) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_UsersConnection_pageInfo(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.PageInfo, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(*model.PageInfo)
-	fc.Result = res
-	return ec.marshalNPageInfo2ᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐPageInfo(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_UsersConnection_pageInfo(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "UsersConnection",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			switch field.Name {
-			case "total":
-				return ec.fieldContext_PageInfo_total(ctx, field)
-			case "size":
-				return ec.fieldContext_PageInfo_size(ctx, field)
-			case "hasPreviousPage":
-				return ec.fieldContext_PageInfo_hasPreviousPage(ctx, field)
-			case "hasNextPage":
-				return ec.fieldContext_PageInfo_hasNextPage(ctx, field)
-			case "startCursor":
-				return ec.fieldContext_PageInfo_startCursor(ctx, field)
-			case "endCursor":
-				return ec.fieldContext_PageInfo_endCursor(ctx, field)
-			}
-			return nil, fmt.Errorf("no field named %q was found under type PageInfo", field.Name)
 		},
 	}
 	return fc, nil
@@ -15488,8 +17919,8 @@ func (ec *executionContext) fieldContext_Withdrawal_token(_ context.Context, fie
 				return ec.fieldContext_Token_id(ctx, field)
 			case "address":
 				return ec.fieldContext_Token_address(ctx, field)
-			case "chainId":
-				return ec.fieldContext_Token_chainId(ctx, field)
+			case "network":
+				return ec.fieldContext_Token_network(ctx, field)
 			case "tokenType":
 				return ec.fieldContext_Token_tokenType(ctx, field)
 			case "symbol":
@@ -15506,6 +17937,8 @@ func (ec *executionContext) fieldContext_Withdrawal_token(_ context.Context, fie
 				return ec.fieldContext_Token_validated(ctx, field)
 			case "possibleSpam":
 				return ec.fieldContext_Token_possibleSpam(ctx, field)
+			case "quotes":
+				return ec.fieldContext_Token_quotes(ctx, field)
 			case "createdAt":
 				return ec.fieldContext_Token_createdAt(ctx, field)
 			case "updatedAt":
@@ -15675,9 +18108,9 @@ func (ec *executionContext) _Withdrawal_amount(ctx context.Context, field graphq
 		}
 		return graphql.Null
 	}
-	res := resTmp.(persist.HexString)
+	res := resTmp.(persist.UInt256)
 	fc.Result = res
-	return ec.marshalNHexString2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋserviceᚋpersistᚐHexString(ctx, field.Selections, res)
+	return ec.marshalNUInt2562githubᚗcomᚋmutualsᚋgoᚑmutualsᚋserviceᚋpersistᚐUInt256(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Withdrawal_amount(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -15687,7 +18120,7 @@ func (ec *executionContext) fieldContext_Withdrawal_amount(_ context.Context, fi
 		IsMethod:   false,
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type HexString does not have child fields")
+			return nil, errors.New("field of type UInt256 does not have child fields")
 		},
 	}
 	return fc, nil
@@ -15817,6 +18250,226 @@ func (ec *executionContext) fieldContext_Withdrawal_updatedAt(_ context.Context,
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			return nil, errors.New("field of type Time does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _WithdrawalConnection_edges(ctx context.Context, field graphql.CollectedField, obj *model.WithdrawalConnection) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_WithdrawalConnection_edges(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Edges, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.([]*model.WithdrawalEdge)
+	fc.Result = res
+	return ec.marshalNWithdrawalEdge2ᚕᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐWithdrawalEdgeᚄ(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_WithdrawalConnection_edges(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "WithdrawalConnection",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "node":
+				return ec.fieldContext_WithdrawalEdge_node(ctx, field)
+			case "cursor":
+				return ec.fieldContext_WithdrawalEdge_cursor(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type WithdrawalEdge", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _WithdrawalConnection_pageInfo(ctx context.Context, field graphql.CollectedField, obj *model.WithdrawalConnection) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_WithdrawalConnection_pageInfo(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.PageInfo, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*model.PageInfo)
+	fc.Result = res
+	return ec.marshalNPageInfo2ᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐPageInfo(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_WithdrawalConnection_pageInfo(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "WithdrawalConnection",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "total":
+				return ec.fieldContext_PageInfo_total(ctx, field)
+			case "size":
+				return ec.fieldContext_PageInfo_size(ctx, field)
+			case "hasPreviousPage":
+				return ec.fieldContext_PageInfo_hasPreviousPage(ctx, field)
+			case "hasNextPage":
+				return ec.fieldContext_PageInfo_hasNextPage(ctx, field)
+			case "startCursor":
+				return ec.fieldContext_PageInfo_startCursor(ctx, field)
+			case "endCursor":
+				return ec.fieldContext_PageInfo_endCursor(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type PageInfo", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _WithdrawalEdge_node(ctx context.Context, field graphql.CollectedField, obj *model.WithdrawalEdge) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_WithdrawalEdge_node(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Node, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*model.Withdrawal)
+	fc.Result = res
+	return ec.marshalNWithdrawal2ᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐWithdrawal(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_WithdrawalEdge_node(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "WithdrawalEdge",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_Withdrawal_id(ctx, field)
+			case "transaction":
+				return ec.fieldContext_Withdrawal_transaction(ctx, field)
+			case "pool":
+				return ec.fieldContext_Withdrawal_pool(ctx, field)
+			case "token":
+				return ec.fieldContext_Withdrawal_token(ctx, field)
+			case "from":
+				return ec.fieldContext_Withdrawal_from(ctx, field)
+			case "to":
+				return ec.fieldContext_Withdrawal_to(ctx, field)
+			case "origin":
+				return ec.fieldContext_Withdrawal_origin(ctx, field)
+			case "amount":
+				return ec.fieldContext_Withdrawal_amount(ctx, field)
+			case "logIndex":
+				return ec.fieldContext_Withdrawal_logIndex(ctx, field)
+			case "createdAt":
+				return ec.fieldContext_Withdrawal_createdAt(ctx, field)
+			case "updatedAt":
+				return ec.fieldContext_Withdrawal_updatedAt(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Withdrawal", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _WithdrawalEdge_cursor(ctx context.Context, field graphql.CollectedField, obj *model.WithdrawalEdge) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_WithdrawalEdge_cursor(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Cursor, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_WithdrawalEdge_cursor(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "WithdrawalEdge",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
 		},
 	}
 	return fc, nil
@@ -18436,55 +21089,6 @@ func (ec *executionContext) _Error(ctx context.Context, sel ast.SelectionSet, ob
 	switch obj := (obj).(type) {
 	case nil:
 		return graphql.Null
-	case model.ErrAuthenticationFailed:
-		return ec._ErrAuthenticationFailed(ctx, sel, &obj)
-	case *model.ErrAuthenticationFailed:
-		if obj == nil {
-			return graphql.Null
-		}
-		return ec._ErrAuthenticationFailed(ctx, sel, obj)
-	case model.ErrUserAlreadyExists:
-		return ec._ErrUserAlreadyExists(ctx, sel, &obj)
-	case *model.ErrUserAlreadyExists:
-		if obj == nil {
-			return graphql.Null
-		}
-		return ec._ErrUserAlreadyExists(ctx, sel, obj)
-	case model.ErrUsernameNotAvailable:
-		return ec._ErrUsernameNotAvailable(ctx, sel, &obj)
-	case *model.ErrUsernameNotAvailable:
-		if obj == nil {
-			return graphql.Null
-		}
-		return ec._ErrUsernameNotAvailable(ctx, sel, obj)
-	case model.ErrAddressOwnedByUser:
-		return ec._ErrAddressOwnedByUser(ctx, sel, &obj)
-	case *model.ErrAddressOwnedByUser:
-		if obj == nil {
-			return graphql.Null
-		}
-		return ec._ErrAddressOwnedByUser(ctx, sel, obj)
-	case model.ErrUserNotFound:
-		return ec._ErrUserNotFound(ctx, sel, &obj)
-	case *model.ErrUserNotFound:
-		if obj == nil {
-			return graphql.Null
-		}
-		return ec._ErrUserNotFound(ctx, sel, obj)
-	case model.ErrPoolNotFound:
-		return ec._ErrPoolNotFound(ctx, sel, &obj)
-	case *model.ErrPoolNotFound:
-		if obj == nil {
-			return graphql.Null
-		}
-		return ec._ErrPoolNotFound(ctx, sel, obj)
-	case model.ErrTokenNotFound:
-		return ec._ErrTokenNotFound(ctx, sel, &obj)
-	case *model.ErrTokenNotFound:
-		if obj == nil {
-			return graphql.Null
-		}
-		return ec._ErrTokenNotFound(ctx, sel, obj)
 	case model.ErrInvalidInput:
 		return ec._ErrInvalidInput(ctx, sel, &obj)
 	case *model.ErrInvalidInput:
@@ -18492,6 +21096,20 @@ func (ec *executionContext) _Error(ctx context.Context, sel ast.SelectionSet, ob
 			return graphql.Null
 		}
 		return ec._ErrInvalidInput(ctx, sel, obj)
+	case model.ErrSyncFailed:
+		return ec._ErrSyncFailed(ctx, sel, &obj)
+	case *model.ErrSyncFailed:
+		if obj == nil {
+			return graphql.Null
+		}
+		return ec._ErrSyncFailed(ctx, sel, obj)
+	case model.ErrAuthenticationFailed:
+		return ec._ErrAuthenticationFailed(ctx, sel, &obj)
+	case *model.ErrAuthenticationFailed:
+		if obj == nil {
+			return graphql.Null
+		}
+		return ec._ErrAuthenticationFailed(ctx, sel, obj)
 	case model.ErrNoCookie:
 		return ec._ErrNoCookie(ctx, sel, &obj)
 	case *model.ErrNoCookie:
@@ -18527,13 +21145,48 @@ func (ec *executionContext) _Error(ctx context.Context, sel ast.SelectionSet, ob
 			return graphql.Null
 		}
 		return ec._ErrNotAuthorized(ctx, sel, obj)
-	case model.ErrSyncFailed:
-		return ec._ErrSyncFailed(ctx, sel, &obj)
-	case *model.ErrSyncFailed:
+	case model.ErrAddressOwnedByUser:
+		return ec._ErrAddressOwnedByUser(ctx, sel, &obj)
+	case *model.ErrAddressOwnedByUser:
 		if obj == nil {
 			return graphql.Null
 		}
-		return ec._ErrSyncFailed(ctx, sel, obj)
+		return ec._ErrAddressOwnedByUser(ctx, sel, obj)
+	case model.ErrUserAlreadyExists:
+		return ec._ErrUserAlreadyExists(ctx, sel, &obj)
+	case *model.ErrUserAlreadyExists:
+		if obj == nil {
+			return graphql.Null
+		}
+		return ec._ErrUserAlreadyExists(ctx, sel, obj)
+	case model.ErrUsernameNotAvailable:
+		return ec._ErrUsernameNotAvailable(ctx, sel, &obj)
+	case *model.ErrUsernameNotAvailable:
+		if obj == nil {
+			return graphql.Null
+		}
+		return ec._ErrUsernameNotAvailable(ctx, sel, obj)
+	case model.ErrUserNotFound:
+		return ec._ErrUserNotFound(ctx, sel, &obj)
+	case *model.ErrUserNotFound:
+		if obj == nil {
+			return graphql.Null
+		}
+		return ec._ErrUserNotFound(ctx, sel, obj)
+	case model.ErrTokenNotFound:
+		return ec._ErrTokenNotFound(ctx, sel, &obj)
+	case *model.ErrTokenNotFound:
+		if obj == nil {
+			return graphql.Null
+		}
+		return ec._ErrTokenNotFound(ctx, sel, obj)
+	case model.ErrPoolNotFound:
+		return ec._ErrPoolNotFound(ctx, sel, &obj)
+	case *model.ErrPoolNotFound:
+		if obj == nil {
+			return graphql.Null
+		}
+		return ec._ErrPoolNotFound(ctx, sel, obj)
 	default:
 		panic(fmt.Errorf("unexpected type %T", obj))
 	}
@@ -18594,20 +21247,6 @@ func (ec *executionContext) _Node(ctx context.Context, sel ast.SelectionSet, obj
 			return graphql.Null
 		}
 		return ec._EVMAccount(ctx, sel, obj)
-	case model.PoolFactory:
-		return ec._PoolFactory(ctx, sel, &obj)
-	case *model.PoolFactory:
-		if obj == nil {
-			return graphql.Null
-		}
-		return ec._PoolFactory(ctx, sel, obj)
-	case model.ModuleRegistry:
-		return ec._ModuleRegistry(ctx, sel, &obj)
-	case *model.ModuleRegistry:
-		if obj == nil {
-			return graphql.Null
-		}
-		return ec._ModuleRegistry(ctx, sel, obj)
 	case model.User:
 		return ec._User(ctx, sel, &obj)
 	case *model.User:
@@ -18629,6 +21268,13 @@ func (ec *executionContext) _Node(ctx context.Context, sel ast.SelectionSet, obj
 			return graphql.Null
 		}
 		return ec._TokenBalance(ctx, sel, obj)
+	case model.ModuleRegistry:
+		return ec._ModuleRegistry(ctx, sel, &obj)
+	case *model.ModuleRegistry:
+		if obj == nil {
+			return graphql.Null
+		}
+		return ec._ModuleRegistry(ctx, sel, obj)
 	case model.Module:
 		return ec._Module(ctx, sel, &obj)
 	case *model.Module:
@@ -18643,6 +21289,13 @@ func (ec *executionContext) _Node(ctx context.Context, sel ast.SelectionSet, obj
 			return graphql.Null
 		}
 		return ec._Claim(ctx, sel, obj)
+	case model.PoolFactory:
+		return ec._PoolFactory(ctx, sel, &obj)
+	case *model.PoolFactory:
+		if obj == nil {
+			return graphql.Null
+		}
+		return ec._PoolFactory(ctx, sel, obj)
 	case model.Pool:
 		return ec._Pool(ctx, sel, &obj)
 	case *model.Pool:
@@ -19273,13 +21926,16 @@ func (ec *executionContext) _Claim(ctx context.Context, sel ast.SelectionSet, ob
 		case "children":
 			field := field
 
-			innerFunc := func(ctx context.Context, _ *graphql.FieldSet) (res graphql.Marshaler) {
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
 				defer func() {
 					if r := recover(); r != nil {
 						ec.Error(ctx, ec.Recover(ctx, r))
 					}
 				}()
 				res = ec._Claim_children(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
 				return res
 			}
 
@@ -19910,7 +22566,95 @@ func (ec *executionContext) _Deposit(ctx context.Context, sel ast.SelectionSet, 
 	return out
 }
 
-var eVMAccountImplementors = []string{"EVMAccount", "Node", "UserOrEVMAccount", "PoolOrUserOrEVMAccount"}
+var depositConnectionImplementors = []string{"DepositConnection"}
+
+func (ec *executionContext) _DepositConnection(ctx context.Context, sel ast.SelectionSet, obj *model.DepositConnection) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, depositConnectionImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("DepositConnection")
+		case "edges":
+			out.Values[i] = ec._DepositConnection_edges(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "pageInfo":
+			out.Values[i] = ec._DepositConnection_pageInfo(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
+var depositEdgeImplementors = []string{"DepositEdge"}
+
+func (ec *executionContext) _DepositEdge(ctx context.Context, sel ast.SelectionSet, obj *model.DepositEdge) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, depositEdgeImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("DepositEdge")
+		case "node":
+			out.Values[i] = ec._DepositEdge_node(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "cursor":
+			out.Values[i] = ec._DepositEdge_cursor(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
+var eVMAccountImplementors = []string{"EVMAccount", "Node", "PoolOrUserOrEVMAccount", "UserOrEVMAccount"}
 
 func (ec *executionContext) _EVMAccount(ctx context.Context, sel ast.SelectionSet, obj *model.EVMAccount) graphql.Marshaler {
 	fields := graphql.CollectFields(ec.OperationContext, sel, eVMAccountImplementors)
@@ -19939,13 +22683,16 @@ func (ec *executionContext) _EVMAccount(ctx context.Context, sel ast.SelectionSe
 		case "selfPools":
 			field := field
 
-			innerFunc := func(ctx context.Context, _ *graphql.FieldSet) (res graphql.Marshaler) {
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
 				defer func() {
 					if r := recover(); r != nil {
 						ec.Error(ctx, ec.Recover(ctx, r))
 					}
 				}()
 				res = ec._EVMAccount_selfPools(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
 				return res
 			}
 
@@ -19972,13 +22719,16 @@ func (ec *executionContext) _EVMAccount(ctx context.Context, sel ast.SelectionSe
 		case "balances":
 			field := field
 
-			innerFunc := func(ctx context.Context, _ *graphql.FieldSet) (res graphql.Marshaler) {
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
 				defer func() {
 					if r := recover(); r != nil {
 						ec.Error(ctx, ec.Recover(ctx, r))
 					}
 				}()
 				res = ec._EVMAccount_balances(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
 				return res
 			}
 
@@ -20074,7 +22824,7 @@ func (ec *executionContext) _ErrAddressOwnedByUser(ctx context.Context, sel ast.
 	return out
 }
 
-var errAuthenticationFailedImplementors = []string{"ErrAuthenticationFailed", "Error", "UserRegisterResult", "AddUserWalletResult", "LoginResult"}
+var errAuthenticationFailedImplementors = []string{"ErrAuthenticationFailed", "Error", "LoginResult", "AddUserWalletResult", "UserRegisterResult"}
 
 func (ec *executionContext) _ErrAuthenticationFailed(ctx context.Context, sel ast.SelectionSet, obj *model.ErrAuthenticationFailed) graphql.Marshaler {
 	fields := graphql.CollectFields(ec.OperationContext, sel, errAuthenticationFailedImplementors)
@@ -20113,7 +22863,7 @@ func (ec *executionContext) _ErrAuthenticationFailed(ctx context.Context, sel as
 	return out
 }
 
-var errDoesNotOwnRequiredTokenImplementors = []string{"ErrDoesNotOwnRequiredToken", "Error", "AuthorizationError", "UserRegisterResult", "LoginResult"}
+var errDoesNotOwnRequiredTokenImplementors = []string{"ErrDoesNotOwnRequiredToken", "Error", "AuthorizationError", "LoginResult", "UserRegisterResult"}
 
 func (ec *executionContext) _ErrDoesNotOwnRequiredToken(ctx context.Context, sel ast.SelectionSet, obj *model.ErrDoesNotOwnRequiredToken) graphql.Marshaler {
 	fields := graphql.CollectFields(ec.OperationContext, sel, errDoesNotOwnRequiredTokenImplementors)
@@ -20152,7 +22902,7 @@ func (ec *executionContext) _ErrDoesNotOwnRequiredToken(ctx context.Context, sel
 	return out
 }
 
-var errInvalidInputImplementors = []string{"ErrInvalidInput", "Error", "UserResult", "PoolResult", "SearchUsersResult", "SearchPoolsResult", "UserRegisterResult", "UserUpdateResult", "UserDeleteResult", "AddUserWalletResult", "RemoveUserWalletsResult", "VerifyTokenResult", "RoleUpdateResult", "ClaimCreateResult", "ClaimUpdateResult", "ClaimDeleteResult", "ClaimBulkCreateResult", "ClaimBulkUpdateResult", "ClaimBulkDeleteResult", "PoolCreateResult", "PoolUpdateResult", "PoolDeleteResult"}
+var errInvalidInputImplementors = []string{"ErrInvalidInput", "Error", "VerifyTokenResult", "AddUserWalletResult", "RemoveUserWalletsResult", "SearchUsersResult", "UserResult", "UserRegisterResult", "UserUpdateResult", "RoleUpdateResult", "UserDeleteResult", "ClaimCreateResult", "ClaimBulkCreateResult", "ClaimUpdateResult", "ClaimBulkUpdateResult", "ClaimDeleteResult", "ClaimBulkDeleteResult", "SearchPoolsResult", "PoolResult", "PoolCreateResult", "PoolUpdateResult", "PoolDeleteResult"}
 
 func (ec *executionContext) _ErrInvalidInput(ctx context.Context, sel ast.SelectionSet, obj *model.ErrInvalidInput) graphql.Marshaler {
 	fields := graphql.CollectFields(ec.OperationContext, sel, errInvalidInputImplementors)
@@ -20279,7 +23029,7 @@ func (ec *executionContext) _ErrNoCookie(ctx context.Context, sel ast.SelectionS
 	return out
 }
 
-var errNotAuthorizedImplementors = []string{"ErrNotAuthorized", "Error", "UserResult", "UserUpdateResult", "UserDeleteResult", "AddUserWalletResult", "RemoveUserWalletsResult", "VerifyTokenResult", "RoleUpdateResult", "ClaimCreateResult", "ClaimUpdateResult", "ClaimDeleteResult", "ClaimBulkCreateResult", "ClaimBulkUpdateResult", "ClaimBulkDeleteResult", "PoolCreateResult", "PoolUpdateResult", "PoolDeleteResult"}
+var errNotAuthorizedImplementors = []string{"ErrNotAuthorized", "Error", "VerifyTokenResult", "AddUserWalletResult", "RemoveUserWalletsResult", "UserResult", "UserUpdateResult", "RoleUpdateResult", "UserDeleteResult", "ClaimCreateResult", "ClaimBulkCreateResult", "ClaimUpdateResult", "ClaimBulkUpdateResult", "ClaimDeleteResult", "ClaimBulkDeleteResult", "PoolCreateResult", "PoolUpdateResult", "PoolDeleteResult"}
 
 func (ec *executionContext) _ErrNotAuthorized(ctx context.Context, sel ast.SelectionSet, obj *model.ErrNotAuthorized) graphql.Marshaler {
 	fields := graphql.CollectFields(ec.OperationContext, sel, errNotAuthorizedImplementors)
@@ -20323,7 +23073,7 @@ func (ec *executionContext) _ErrNotAuthorized(ctx context.Context, sel ast.Selec
 	return out
 }
 
-var errPoolNotFoundImplementors = []string{"ErrPoolNotFound", "Error", "PoolResult", "ClaimCreateResult", "ClaimUpdateResult", "ClaimDeleteResult", "ClaimBulkCreateResult", "ClaimBulkUpdateResult", "ClaimBulkDeleteResult", "PoolUpdateResult", "PoolDeleteResult"}
+var errPoolNotFoundImplementors = []string{"ErrPoolNotFound", "ClaimCreateResult", "ClaimBulkCreateResult", "ClaimUpdateResult", "ClaimBulkUpdateResult", "ClaimDeleteResult", "ClaimBulkDeleteResult", "Error", "PoolResult", "PoolUpdateResult", "PoolDeleteResult"}
 
 func (ec *executionContext) _ErrPoolNotFound(ctx context.Context, sel ast.SelectionSet, obj *model.ErrPoolNotFound) graphql.Marshaler {
 	fields := graphql.CollectFields(ec.OperationContext, sel, errPoolNotFoundImplementors)
@@ -20518,7 +23268,7 @@ func (ec *executionContext) _ErrUserAlreadyExists(ctx context.Context, sel ast.S
 	return out
 }
 
-var errUserNotFoundImplementors = []string{"ErrUserNotFound", "Error", "UserResult", "LoginResult"}
+var errUserNotFoundImplementors = []string{"ErrUserNotFound", "LoginResult", "UserResult", "Error"}
 
 func (ec *executionContext) _ErrUserNotFound(ctx context.Context, sel ast.SelectionSet, obj *model.ErrUserNotFound) graphql.Marshaler {
 	fields := graphql.CollectFields(ec.OperationContext, sel, errUserNotFoundImplementors)
@@ -20692,8 +23442,8 @@ func (ec *executionContext) _Module(ctx context.Context, sel ast.SelectionSet, o
 			if out.Values[i] == graphql.Null {
 				atomic.AddUint32(&out.Invalids, 1)
 			}
-		case "chainId":
-			out.Values[i] = ec._Module_chainId(ctx, field, obj)
+		case "network":
+			out.Values[i] = ec._Module_network(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				atomic.AddUint32(&out.Invalids, 1)
 			}
@@ -20745,6 +23495,9 @@ func (ec *executionContext) _Module(ctx context.Context, sel ast.SelectionSet, o
 			}
 		case "permissions":
 			out.Values[i] = ec._Module_permissions(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
 		case "data":
 			out.Values[i] = ec._Module_data(ctx, field, obj)
 		case "name":
@@ -20811,8 +23564,8 @@ func (ec *executionContext) _ModuleRegistry(ctx context.Context, sel ast.Selecti
 			if out.Values[i] == graphql.Null {
 				atomic.AddUint32(&out.Invalids, 1)
 			}
-		case "chainId":
-			out.Values[i] = ec._ModuleRegistry_chainId(ctx, field, obj)
+		case "network":
+			out.Values[i] = ec._ModuleRegistry_network(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				atomic.AddUint32(&out.Invalids, 1)
 			}
@@ -21060,14 +23813,8 @@ func (ec *executionContext) _PageInfo(ctx context.Context, sel ast.SelectionSet,
 			}
 		case "startCursor":
 			out.Values[i] = ec._PageInfo_startCursor(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				out.Invalids++
-			}
 		case "endCursor":
 			out.Values[i] = ec._PageInfo_endCursor(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				out.Invalids++
-			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -21091,7 +23838,7 @@ func (ec *executionContext) _PageInfo(ctx context.Context, sel ast.SelectionSet,
 	return out
 }
 
-var poolImplementors = []string{"Pool", "Node", "PoolOrUserOrEVMAccount", "PoolResult"}
+var poolImplementors = []string{"Pool", "PoolOrUserOrEVMAccount", "Node", "PoolResult"}
 
 func (ec *executionContext) _Pool(ctx context.Context, sel ast.SelectionSet, obj *model.Pool) graphql.Marshaler {
 	fields := graphql.CollectFields(ec.OperationContext, sel, poolImplementors)
@@ -21209,13 +23956,16 @@ func (ec *executionContext) _Pool(ctx context.Context, sel ast.SelectionSet, obj
 		case "claims":
 			field := field
 
-			innerFunc := func(ctx context.Context, _ *graphql.FieldSet) (res graphql.Marshaler) {
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
 				defer func() {
 					if r := recover(); r != nil {
 						ec.Error(ctx, ec.Recover(ctx, r))
 					}
 				}()
 				res = ec._Pool_claims(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
 				return res
 			}
 
@@ -21322,15 +24072,95 @@ func (ec *executionContext) _PoolBalance(ctx context.Context, sel ast.SelectionS
 		case "totalIncome":
 			out.Values[i] = ec._PoolBalance_totalIncome(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				out.Invalids++
+				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "balance":
 			out.Values[i] = ec._PoolBalance_balance(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				out.Invalids++
+				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "withdrawals":
 			out.Values[i] = ec._PoolBalance_withdrawals(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "tokens":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._PoolBalance_tokens(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			if field.Deferrable != nil {
+				dfs, ok := deferred[field.Deferrable.Label]
+				di := 0
+				if ok {
+					dfs.AddField(field)
+					di = len(dfs.Values) - 1
+				} else {
+					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
+					deferred[field.Deferrable.Label] = dfs
+				}
+				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, dfs)
+				})
+
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
+var poolConnectionImplementors = []string{"PoolConnection"}
+
+func (ec *executionContext) _PoolConnection(ctx context.Context, sel ast.SelectionSet, obj *model.PoolConnection) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, poolConnectionImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("PoolConnection")
+		case "edges":
+			out.Values[i] = ec._PoolConnection_edges(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "pageInfo":
+			out.Values[i] = ec._PoolConnection_pageInfo(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
@@ -21378,8 +24208,8 @@ func (ec *executionContext) _PoolContract(ctx context.Context, sel ast.Selection
 			if out.Values[i] == graphql.Null {
 				atomic.AddUint32(&out.Invalids, 1)
 			}
-		case "chainId":
-			out.Values[i] = ec._PoolContract_chainId(ctx, field, obj)
+		case "network":
+			out.Values[i] = ec._PoolContract_network(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				atomic.AddUint32(&out.Invalids, 1)
 			}
@@ -21496,7 +24326,7 @@ func (ec *executionContext) _PoolContract(ctx context.Context, sel ast.Selection
 			}
 
 			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
-		case "dayBalance":
+		case "dayBalances":
 			field := field
 
 			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
@@ -21505,7 +24335,7 @@ func (ec *executionContext) _PoolContract(ctx context.Context, sel ast.Selection
 						ec.Error(ctx, ec.Recover(ctx, r))
 					}
 				}()
-				res = ec._PoolContract_dayBalance(ctx, field, obj)
+				res = ec._PoolContract_dayBalances(ctx, field, obj)
 				if res == graphql.Null {
 					atomic.AddUint32(&fs.Invalids, 1)
 				}
@@ -21532,7 +24362,7 @@ func (ec *executionContext) _PoolContract(ctx context.Context, sel ast.Selection
 			}
 
 			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
-		case "hourBalance":
+		case "hourBalances":
 			field := field
 
 			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
@@ -21541,7 +24371,7 @@ func (ec *executionContext) _PoolContract(ctx context.Context, sel ast.Selection
 						ec.Error(ctx, ec.Recover(ctx, r))
 					}
 				}()
-				res = ec._PoolContract_hourBalance(ctx, field, obj)
+				res = ec._PoolContract_hourBalances(ctx, field, obj)
 				if res == graphql.Null {
 					atomic.AddUint32(&fs.Invalids, 1)
 				}
@@ -21728,8 +24558,8 @@ func (ec *executionContext) _PoolDayBalance(ctx context.Context, sel ast.Selecti
 			if out.Values[i] == graphql.Null {
 				atomic.AddUint32(&out.Invalids, 1)
 			}
-		case "chainId":
-			out.Values[i] = ec._PoolDayBalance_chainId(ctx, field, obj)
+		case "network":
+			out.Values[i] = ec._PoolDayBalance_network(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				atomic.AddUint32(&out.Invalids, 1)
 			}
@@ -21815,6 +24645,16 @@ func (ec *executionContext) _PoolDayBalance(ctx context.Context, sel ast.Selecti
 			if out.Values[i] == graphql.Null {
 				atomic.AddUint32(&out.Invalids, 1)
 			}
+		case "formattedAmount":
+			out.Values[i] = ec._PoolDayBalance_formattedAmount(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "quotes":
+			out.Values[i] = ec._PoolDayBalance_quotes(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
 		case "createdAt":
 			out.Values[i] = ec._PoolDayBalance_createdAt(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
@@ -21824,6 +24664,94 @@ func (ec *executionContext) _PoolDayBalance(ctx context.Context, sel ast.Selecti
 			out.Values[i] = ec._PoolDayBalance_updatedAt(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				atomic.AddUint32(&out.Invalids, 1)
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
+var poolDayBalanceConnectionImplementors = []string{"PoolDayBalanceConnection"}
+
+func (ec *executionContext) _PoolDayBalanceConnection(ctx context.Context, sel ast.SelectionSet, obj *model.PoolDayBalanceConnection) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, poolDayBalanceConnectionImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("PoolDayBalanceConnection")
+		case "edges":
+			out.Values[i] = ec._PoolDayBalanceConnection_edges(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "pageInfo":
+			out.Values[i] = ec._PoolDayBalanceConnection_pageInfo(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
+var poolDayBalanceEdgeImplementors = []string{"PoolDayBalanceEdge"}
+
+func (ec *executionContext) _PoolDayBalanceEdge(ctx context.Context, sel ast.SelectionSet, obj *model.PoolDayBalanceEdge) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, poolDayBalanceEdgeImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("PoolDayBalanceEdge")
+		case "node":
+			out.Values[i] = ec._PoolDayBalanceEdge_node(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "cursor":
+			out.Values[i] = ec._PoolDayBalanceEdge_cursor(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
 			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
@@ -21887,6 +24815,50 @@ func (ec *executionContext) _PoolDeletePayload(ctx context.Context, sel ast.Sele
 	return out
 }
 
+var poolEdgeImplementors = []string{"PoolEdge"}
+
+func (ec *executionContext) _PoolEdge(ctx context.Context, sel ast.SelectionSet, obj *model.PoolEdge) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, poolEdgeImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("PoolEdge")
+		case "node":
+			out.Values[i] = ec._PoolEdge_node(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "cursor":
+			out.Values[i] = ec._PoolEdge_cursor(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
 var poolFactoryImplementors = []string{"PoolFactory", "Node"}
 
 func (ec *executionContext) _PoolFactory(ctx context.Context, sel ast.SelectionSet, obj *model.PoolFactory) graphql.Marshaler {
@@ -21908,8 +24880,8 @@ func (ec *executionContext) _PoolFactory(ctx context.Context, sel ast.SelectionS
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
-		case "chainId":
-			out.Values[i] = ec._PoolFactory_chainId(ctx, field, obj)
+		case "network":
+			out.Values[i] = ec._PoolFactory_network(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
@@ -21972,8 +24944,8 @@ func (ec *executionContext) _PoolHourBalance(ctx context.Context, sel ast.Select
 			if out.Values[i] == graphql.Null {
 				atomic.AddUint32(&out.Invalids, 1)
 			}
-		case "chainId":
-			out.Values[i] = ec._PoolHourBalance_chainId(ctx, field, obj)
+		case "network":
+			out.Values[i] = ec._PoolHourBalance_network(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				atomic.AddUint32(&out.Invalids, 1)
 			}
@@ -22059,6 +25031,16 @@ func (ec *executionContext) _PoolHourBalance(ctx context.Context, sel ast.Select
 			if out.Values[i] == graphql.Null {
 				atomic.AddUint32(&out.Invalids, 1)
 			}
+		case "formattedAmount":
+			out.Values[i] = ec._PoolHourBalance_formattedAmount(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "quotes":
+			out.Values[i] = ec._PoolHourBalance_quotes(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
 		case "createdAt":
 			out.Values[i] = ec._PoolHourBalance_createdAt(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
@@ -22092,19 +25074,71 @@ func (ec *executionContext) _PoolHourBalance(ctx context.Context, sel ast.Select
 	return out
 }
 
-var poolSearchResultImplementors = []string{"PoolSearchResult"}
+var poolHourBalanceConnectionImplementors = []string{"PoolHourBalanceConnection"}
 
-func (ec *executionContext) _PoolSearchResult(ctx context.Context, sel ast.SelectionSet, obj *model.PoolSearchResult) graphql.Marshaler {
-	fields := graphql.CollectFields(ec.OperationContext, sel, poolSearchResultImplementors)
+func (ec *executionContext) _PoolHourBalanceConnection(ctx context.Context, sel ast.SelectionSet, obj *model.PoolHourBalanceConnection) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, poolHourBalanceConnectionImplementors)
 
 	out := graphql.NewFieldSet(fields)
 	deferred := make(map[string]*graphql.FieldSet)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
-			out.Values[i] = graphql.MarshalString("PoolSearchResult")
-		case "pool":
-			out.Values[i] = ec._PoolSearchResult_pool(ctx, field, obj)
+			out.Values[i] = graphql.MarshalString("PoolHourBalanceConnection")
+		case "edges":
+			out.Values[i] = ec._PoolHourBalanceConnection_edges(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "pageInfo":
+			out.Values[i] = ec._PoolHourBalanceConnection_pageInfo(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
+var poolHourBalanceEdgeImplementors = []string{"PoolHourBalanceEdge"}
+
+func (ec *executionContext) _PoolHourBalanceEdge(ctx context.Context, sel ast.SelectionSet, obj *model.PoolHourBalanceEdge) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, poolHourBalanceEdgeImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("PoolHourBalanceEdge")
+		case "node":
+			out.Values[i] = ec._PoolHourBalanceEdge_node(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "cursor":
+			out.Values[i] = ec._PoolHourBalanceEdge_cursor(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -22224,7 +25258,7 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 			}
 
 			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
-		case "userById":
+		case "user":
 			field := field
 
 			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
@@ -22233,29 +25267,7 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 						ec.Error(ctx, ec.Recover(ctx, r))
 					}
 				}()
-				res = ec._Query_userById(ctx, field)
-				if res == graphql.Null {
-					atomic.AddUint32(&fs.Invalids, 1)
-				}
-				return res
-			}
-
-			rrm := func(ctx context.Context) graphql.Marshaler {
-				return ec.OperationContext.RootResolverMiddleware(ctx,
-					func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
-			}
-
-			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
-		case "userByAddress":
-			field := field
-
-			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
-				defer func() {
-					if r := recover(); r != nil {
-						ec.Error(ctx, ec.Recover(ctx, r))
-					}
-				}()
-				res = ec._Query_userByAddress(ctx, field)
+				res = ec._Query_user(ctx, field)
 				if res == graphql.Null {
 					atomic.AddUint32(&fs.Invalids, 1)
 				}
@@ -22337,13 +25349,16 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 		case "usersByRole":
 			field := field
 
-			innerFunc := func(ctx context.Context, _ *graphql.FieldSet) (res graphql.Marshaler) {
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
 				defer func() {
 					if r := recover(); r != nil {
 						ec.Error(ctx, ec.Recover(ctx, r))
 					}
 				}()
 				res = ec._Query_usersByRole(ctx, field)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
 				return res
 			}
 
@@ -22383,6 +25398,55 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._Query___schema(ctx, field)
 			})
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
+var quoteImplementors = []string{"Quote"}
+
+func (ec *executionContext) _Quote(ctx context.Context, sel ast.SelectionSet, obj *model.Quote) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, quoteImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("Quote")
+		case "currency":
+			out.Values[i] = ec._Quote_currency(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "value":
+			out.Values[i] = ec._Quote_value(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "lastUpdatedAt":
+			out.Values[i] = ec._Quote_lastUpdatedAt(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -22497,6 +25561,9 @@ func (ec *executionContext) _SearchPoolsPayload(ctx context.Context, sel ast.Sel
 			out.Values[i] = graphql.MarshalString("SearchPoolsPayload")
 		case "results":
 			out.Values[i] = ec._SearchPoolsPayload_results(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -22533,6 +25600,9 @@ func (ec *executionContext) _SearchUsersPayload(ctx context.Context, sel ast.Sel
 			out.Values[i] = graphql.MarshalString("SearchUsersPayload")
 		case "results":
 			out.Values[i] = ec._SearchUsersPayload_results(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -22577,8 +25647,8 @@ func (ec *executionContext) _Token(ctx context.Context, sel ast.SelectionSet, ob
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
-		case "chainId":
-			out.Values[i] = ec._Token_chainId(ctx, field, obj)
+		case "network":
+			out.Values[i] = ec._Token_network(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
@@ -22610,6 +25680,11 @@ func (ec *executionContext) _Token(ctx context.Context, sel ast.SelectionSet, ob
 			out.Values[i] = ec._Token_validated(ctx, field, obj)
 		case "possibleSpam":
 			out.Values[i] = ec._Token_possibleSpam(ctx, field, obj)
+		case "quotes":
+			out.Values[i] = ec._Token_quotes(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
 		case "createdAt":
 			out.Values[i] = ec._Token_createdAt(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
@@ -22659,8 +25734,8 @@ func (ec *executionContext) _TokenBalance(ctx context.Context, sel ast.Selection
 			if out.Values[i] == graphql.Null {
 				atomic.AddUint32(&out.Invalids, 1)
 			}
-		case "chainId":
-			out.Values[i] = ec._TokenBalance_chainId(ctx, field, obj)
+		case "network":
+			out.Values[i] = ec._TokenBalance_network(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				atomic.AddUint32(&out.Invalids, 1)
 			}
@@ -22741,6 +25816,16 @@ func (ec *executionContext) _TokenBalance(ctx context.Context, sel ast.Selection
 			if out.Values[i] == graphql.Null {
 				atomic.AddUint32(&out.Invalids, 1)
 			}
+		case "formattedAmount":
+			out.Values[i] = ec._TokenBalance_formattedAmount(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "quotes":
+			out.Values[i] = ec._TokenBalance_quotes(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
 		case "createdAt":
 			out.Values[i] = ec._TokenBalance_createdAt(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
@@ -22750,6 +25835,94 @@ func (ec *executionContext) _TokenBalance(ctx context.Context, sel ast.Selection
 			out.Values[i] = ec._TokenBalance_updatedAt(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				atomic.AddUint32(&out.Invalids, 1)
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
+var tokenBalanceConnectionImplementors = []string{"TokenBalanceConnection"}
+
+func (ec *executionContext) _TokenBalanceConnection(ctx context.Context, sel ast.SelectionSet, obj *model.TokenBalanceConnection) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, tokenBalanceConnectionImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("TokenBalanceConnection")
+		case "edges":
+			out.Values[i] = ec._TokenBalanceConnection_edges(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "pageInfo":
+			out.Values[i] = ec._TokenBalanceConnection_pageInfo(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
+var tokenBalanceEdgeImplementors = []string{"TokenBalanceEdge"}
+
+func (ec *executionContext) _TokenBalanceEdge(ctx context.Context, sel ast.SelectionSet, obj *model.TokenBalanceEdge) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, tokenBalanceEdgeImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("TokenBalanceEdge")
+		case "node":
+			out.Values[i] = ec._TokenBalanceEdge_node(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "cursor":
+			out.Values[i] = ec._TokenBalanceEdge_cursor(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
 			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
@@ -22905,7 +26078,7 @@ func (ec *executionContext) _Tx(ctx context.Context, sel ast.SelectionSet, obj *
 	return out
 }
 
-var userImplementors = []string{"User", "Node", "UserOrEVMAccount", "PoolOrUserOrEVMAccount", "UserResult"}
+var userImplementors = []string{"User", "PoolOrUserOrEVMAccount", "Node", "UserOrEVMAccount", "UserResult"}
 
 func (ec *executionContext) _User(ctx context.Context, sel ast.SelectionSet, obj *model.User) graphql.Marshaler {
 	fields := graphql.CollectFields(ec.OperationContext, sel, userImplementors)
@@ -22924,13 +26097,16 @@ func (ec *executionContext) _User(ctx context.Context, sel ast.SelectionSet, obj
 		case "roles":
 			field := field
 
-			innerFunc := func(ctx context.Context, _ *graphql.FieldSet) (res graphql.Marshaler) {
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
 				defer func() {
 					if r := recover(); r != nil {
 						ec.Error(ctx, ec.Recover(ctx, r))
 					}
 				}()
 				res = ec._User_roles(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
 				return res
 			}
 
@@ -22957,13 +26133,16 @@ func (ec *executionContext) _User(ctx context.Context, sel ast.SelectionSet, obj
 		case "pools":
 			field := field
 
-			innerFunc := func(ctx context.Context, _ *graphql.FieldSet) (res graphql.Marshaler) {
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
 				defer func() {
 					if r := recover(); r != nil {
 						ec.Error(ctx, ec.Recover(ctx, r))
 					}
 				}()
 				res = ec._User_pools(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
 				return res
 			}
 
@@ -22987,6 +26166,50 @@ func (ec *executionContext) _User(ctx context.Context, sel ast.SelectionSet, obj
 			}
 
 			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
+var userConnectionImplementors = []string{"UserConnection"}
+
+func (ec *executionContext) _UserConnection(ctx context.Context, sel ast.SelectionSet, obj *model.UserConnection) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, userConnectionImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("UserConnection")
+		case "edges":
+			out.Values[i] = ec._UserConnection_edges(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "pageInfo":
+			out.Values[i] = ec._UserConnection_pageInfo(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -23059,8 +26282,14 @@ func (ec *executionContext) _UserEdge(ctx context.Context, sel ast.SelectionSet,
 			out.Values[i] = graphql.MarshalString("UserEdge")
 		case "node":
 			out.Values[i] = ec._UserEdge_node(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
 		case "cursor":
 			out.Values[i] = ec._UserEdge_cursor(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -23125,42 +26354,6 @@ func (ec *executionContext) _UserRegisterPayload(ctx context.Context, sel ast.Se
 	return out
 }
 
-var userSearchResultImplementors = []string{"UserSearchResult"}
-
-func (ec *executionContext) _UserSearchResult(ctx context.Context, sel ast.SelectionSet, obj *model.UserSearchResult) graphql.Marshaler {
-	fields := graphql.CollectFields(ec.OperationContext, sel, userSearchResultImplementors)
-
-	out := graphql.NewFieldSet(fields)
-	deferred := make(map[string]*graphql.FieldSet)
-	for i, field := range fields {
-		switch field.Name {
-		case "__typename":
-			out.Values[i] = graphql.MarshalString("UserSearchResult")
-		case "user":
-			out.Values[i] = ec._UserSearchResult_user(ctx, field, obj)
-		default:
-			panic("unknown field " + strconv.Quote(field.Name))
-		}
-	}
-	out.Dispatch(ctx)
-	if out.Invalids > 0 {
-		return graphql.Null
-	}
-
-	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
-
-	for label, dfs := range deferred {
-		ec.processDeferredGroup(graphql.DeferredGroup{
-			Label:    label,
-			Path:     graphql.GetPath(ctx),
-			FieldSet: dfs,
-			Context:  ctx,
-		})
-	}
-
-	return out
-}
-
 var userUpdatePayloadImplementors = []string{"UserUpdatePayload", "UserUpdateResult"}
 
 func (ec *executionContext) _UserUpdatePayload(ctx context.Context, sel ast.SelectionSet, obj *model.UserUpdatePayload) graphql.Marshaler {
@@ -23174,47 +26367,6 @@ func (ec *executionContext) _UserUpdatePayload(ctx context.Context, sel ast.Sele
 			out.Values[i] = graphql.MarshalString("UserUpdatePayload")
 		case "user":
 			out.Values[i] = ec._UserUpdatePayload_user(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				out.Invalids++
-			}
-		default:
-			panic("unknown field " + strconv.Quote(field.Name))
-		}
-	}
-	out.Dispatch(ctx)
-	if out.Invalids > 0 {
-		return graphql.Null
-	}
-
-	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
-
-	for label, dfs := range deferred {
-		ec.processDeferredGroup(graphql.DeferredGroup{
-			Label:    label,
-			Path:     graphql.GetPath(ctx),
-			FieldSet: dfs,
-			Context:  ctx,
-		})
-	}
-
-	return out
-}
-
-var usersConnectionImplementors = []string{"UsersConnection"}
-
-func (ec *executionContext) _UsersConnection(ctx context.Context, sel ast.SelectionSet, obj *model.UsersConnection) graphql.Marshaler {
-	fields := graphql.CollectFields(ec.OperationContext, sel, usersConnectionImplementors)
-
-	out := graphql.NewFieldSet(fields)
-	deferred := make(map[string]*graphql.FieldSet)
-	for i, field := range fields {
-		switch field.Name {
-		case "__typename":
-			out.Values[i] = graphql.MarshalString("UsersConnection")
-		case "edges":
-			out.Values[i] = ec._UsersConnection_edges(ctx, field, obj)
-		case "pageInfo":
-			out.Values[i] = ec._UsersConnection_pageInfo(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
@@ -23440,6 +26592,94 @@ func (ec *executionContext) _Withdrawal(ctx context.Context, sel ast.SelectionSe
 			out.Values[i] = ec._Withdrawal_updatedAt(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				atomic.AddUint32(&out.Invalids, 1)
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
+var withdrawalConnectionImplementors = []string{"WithdrawalConnection"}
+
+func (ec *executionContext) _WithdrawalConnection(ctx context.Context, sel ast.SelectionSet, obj *model.WithdrawalConnection) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, withdrawalConnectionImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("WithdrawalConnection")
+		case "edges":
+			out.Values[i] = ec._WithdrawalConnection_edges(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "pageInfo":
+			out.Values[i] = ec._WithdrawalConnection_pageInfo(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
+var withdrawalEdgeImplementors = []string{"WithdrawalEdge"}
+
+func (ec *executionContext) _WithdrawalEdge(ctx context.Context, sel ast.SelectionSet, obj *model.WithdrawalEdge) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, withdrawalEdgeImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("WithdrawalEdge")
+		case "node":
+			out.Values[i] = ec._WithdrawalEdge_node(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "cursor":
+			out.Values[i] = ec._WithdrawalEdge_cursor(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
 			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
@@ -24122,45 +27362,41 @@ func (ec *executionContext) marshalNClaimUpdateResult2githubᚗcomᚋmutualsᚋg
 	return ec._ClaimUpdateResult(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalNDeposit2ᚕᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐDeposit(ctx context.Context, sel ast.SelectionSet, v []*model.Deposit) graphql.Marshaler {
-	ret := make(graphql.Array, len(v))
-	var wg sync.WaitGroup
-	isLen1 := len(v) == 1
-	if !isLen1 {
-		wg.Add(len(v))
-	}
-	for i := range v {
-		i := i
-		fc := &graphql.FieldContext{
-			Index:  &i,
-			Result: &v[i],
-		}
-		ctx := graphql.WithFieldContext(ctx, fc)
-		f := func(i int) {
-			defer func() {
-				if r := recover(); r != nil {
-					ec.Error(ctx, ec.Recover(ctx, r))
-					ret = nil
-				}
-			}()
-			if !isLen1 {
-				defer wg.Done()
-			}
-			ret[i] = ec.marshalODeposit2ᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐDeposit(ctx, sel, v[i])
-		}
-		if isLen1 {
-			f(i)
-		} else {
-			go f(i)
-		}
-
-	}
-	wg.Wait()
-
-	return ret
+func (ec *executionContext) unmarshalNCurrency2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋserviceᚋpersistᚐCurrency(ctx context.Context, v interface{}) (persist.Currency, error) {
+	var res persist.Currency
+	err := res.UnmarshalGQL(v)
+	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) marshalNDeposit2ᚕᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐDepositᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.Deposit) graphql.Marshaler {
+func (ec *executionContext) marshalNCurrency2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋserviceᚋpersistᚐCurrency(ctx context.Context, sel ast.SelectionSet, v persist.Currency) graphql.Marshaler {
+	return v
+}
+
+func (ec *executionContext) marshalNDeposit2ᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐDeposit(ctx context.Context, sel ast.SelectionSet, v *model.Deposit) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._Deposit(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalNDepositConnection2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐDepositConnection(ctx context.Context, sel ast.SelectionSet, v model.DepositConnection) graphql.Marshaler {
+	return ec._DepositConnection(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNDepositConnection2ᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐDepositConnection(ctx context.Context, sel ast.SelectionSet, v *model.DepositConnection) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._DepositConnection(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalNDepositEdge2ᚕᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐDepositEdgeᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.DepositEdge) graphql.Marshaler {
 	ret := make(graphql.Array, len(v))
 	var wg sync.WaitGroup
 	isLen1 := len(v) == 1
@@ -24184,7 +27420,7 @@ func (ec *executionContext) marshalNDeposit2ᚕᚖgithubᚗcomᚋmutualsᚋgoᚑ
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalNDeposit2ᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐDeposit(ctx, sel, v[i])
+			ret[i] = ec.marshalNDepositEdge2ᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐDepositEdge(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)
@@ -24204,14 +27440,14 @@ func (ec *executionContext) marshalNDeposit2ᚕᚖgithubᚗcomᚋmutualsᚋgoᚑ
 	return ret
 }
 
-func (ec *executionContext) marshalNDeposit2ᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐDeposit(ctx context.Context, sel ast.SelectionSet, v *model.Deposit) graphql.Marshaler {
+func (ec *executionContext) marshalNDepositEdge2ᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐDepositEdge(ctx context.Context, sel ast.SelectionSet, v *model.DepositEdge) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
 		}
 		return graphql.Null
 	}
-	return ec._Deposit(ctx, sel, v)
+	return ec._DepositEdge(ctx, sel, v)
 }
 
 func (ec *executionContext) marshalNEVMAccount2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐEVMAccount(ctx context.Context, sel ast.SelectionSet, v model.EVMAccount) graphql.Marshaler {
@@ -24266,22 +27502,6 @@ func (ec *executionContext) marshalNFloat2float64(ctx context.Context, sel ast.S
 		}
 	}
 	return graphql.WrapContextMarshaler(ctx, res)
-}
-
-func (ec *executionContext) unmarshalNHexString2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋserviceᚋpersistᚐHexString(ctx context.Context, v interface{}) (persist.HexString, error) {
-	tmp, err := graphql.UnmarshalString(v)
-	res := persist.HexString(tmp)
-	return res, graphql.ErrorOnPath(ctx, err)
-}
-
-func (ec *executionContext) marshalNHexString2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋserviceᚋpersistᚐHexString(ctx context.Context, sel ast.SelectionSet, v persist.HexString) graphql.Marshaler {
-	res := graphql.MarshalString(string(v))
-	if res == graphql.Null {
-		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
-		}
-	}
-	return res
 }
 
 func (ec *executionContext) unmarshalNID2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐGqlID(ctx context.Context, v interface{}) (model.GqlID, error) {
@@ -24379,6 +27599,16 @@ func (ec *executionContext) marshalNModuleType2githubᚗcomᚋmutualsᚋgoᚑmut
 	return v
 }
 
+func (ec *executionContext) unmarshalNNetwork2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋserviceᚋpersistᚐChain(ctx context.Context, v interface{}) (persist.Chain, error) {
+	var res persist.Chain
+	err := res.UnmarshalGQL(v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNNetwork2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋserviceᚋpersistᚐChain(ctx context.Context, sel ast.SelectionSet, v persist.Chain) graphql.Marshaler {
+	return v
+}
+
 func (ec *executionContext) marshalNPageInfo2ᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐPageInfo(ctx context.Context, sel ast.SelectionSet, v *model.PageInfo) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
@@ -24391,6 +27621,50 @@ func (ec *executionContext) marshalNPageInfo2ᚖgithubᚗcomᚋmutualsᚋgoᚑmu
 
 func (ec *executionContext) marshalNPool2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐPool(ctx context.Context, sel ast.SelectionSet, v model.Pool) graphql.Marshaler {
 	return ec._Pool(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNPool2ᚕᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐPoolᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.Pool) graphql.Marshaler {
+	ret := make(graphql.Array, len(v))
+	var wg sync.WaitGroup
+	isLen1 := len(v) == 1
+	if !isLen1 {
+		wg.Add(len(v))
+	}
+	for i := range v {
+		i := i
+		fc := &graphql.FieldContext{
+			Index:  &i,
+			Result: &v[i],
+		}
+		ctx := graphql.WithFieldContext(ctx, fc)
+		f := func(i int) {
+			defer func() {
+				if r := recover(); r != nil {
+					ec.Error(ctx, ec.Recover(ctx, r))
+					ret = nil
+				}
+			}()
+			if !isLen1 {
+				defer wg.Done()
+			}
+			ret[i] = ec.marshalNPool2ᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐPool(ctx, sel, v[i])
+		}
+		if isLen1 {
+			f(i)
+		} else {
+			go f(i)
+		}
+
+	}
+	wg.Wait()
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
 }
 
 func (ec *executionContext) marshalNPool2ᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐPool(ctx context.Context, sel ast.SelectionSet, v *model.Pool) graphql.Marshaler {
@@ -24417,6 +27691,20 @@ func (ec *executionContext) marshalNPoolBalance2ᚖgithubᚗcomᚋmutualsᚋgo�
 	return ec._PoolBalance(ctx, sel, v)
 }
 
+func (ec *executionContext) marshalNPoolConnection2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐPoolConnection(ctx context.Context, sel ast.SelectionSet, v model.PoolConnection) graphql.Marshaler {
+	return ec._PoolConnection(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNPoolConnection2ᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐPoolConnection(ctx context.Context, sel ast.SelectionSet, v *model.PoolConnection) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._PoolConnection(ctx, sel, v)
+}
+
 func (ec *executionContext) unmarshalNPoolCreateInput2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐPoolCreateInput(ctx context.Context, v interface{}) (model.PoolCreateInput, error) {
 	res, err := ec.unmarshalInputPoolCreateInput(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
@@ -24432,7 +27720,31 @@ func (ec *executionContext) marshalNPoolCreateResult2githubᚗcomᚋmutualsᚋgo
 	return ec._PoolCreateResult(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalNPoolDayBalance2ᚕᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐPoolDayBalanceᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.PoolDayBalance) graphql.Marshaler {
+func (ec *executionContext) marshalNPoolDayBalance2ᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐPoolDayBalance(ctx context.Context, sel ast.SelectionSet, v *model.PoolDayBalance) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._PoolDayBalance(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalNPoolDayBalanceConnection2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐPoolDayBalanceConnection(ctx context.Context, sel ast.SelectionSet, v model.PoolDayBalanceConnection) graphql.Marshaler {
+	return ec._PoolDayBalanceConnection(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNPoolDayBalanceConnection2ᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐPoolDayBalanceConnection(ctx context.Context, sel ast.SelectionSet, v *model.PoolDayBalanceConnection) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._PoolDayBalanceConnection(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalNPoolDayBalanceEdge2ᚕᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐPoolDayBalanceEdgeᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.PoolDayBalanceEdge) graphql.Marshaler {
 	ret := make(graphql.Array, len(v))
 	var wg sync.WaitGroup
 	isLen1 := len(v) == 1
@@ -24456,7 +27768,7 @@ func (ec *executionContext) marshalNPoolDayBalance2ᚕᚖgithubᚗcomᚋmutuals�
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalNPoolDayBalance2ᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐPoolDayBalance(ctx, sel, v[i])
+			ret[i] = ec.marshalNPoolDayBalanceEdge2ᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐPoolDayBalanceEdge(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)
@@ -24476,14 +27788,14 @@ func (ec *executionContext) marshalNPoolDayBalance2ᚕᚖgithubᚗcomᚋmutuals�
 	return ret
 }
 
-func (ec *executionContext) marshalNPoolDayBalance2ᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐPoolDayBalance(ctx context.Context, sel ast.SelectionSet, v *model.PoolDayBalance) graphql.Marshaler {
+func (ec *executionContext) marshalNPoolDayBalanceEdge2ᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐPoolDayBalanceEdge(ctx context.Context, sel ast.SelectionSet, v *model.PoolDayBalanceEdge) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
 		}
 		return graphql.Null
 	}
-	return ec._PoolDayBalance(ctx, sel, v)
+	return ec._PoolDayBalanceEdge(ctx, sel, v)
 }
 
 func (ec *executionContext) marshalNPoolDeleteResult2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐPoolDeleteResult(ctx context.Context, sel ast.SelectionSet, v model.PoolDeleteResult) graphql.Marshaler {
@@ -24494,6 +27806,60 @@ func (ec *executionContext) marshalNPoolDeleteResult2githubᚗcomᚋmutualsᚋgo
 		return graphql.Null
 	}
 	return ec._PoolDeleteResult(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalNPoolEdge2ᚕᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐPoolEdgeᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.PoolEdge) graphql.Marshaler {
+	ret := make(graphql.Array, len(v))
+	var wg sync.WaitGroup
+	isLen1 := len(v) == 1
+	if !isLen1 {
+		wg.Add(len(v))
+	}
+	for i := range v {
+		i := i
+		fc := &graphql.FieldContext{
+			Index:  &i,
+			Result: &v[i],
+		}
+		ctx := graphql.WithFieldContext(ctx, fc)
+		f := func(i int) {
+			defer func() {
+				if r := recover(); r != nil {
+					ec.Error(ctx, ec.Recover(ctx, r))
+					ret = nil
+				}
+			}()
+			if !isLen1 {
+				defer wg.Done()
+			}
+			ret[i] = ec.marshalNPoolEdge2ᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐPoolEdge(ctx, sel, v[i])
+		}
+		if isLen1 {
+			f(i)
+		} else {
+			go f(i)
+		}
+
+	}
+	wg.Wait()
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
+}
+
+func (ec *executionContext) marshalNPoolEdge2ᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐPoolEdge(ctx context.Context, sel ast.SelectionSet, v *model.PoolEdge) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._PoolEdge(ctx, sel, v)
 }
 
 func (ec *executionContext) marshalNPoolFactory2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐPoolFactory(ctx context.Context, sel ast.SelectionSet, v model.PoolFactory) graphql.Marshaler {
@@ -24510,7 +27876,31 @@ func (ec *executionContext) marshalNPoolFactory2ᚖgithubᚗcomᚋmutualsᚋgo�
 	return ec._PoolFactory(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalNPoolHourBalance2ᚕᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐPoolHourBalanceᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.PoolHourBalance) graphql.Marshaler {
+func (ec *executionContext) marshalNPoolHourBalance2ᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐPoolHourBalance(ctx context.Context, sel ast.SelectionSet, v *model.PoolHourBalance) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._PoolHourBalance(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalNPoolHourBalanceConnection2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐPoolHourBalanceConnection(ctx context.Context, sel ast.SelectionSet, v model.PoolHourBalanceConnection) graphql.Marshaler {
+	return ec._PoolHourBalanceConnection(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNPoolHourBalanceConnection2ᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐPoolHourBalanceConnection(ctx context.Context, sel ast.SelectionSet, v *model.PoolHourBalanceConnection) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._PoolHourBalanceConnection(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalNPoolHourBalanceEdge2ᚕᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐPoolHourBalanceEdgeᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.PoolHourBalanceEdge) graphql.Marshaler {
 	ret := make(graphql.Array, len(v))
 	var wg sync.WaitGroup
 	isLen1 := len(v) == 1
@@ -24534,7 +27924,7 @@ func (ec *executionContext) marshalNPoolHourBalance2ᚕᚖgithubᚗcomᚋmutuals
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalNPoolHourBalance2ᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐPoolHourBalance(ctx, sel, v[i])
+			ret[i] = ec.marshalNPoolHourBalanceEdge2ᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐPoolHourBalanceEdge(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)
@@ -24554,14 +27944,14 @@ func (ec *executionContext) marshalNPoolHourBalance2ᚕᚖgithubᚗcomᚋmutuals
 	return ret
 }
 
-func (ec *executionContext) marshalNPoolHourBalance2ᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐPoolHourBalance(ctx context.Context, sel ast.SelectionSet, v *model.PoolHourBalance) graphql.Marshaler {
+func (ec *executionContext) marshalNPoolHourBalanceEdge2ᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐPoolHourBalanceEdge(ctx context.Context, sel ast.SelectionSet, v *model.PoolHourBalanceEdge) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
 		}
 		return graphql.Null
 	}
-	return ec._PoolHourBalance(ctx, sel, v)
+	return ec._PoolHourBalanceEdge(ctx, sel, v)
 }
 
 func (ec *executionContext) marshalNPoolOrUserOrEVMAccount2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐPoolOrUserOrEVMAccount(ctx context.Context, sel ast.SelectionSet, v model.PoolOrUserOrEVMAccount) graphql.Marshaler {
@@ -24582,16 +27972,6 @@ func (ec *executionContext) marshalNPoolResult2githubᚗcomᚋmutualsᚋgoᚑmut
 		return graphql.Null
 	}
 	return ec._PoolResult(ctx, sel, v)
-}
-
-func (ec *executionContext) marshalNPoolSearchResult2ᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐPoolSearchResult(ctx context.Context, sel ast.SelectionSet, v *model.PoolSearchResult) graphql.Marshaler {
-	if v == nil {
-		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
-		}
-		return graphql.Null
-	}
-	return ec._PoolSearchResult(ctx, sel, v)
 }
 
 func (ec *executionContext) unmarshalNPoolStatus2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐPoolStatus(ctx context.Context, v interface{}) (model.PoolStatus, error) {
@@ -24619,14 +27999,135 @@ func (ec *executionContext) marshalNPoolUpdateResult2githubᚗcomᚋmutualsᚋgo
 	return ec._PoolUpdateResult(ctx, sel, v)
 }
 
+func (ec *executionContext) marshalNQuote2ᚕᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐQuoteᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.Quote) graphql.Marshaler {
+	ret := make(graphql.Array, len(v))
+	var wg sync.WaitGroup
+	isLen1 := len(v) == 1
+	if !isLen1 {
+		wg.Add(len(v))
+	}
+	for i := range v {
+		i := i
+		fc := &graphql.FieldContext{
+			Index:  &i,
+			Result: &v[i],
+		}
+		ctx := graphql.WithFieldContext(ctx, fc)
+		f := func(i int) {
+			defer func() {
+				if r := recover(); r != nil {
+					ec.Error(ctx, ec.Recover(ctx, r))
+					ret = nil
+				}
+			}()
+			if !isLen1 {
+				defer wg.Done()
+			}
+			ret[i] = ec.marshalNQuote2ᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐQuote(ctx, sel, v[i])
+		}
+		if isLen1 {
+			f(i)
+		} else {
+			go f(i)
+		}
+
+	}
+	wg.Wait()
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
+}
+
+func (ec *executionContext) marshalNQuote2ᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐQuote(ctx context.Context, sel ast.SelectionSet, v *model.Quote) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._Quote(ctx, sel, v)
+}
+
 func (ec *executionContext) unmarshalNRole2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋserviceᚋpersistᚐRole(ctx context.Context, v interface{}) (persist.Role, error) {
-	var res persist.Role
-	err := res.UnmarshalGQL(v)
+	tmp, err := graphql.UnmarshalString(v)
+	res := persist.Role(tmp)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
 func (ec *executionContext) marshalNRole2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋserviceᚋpersistᚐRole(ctx context.Context, sel ast.SelectionSet, v persist.Role) graphql.Marshaler {
-	return v
+	res := graphql.MarshalString(string(v))
+	if res == graphql.Null {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+	}
+	return res
+}
+
+func (ec *executionContext) unmarshalNRole2ᚕgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋserviceᚋpersistᚐRoleᚄ(ctx context.Context, v interface{}) ([]persist.Role, error) {
+	var vSlice []interface{}
+	if v != nil {
+		vSlice = graphql.CoerceList(v)
+	}
+	var err error
+	res := make([]persist.Role, len(vSlice))
+	for i := range vSlice {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithIndex(i))
+		res[i], err = ec.unmarshalNRole2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋserviceᚋpersistᚐRole(ctx, vSlice[i])
+		if err != nil {
+			return nil, err
+		}
+	}
+	return res, nil
+}
+
+func (ec *executionContext) marshalNRole2ᚕgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋserviceᚋpersistᚐRoleᚄ(ctx context.Context, sel ast.SelectionSet, v []persist.Role) graphql.Marshaler {
+	ret := make(graphql.Array, len(v))
+	var wg sync.WaitGroup
+	isLen1 := len(v) == 1
+	if !isLen1 {
+		wg.Add(len(v))
+	}
+	for i := range v {
+		i := i
+		fc := &graphql.FieldContext{
+			Index:  &i,
+			Result: &v[i],
+		}
+		ctx := graphql.WithFieldContext(ctx, fc)
+		f := func(i int) {
+			defer func() {
+				if r := recover(); r != nil {
+					ec.Error(ctx, ec.Recover(ctx, r))
+					ret = nil
+				}
+			}()
+			if !isLen1 {
+				defer wg.Done()
+			}
+			ret[i] = ec.marshalNRole2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋserviceᚋpersistᚐRole(ctx, sel, v[i])
+		}
+		if isLen1 {
+			f(i)
+		} else {
+			go f(i)
+		}
+
+	}
+	wg.Wait()
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
 }
 
 func (ec *executionContext) unmarshalNRoleUpdateInput2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐRoleUpdateInput(ctx context.Context, v interface{}) (model.RoleUpdateInput, error) {
@@ -24750,6 +28251,74 @@ func (ec *executionContext) marshalNTokenBalance2ᚖgithubᚗcomᚋmutualsᚋgo�
 	return ec._TokenBalance(ctx, sel, v)
 }
 
+func (ec *executionContext) marshalNTokenBalanceConnection2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐTokenBalanceConnection(ctx context.Context, sel ast.SelectionSet, v model.TokenBalanceConnection) graphql.Marshaler {
+	return ec._TokenBalanceConnection(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNTokenBalanceConnection2ᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐTokenBalanceConnection(ctx context.Context, sel ast.SelectionSet, v *model.TokenBalanceConnection) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._TokenBalanceConnection(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalNTokenBalanceEdge2ᚕᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐTokenBalanceEdgeᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.TokenBalanceEdge) graphql.Marshaler {
+	ret := make(graphql.Array, len(v))
+	var wg sync.WaitGroup
+	isLen1 := len(v) == 1
+	if !isLen1 {
+		wg.Add(len(v))
+	}
+	for i := range v {
+		i := i
+		fc := &graphql.FieldContext{
+			Index:  &i,
+			Result: &v[i],
+		}
+		ctx := graphql.WithFieldContext(ctx, fc)
+		f := func(i int) {
+			defer func() {
+				if r := recover(); r != nil {
+					ec.Error(ctx, ec.Recover(ctx, r))
+					ret = nil
+				}
+			}()
+			if !isLen1 {
+				defer wg.Done()
+			}
+			ret[i] = ec.marshalNTokenBalanceEdge2ᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐTokenBalanceEdge(ctx, sel, v[i])
+		}
+		if isLen1 {
+			f(i)
+		} else {
+			go f(i)
+		}
+
+	}
+	wg.Wait()
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
+}
+
+func (ec *executionContext) marshalNTokenBalanceEdge2ᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐTokenBalanceEdge(ctx context.Context, sel ast.SelectionSet, v *model.TokenBalanceEdge) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._TokenBalanceEdge(ctx, sel, v)
+}
+
 func (ec *executionContext) unmarshalNTokenType2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐTokenType(ctx context.Context, v interface{}) (model.TokenType, error) {
 	var res model.TokenType
 	err := res.UnmarshalGQL(v)
@@ -24774,6 +28343,60 @@ func (ec *executionContext) marshalNTx2ᚖgithubᚗcomᚋmutualsᚋgoᚑmutuals�
 	return ec._Tx(ctx, sel, v)
 }
 
+func (ec *executionContext) unmarshalNUInt2562githubᚗcomᚋmutualsᚋgoᚑmutualsᚋserviceᚋpersistᚐUInt256(ctx context.Context, v interface{}) (persist.UInt256, error) {
+	var res persist.UInt256
+	err := res.UnmarshalGQL(v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNUInt2562githubᚗcomᚋmutualsᚋgoᚑmutualsᚋserviceᚋpersistᚐUInt256(ctx context.Context, sel ast.SelectionSet, v persist.UInt256) graphql.Marshaler {
+	return v
+}
+
+func (ec *executionContext) marshalNUser2ᚕᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐUserᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.User) graphql.Marshaler {
+	ret := make(graphql.Array, len(v))
+	var wg sync.WaitGroup
+	isLen1 := len(v) == 1
+	if !isLen1 {
+		wg.Add(len(v))
+	}
+	for i := range v {
+		i := i
+		fc := &graphql.FieldContext{
+			Index:  &i,
+			Result: &v[i],
+		}
+		ctx := graphql.WithFieldContext(ctx, fc)
+		f := func(i int) {
+			defer func() {
+				if r := recover(); r != nil {
+					ec.Error(ctx, ec.Recover(ctx, r))
+					ret = nil
+				}
+			}()
+			if !isLen1 {
+				defer wg.Done()
+			}
+			ret[i] = ec.marshalNUser2ᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐUser(ctx, sel, v[i])
+		}
+		if isLen1 {
+			f(i)
+		} else {
+			go f(i)
+		}
+
+	}
+	wg.Wait()
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
+}
+
 func (ec *executionContext) marshalNUser2ᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐUser(ctx context.Context, sel ast.SelectionSet, v *model.User) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
@@ -24784,6 +28407,20 @@ func (ec *executionContext) marshalNUser2ᚖgithubᚗcomᚋmutualsᚋgoᚑmutual
 	return ec._User(ctx, sel, v)
 }
 
+func (ec *executionContext) marshalNUserConnection2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐUserConnection(ctx context.Context, sel ast.SelectionSet, v model.UserConnection) graphql.Marshaler {
+	return ec._UserConnection(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNUserConnection2ᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐUserConnection(ctx context.Context, sel ast.SelectionSet, v *model.UserConnection) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._UserConnection(ctx, sel, v)
+}
+
 func (ec *executionContext) marshalNUserDeleteResult2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐUserDeleteResult(ctx context.Context, sel ast.SelectionSet, v model.UserDeleteResult) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
@@ -24792,6 +28429,60 @@ func (ec *executionContext) marshalNUserDeleteResult2githubᚗcomᚋmutualsᚋgo
 		return graphql.Null
 	}
 	return ec._UserDeleteResult(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalNUserEdge2ᚕᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐUserEdgeᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.UserEdge) graphql.Marshaler {
+	ret := make(graphql.Array, len(v))
+	var wg sync.WaitGroup
+	isLen1 := len(v) == 1
+	if !isLen1 {
+		wg.Add(len(v))
+	}
+	for i := range v {
+		i := i
+		fc := &graphql.FieldContext{
+			Index:  &i,
+			Result: &v[i],
+		}
+		ctx := graphql.WithFieldContext(ctx, fc)
+		f := func(i int) {
+			defer func() {
+				if r := recover(); r != nil {
+					ec.Error(ctx, ec.Recover(ctx, r))
+					ret = nil
+				}
+			}()
+			if !isLen1 {
+				defer wg.Done()
+			}
+			ret[i] = ec.marshalNUserEdge2ᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐUserEdge(ctx, sel, v[i])
+		}
+		if isLen1 {
+			f(i)
+		} else {
+			go f(i)
+		}
+
+	}
+	wg.Wait()
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
+}
+
+func (ec *executionContext) marshalNUserEdge2ᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐUserEdge(ctx context.Context, sel ast.SelectionSet, v *model.UserEdge) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._UserEdge(ctx, sel, v)
 }
 
 func (ec *executionContext) marshalNUserOrEVMAccount2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐUserOrEVMAccount(ctx context.Context, sel ast.SelectionSet, v model.UserOrEVMAccount) graphql.Marshaler {
@@ -24824,16 +28515,6 @@ func (ec *executionContext) marshalNUserResult2githubᚗcomᚋmutualsᚋgoᚑmut
 	return ec._UserResult(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalNUserSearchResult2ᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐUserSearchResult(ctx context.Context, sel ast.SelectionSet, v *model.UserSearchResult) graphql.Marshaler {
-	if v == nil {
-		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
-		}
-		return graphql.Null
-	}
-	return ec._UserSearchResult(ctx, sel, v)
-}
-
 func (ec *executionContext) unmarshalNUserUpdateInput2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐUserUpdateInput(ctx context.Context, v interface{}) (model.UserUpdateInput, error) {
 	res, err := ec.unmarshalInputUserUpdateInput(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
@@ -24849,45 +28530,31 @@ func (ec *executionContext) marshalNUserUpdateResult2githubᚗcomᚋmutualsᚋgo
 	return ec._UserUpdateResult(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalNWithdrawal2ᚕᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐWithdrawal(ctx context.Context, sel ast.SelectionSet, v []*model.Withdrawal) graphql.Marshaler {
-	ret := make(graphql.Array, len(v))
-	var wg sync.WaitGroup
-	isLen1 := len(v) == 1
-	if !isLen1 {
-		wg.Add(len(v))
+func (ec *executionContext) marshalNWithdrawal2ᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐWithdrawal(ctx context.Context, sel ast.SelectionSet, v *model.Withdrawal) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
 	}
-	for i := range v {
-		i := i
-		fc := &graphql.FieldContext{
-			Index:  &i,
-			Result: &v[i],
-		}
-		ctx := graphql.WithFieldContext(ctx, fc)
-		f := func(i int) {
-			defer func() {
-				if r := recover(); r != nil {
-					ec.Error(ctx, ec.Recover(ctx, r))
-					ret = nil
-				}
-			}()
-			if !isLen1 {
-				defer wg.Done()
-			}
-			ret[i] = ec.marshalOWithdrawal2ᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐWithdrawal(ctx, sel, v[i])
-		}
-		if isLen1 {
-			f(i)
-		} else {
-			go f(i)
-		}
-
-	}
-	wg.Wait()
-
-	return ret
+	return ec._Withdrawal(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalNWithdrawal2ᚕᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐWithdrawalᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.Withdrawal) graphql.Marshaler {
+func (ec *executionContext) marshalNWithdrawalConnection2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐWithdrawalConnection(ctx context.Context, sel ast.SelectionSet, v model.WithdrawalConnection) graphql.Marshaler {
+	return ec._WithdrawalConnection(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNWithdrawalConnection2ᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐWithdrawalConnection(ctx context.Context, sel ast.SelectionSet, v *model.WithdrawalConnection) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._WithdrawalConnection(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalNWithdrawalEdge2ᚕᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐWithdrawalEdgeᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.WithdrawalEdge) graphql.Marshaler {
 	ret := make(graphql.Array, len(v))
 	var wg sync.WaitGroup
 	isLen1 := len(v) == 1
@@ -24911,7 +28578,7 @@ func (ec *executionContext) marshalNWithdrawal2ᚕᚖgithubᚗcomᚋmutualsᚋgo
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalNWithdrawal2ᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐWithdrawal(ctx, sel, v[i])
+			ret[i] = ec.marshalNWithdrawalEdge2ᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐWithdrawalEdge(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)
@@ -24931,14 +28598,14 @@ func (ec *executionContext) marshalNWithdrawal2ᚕᚖgithubᚗcomᚋmutualsᚋgo
 	return ret
 }
 
-func (ec *executionContext) marshalNWithdrawal2ᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐWithdrawal(ctx context.Context, sel ast.SelectionSet, v *model.Withdrawal) graphql.Marshaler {
+func (ec *executionContext) marshalNWithdrawalEdge2ᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐWithdrawalEdge(ctx context.Context, sel ast.SelectionSet, v *model.WithdrawalEdge) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
 		}
 		return graphql.Null
 	}
-	return ec._Withdrawal(ctx, sel, v)
+	return ec._WithdrawalEdge(ctx, sel, v)
 }
 
 func (ec *executionContext) marshalN_Service2githubᚗcomᚋ99designsᚋgqlgenᚋpluginᚋfederationᚋfedruntimeᚐService(ctx context.Context, sel ast.SelectionSet, v fedruntime.Service) graphql.Marshaler {
@@ -25356,6 +29023,23 @@ func (ec *executionContext) marshalNfederation__Scope2ᚕᚕstringᚄ(ctx contex
 	return ret
 }
 
+func (ec *executionContext) unmarshalOAddress2ᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋserviceᚋpersistᚐAddress(ctx context.Context, v interface{}) (*persist.Address, error) {
+	if v == nil {
+		return nil, nil
+	}
+	tmp, err := graphql.UnmarshalString(v)
+	res := persist.Address(tmp)
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalOAddress2ᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋserviceᚋpersistᚐAddress(ctx context.Context, sel ast.SelectionSet, v *persist.Address) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	res := graphql.MarshalString(string(*v))
+	return res
+}
+
 func (ec *executionContext) unmarshalOBoolean2bool(ctx context.Context, v interface{}) (bool, error) {
 	res, err := graphql.UnmarshalBoolean(v)
 	return res, graphql.ErrorOnPath(ctx, err)
@@ -25380,53 +29064,6 @@ func (ec *executionContext) marshalOBoolean2ᚖbool(ctx context.Context, sel ast
 	}
 	res := graphql.MarshalBoolean(*v)
 	return res
-}
-
-func (ec *executionContext) marshalOClaim2ᚕᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐClaimᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.Claim) graphql.Marshaler {
-	if v == nil {
-		return graphql.Null
-	}
-	ret := make(graphql.Array, len(v))
-	var wg sync.WaitGroup
-	isLen1 := len(v) == 1
-	if !isLen1 {
-		wg.Add(len(v))
-	}
-	for i := range v {
-		i := i
-		fc := &graphql.FieldContext{
-			Index:  &i,
-			Result: &v[i],
-		}
-		ctx := graphql.WithFieldContext(ctx, fc)
-		f := func(i int) {
-			defer func() {
-				if r := recover(); r != nil {
-					ec.Error(ctx, ec.Recover(ctx, r))
-					ret = nil
-				}
-			}()
-			if !isLen1 {
-				defer wg.Done()
-			}
-			ret[i] = ec.marshalNClaim2ᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐClaim(ctx, sel, v[i])
-		}
-		if isLen1 {
-			f(i)
-		} else {
-			go f(i)
-		}
-
-	}
-	wg.Wait()
-
-	for _, e := range ret {
-		if e == graphql.Null {
-			return graphql.Null
-		}
-	}
-
-	return ret
 }
 
 func (ec *executionContext) marshalOClaim2ᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐClaim(ctx context.Context, sel ast.SelectionSet, v *model.Claim) graphql.Marshaler {
@@ -25474,13 +29111,6 @@ func (ec *executionContext) unmarshalOClaimUpdateInput2ᚕᚖgithubᚗcomᚋmutu
 		}
 	}
 	return res, nil
-}
-
-func (ec *executionContext) marshalODeposit2ᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐDeposit(ctx context.Context, sel ast.SelectionSet, v *model.Deposit) graphql.Marshaler {
-	if v == nil {
-		return graphql.Null
-	}
-	return ec._Deposit(ctx, sel, v)
 }
 
 func (ec *executionContext) unmarshalOErrorPolicyEnum2ᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐErrorPolicyEnum(ctx context.Context, v interface{}) (*model.ErrorPolicyEnum, error) {
@@ -25608,153 +29238,11 @@ func (ec *executionContext) marshalONode2githubᚗcomᚋmutualsᚋgoᚑmutuals�
 	return ec._Node(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalOPool2ᚕᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐPool(ctx context.Context, sel ast.SelectionSet, v []*model.Pool) graphql.Marshaler {
-	if v == nil {
-		return graphql.Null
-	}
-	ret := make(graphql.Array, len(v))
-	var wg sync.WaitGroup
-	isLen1 := len(v) == 1
-	if !isLen1 {
-		wg.Add(len(v))
-	}
-	for i := range v {
-		i := i
-		fc := &graphql.FieldContext{
-			Index:  &i,
-			Result: &v[i],
-		}
-		ctx := graphql.WithFieldContext(ctx, fc)
-		f := func(i int) {
-			defer func() {
-				if r := recover(); r != nil {
-					ec.Error(ctx, ec.Recover(ctx, r))
-					ret = nil
-				}
-			}()
-			if !isLen1 {
-				defer wg.Done()
-			}
-			ret[i] = ec.marshalOPool2ᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐPool(ctx, sel, v[i])
-		}
-		if isLen1 {
-			f(i)
-		} else {
-			go f(i)
-		}
-
-	}
-	wg.Wait()
-
-	return ret
-}
-
-func (ec *executionContext) marshalOPool2ᚕᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐPoolᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.Pool) graphql.Marshaler {
-	if v == nil {
-		return graphql.Null
-	}
-	ret := make(graphql.Array, len(v))
-	var wg sync.WaitGroup
-	isLen1 := len(v) == 1
-	if !isLen1 {
-		wg.Add(len(v))
-	}
-	for i := range v {
-		i := i
-		fc := &graphql.FieldContext{
-			Index:  &i,
-			Result: &v[i],
-		}
-		ctx := graphql.WithFieldContext(ctx, fc)
-		f := func(i int) {
-			defer func() {
-				if r := recover(); r != nil {
-					ec.Error(ctx, ec.Recover(ctx, r))
-					ret = nil
-				}
-			}()
-			if !isLen1 {
-				defer wg.Done()
-			}
-			ret[i] = ec.marshalNPool2ᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐPool(ctx, sel, v[i])
-		}
-		if isLen1 {
-			f(i)
-		} else {
-			go f(i)
-		}
-
-	}
-	wg.Wait()
-
-	for _, e := range ret {
-		if e == graphql.Null {
-			return graphql.Null
-		}
-	}
-
-	return ret
-}
-
-func (ec *executionContext) marshalOPool2ᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐPool(ctx context.Context, sel ast.SelectionSet, v *model.Pool) graphql.Marshaler {
-	if v == nil {
-		return graphql.Null
-	}
-	return ec._Pool(ctx, sel, v)
-}
-
 func (ec *executionContext) marshalOPoolContract2ᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐPoolContract(ctx context.Context, sel ast.SelectionSet, v *model.PoolContract) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec._PoolContract(ctx, sel, v)
-}
-
-func (ec *executionContext) marshalOPoolSearchResult2ᚕᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐPoolSearchResultᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.PoolSearchResult) graphql.Marshaler {
-	if v == nil {
-		return graphql.Null
-	}
-	ret := make(graphql.Array, len(v))
-	var wg sync.WaitGroup
-	isLen1 := len(v) == 1
-	if !isLen1 {
-		wg.Add(len(v))
-	}
-	for i := range v {
-		i := i
-		fc := &graphql.FieldContext{
-			Index:  &i,
-			Result: &v[i],
-		}
-		ctx := graphql.WithFieldContext(ctx, fc)
-		f := func(i int) {
-			defer func() {
-				if r := recover(); r != nil {
-					ec.Error(ctx, ec.Recover(ctx, r))
-					ret = nil
-				}
-			}()
-			if !isLen1 {
-				defer wg.Done()
-			}
-			ret[i] = ec.marshalNPoolSearchResult2ᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐPoolSearchResult(ctx, sel, v[i])
-		}
-		if isLen1 {
-			f(i)
-		} else {
-			go f(i)
-		}
-
-	}
-	wg.Wait()
-
-	for _, e := range ret {
-		if e == graphql.Null {
-			return graphql.Null
-		}
-	}
-
-	return ret
 }
 
 func (ec *executionContext) unmarshalORole2ᚕgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋserviceᚋpersistᚐRoleᚄ(ctx context.Context, v interface{}) ([]persist.Role, error) {
@@ -25824,83 +29312,6 @@ func (ec *executionContext) marshalORole2ᚕgithubᚗcomᚋmutualsᚋgoᚑmutual
 	return ret
 }
 
-func (ec *executionContext) unmarshalORole2ᚕᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋserviceᚋpersistᚐRole(ctx context.Context, v interface{}) ([]*persist.Role, error) {
-	if v == nil {
-		return nil, nil
-	}
-	var vSlice []interface{}
-	if v != nil {
-		vSlice = graphql.CoerceList(v)
-	}
-	var err error
-	res := make([]*persist.Role, len(vSlice))
-	for i := range vSlice {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithIndex(i))
-		res[i], err = ec.unmarshalORole2ᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋserviceᚋpersistᚐRole(ctx, vSlice[i])
-		if err != nil {
-			return nil, err
-		}
-	}
-	return res, nil
-}
-
-func (ec *executionContext) marshalORole2ᚕᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋserviceᚋpersistᚐRole(ctx context.Context, sel ast.SelectionSet, v []*persist.Role) graphql.Marshaler {
-	if v == nil {
-		return graphql.Null
-	}
-	ret := make(graphql.Array, len(v))
-	var wg sync.WaitGroup
-	isLen1 := len(v) == 1
-	if !isLen1 {
-		wg.Add(len(v))
-	}
-	for i := range v {
-		i := i
-		fc := &graphql.FieldContext{
-			Index:  &i,
-			Result: &v[i],
-		}
-		ctx := graphql.WithFieldContext(ctx, fc)
-		f := func(i int) {
-			defer func() {
-				if r := recover(); r != nil {
-					ec.Error(ctx, ec.Recover(ctx, r))
-					ret = nil
-				}
-			}()
-			if !isLen1 {
-				defer wg.Done()
-			}
-			ret[i] = ec.marshalORole2ᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋserviceᚋpersistᚐRole(ctx, sel, v[i])
-		}
-		if isLen1 {
-			f(i)
-		} else {
-			go f(i)
-		}
-
-	}
-	wg.Wait()
-
-	return ret
-}
-
-func (ec *executionContext) unmarshalORole2ᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋserviceᚋpersistᚐRole(ctx context.Context, v interface{}) (*persist.Role, error) {
-	if v == nil {
-		return nil, nil
-	}
-	var res = new(persist.Role)
-	err := res.UnmarshalGQL(v)
-	return res, graphql.ErrorOnPath(ctx, err)
-}
-
-func (ec *executionContext) marshalORole2ᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋserviceᚋpersistᚐRole(ctx context.Context, sel ast.SelectionSet, v *persist.Role) graphql.Marshaler {
-	if v == nil {
-		return graphql.Null
-	}
-	return v
-}
-
 func (ec *executionContext) unmarshalOString2string(ctx context.Context, v interface{}) (string, error) {
 	res, err := graphql.UnmarshalString(v)
 	return res, graphql.ErrorOnPath(ctx, err)
@@ -25965,53 +29376,6 @@ func (ec *executionContext) marshalOString2ᚖstring(ctx context.Context, sel as
 	return res
 }
 
-func (ec *executionContext) marshalOTokenBalance2ᚕᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐTokenBalanceᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.TokenBalance) graphql.Marshaler {
-	if v == nil {
-		return graphql.Null
-	}
-	ret := make(graphql.Array, len(v))
-	var wg sync.WaitGroup
-	isLen1 := len(v) == 1
-	if !isLen1 {
-		wg.Add(len(v))
-	}
-	for i := range v {
-		i := i
-		fc := &graphql.FieldContext{
-			Index:  &i,
-			Result: &v[i],
-		}
-		ctx := graphql.WithFieldContext(ctx, fc)
-		f := func(i int) {
-			defer func() {
-				if r := recover(); r != nil {
-					ec.Error(ctx, ec.Recover(ctx, r))
-					ret = nil
-				}
-			}()
-			if !isLen1 {
-				defer wg.Done()
-			}
-			ret[i] = ec.marshalNTokenBalance2ᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐTokenBalance(ctx, sel, v[i])
-		}
-		if isLen1 {
-			f(i)
-		} else {
-			go f(i)
-		}
-
-	}
-	wg.Wait()
-
-	for _, e := range ret {
-		if e == graphql.Null {
-			return graphql.Null
-		}
-	}
-
-	return ret
-}
-
 func (ec *executionContext) marshalOUser2ᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐUser(ctx context.Context, sel ast.SelectionSet, v *model.User) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
@@ -26019,120 +29383,11 @@ func (ec *executionContext) marshalOUser2ᚖgithubᚗcomᚋmutualsᚋgoᚑmutual
 	return ec._User(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalOUserEdge2ᚕᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐUserEdge(ctx context.Context, sel ast.SelectionSet, v []*model.UserEdge) graphql.Marshaler {
-	if v == nil {
-		return graphql.Null
-	}
-	ret := make(graphql.Array, len(v))
-	var wg sync.WaitGroup
-	isLen1 := len(v) == 1
-	if !isLen1 {
-		wg.Add(len(v))
-	}
-	for i := range v {
-		i := i
-		fc := &graphql.FieldContext{
-			Index:  &i,
-			Result: &v[i],
-		}
-		ctx := graphql.WithFieldContext(ctx, fc)
-		f := func(i int) {
-			defer func() {
-				if r := recover(); r != nil {
-					ec.Error(ctx, ec.Recover(ctx, r))
-					ret = nil
-				}
-			}()
-			if !isLen1 {
-				defer wg.Done()
-			}
-			ret[i] = ec.marshalOUserEdge2ᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐUserEdge(ctx, sel, v[i])
-		}
-		if isLen1 {
-			f(i)
-		} else {
-			go f(i)
-		}
-
-	}
-	wg.Wait()
-
-	return ret
-}
-
-func (ec *executionContext) marshalOUserEdge2ᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐUserEdge(ctx context.Context, sel ast.SelectionSet, v *model.UserEdge) graphql.Marshaler {
-	if v == nil {
-		return graphql.Null
-	}
-	return ec._UserEdge(ctx, sel, v)
-}
-
 func (ec *executionContext) marshalOUserResult2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐUserResult(ctx context.Context, sel ast.SelectionSet, v model.UserResult) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec._UserResult(ctx, sel, v)
-}
-
-func (ec *executionContext) marshalOUserSearchResult2ᚕᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐUserSearchResultᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.UserSearchResult) graphql.Marshaler {
-	if v == nil {
-		return graphql.Null
-	}
-	ret := make(graphql.Array, len(v))
-	var wg sync.WaitGroup
-	isLen1 := len(v) == 1
-	if !isLen1 {
-		wg.Add(len(v))
-	}
-	for i := range v {
-		i := i
-		fc := &graphql.FieldContext{
-			Index:  &i,
-			Result: &v[i],
-		}
-		ctx := graphql.WithFieldContext(ctx, fc)
-		f := func(i int) {
-			defer func() {
-				if r := recover(); r != nil {
-					ec.Error(ctx, ec.Recover(ctx, r))
-					ret = nil
-				}
-			}()
-			if !isLen1 {
-				defer wg.Done()
-			}
-			ret[i] = ec.marshalNUserSearchResult2ᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐUserSearchResult(ctx, sel, v[i])
-		}
-		if isLen1 {
-			f(i)
-		} else {
-			go f(i)
-		}
-
-	}
-	wg.Wait()
-
-	for _, e := range ret {
-		if e == graphql.Null {
-			return graphql.Null
-		}
-	}
-
-	return ret
-}
-
-func (ec *executionContext) marshalOUsersConnection2ᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐUsersConnection(ctx context.Context, sel ast.SelectionSet, v *model.UsersConnection) graphql.Marshaler {
-	if v == nil {
-		return graphql.Null
-	}
-	return ec._UsersConnection(ctx, sel, v)
-}
-
-func (ec *executionContext) marshalOWithdrawal2ᚖgithubᚗcomᚋmutualsᚋgoᚑmutualsᚋgraphqlᚋmodelᚐWithdrawal(ctx context.Context, sel ast.SelectionSet, v *model.Withdrawal) graphql.Marshaler {
-	if v == nil {
-		return graphql.Null
-	}
-	return ec._Withdrawal(ctx, sel, v)
 }
 
 func (ec *executionContext) marshalO__EnumValue2ᚕgithubᚗcomᚋ99designsᚋgqlgenᚋgraphqlᚋintrospectionᚐEnumValueᚄ(ctx context.Context, sel ast.SelectionSet, v []introspection.EnumValue) graphql.Marshaler {

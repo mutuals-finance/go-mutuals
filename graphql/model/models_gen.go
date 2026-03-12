@@ -122,6 +122,7 @@ type AddUserWalletPayload struct {
 func (AddUserWalletPayload) IsAddUserWalletResult() {}
 
 type Claim struct {
+	DBID             persist.DBID `json:"id"`
 	Label            string       `json:"label"`
 	Path             string       `json:"path"`
 	Parent           *Claim       `json:"parent"`
@@ -215,37 +216,50 @@ type ClaimUpdatePayload struct {
 func (ClaimUpdatePayload) IsClaimUpdateResult() {}
 
 type DeletedNode struct {
+	DBID persist.DBID `json:"id"`
 }
 
 func (DeletedNode) IsNode() {}
 
 type Deposit struct {
-	Transaction *Tx               `json:"transaction"`
-	Pool        *Pool             `json:"pool"`
-	Token       *Token            `json:"token"`
-	From        persist.Address   `json:"from"`
-	To          persist.Address   `json:"to"`
-	Origin      string            `json:"origin"`
-	Amount      persist.HexString `json:"amount"`
-	LogIndex    *int              `json:"logIndex"`
-	CreatedAt   time.Time         `json:"createdAt"`
-	UpdatedAt   time.Time         `json:"updatedAt"`
-}
-
-func (Deposit) IsNode() {}
-
-type EVMAccount struct {
-	Address     persist.Address `json:"address"`
-	AccountType EVMAccountType  `json:"accountType"`
-	SelfPools   []*Pool         `json:"selfPools"`
-	Balances    []*TokenBalance `json:"balances"`
+	DBID        persist.DBID    `json:"id"`
+	Transaction *Tx             `json:"transaction"`
+	Pool        *Pool           `json:"pool"`
+	Token       *Token          `json:"token"`
+	From        persist.Address `json:"from"`
+	To          persist.Address `json:"to"`
+	Origin      string          `json:"origin"`
+	Amount      persist.UInt256 `json:"amount"`
+	LogIndex    *int            `json:"logIndex"`
 	CreatedAt   time.Time       `json:"createdAt"`
 	UpdatedAt   time.Time       `json:"updatedAt"`
 }
 
+func (Deposit) IsNode() {}
+
+type DepositConnection struct {
+	Edges    []*DepositEdge `json:"edges"`
+	PageInfo *PageInfo      `json:"pageInfo"`
+}
+
+type DepositEdge struct {
+	Node   *Deposit `json:"node"`
+	Cursor string   `json:"cursor"`
+}
+
+type EVMAccount struct {
+	DBID        persist.DBID            `json:"id"`
+	Address     persist.Address         `json:"address"`
+	AccountType EVMAccountType          `json:"accountType"`
+	SelfPools   *PoolConnection         `json:"selfPools"`
+	Balances    *TokenBalanceConnection `json:"balances"`
+	CreatedAt   time.Time               `json:"createdAt"`
+	UpdatedAt   time.Time               `json:"updatedAt"`
+}
+
 func (EVMAccount) IsNode()                   {}
-func (EVMAccount) IsUserOrEVMAccount()       {}
 func (EVMAccount) IsPoolOrUserOrEVMAccount() {}
+func (EVMAccount) IsUserOrEVMAccount()       {}
 
 type ErrAddressOwnedByUser struct {
 	Message string `json:"message"`
@@ -259,9 +273,9 @@ type ErrAuthenticationFailed struct {
 }
 
 func (ErrAuthenticationFailed) IsError()               {}
-func (ErrAuthenticationFailed) IsUserRegisterResult()  {}
-func (ErrAuthenticationFailed) IsAddUserWalletResult() {}
 func (ErrAuthenticationFailed) IsLoginResult()         {}
+func (ErrAuthenticationFailed) IsAddUserWalletResult() {}
+func (ErrAuthenticationFailed) IsUserRegisterResult()  {}
 
 type ErrDoesNotOwnRequiredToken struct {
 	Message string `json:"message"`
@@ -269,8 +283,8 @@ type ErrDoesNotOwnRequiredToken struct {
 
 func (ErrDoesNotOwnRequiredToken) IsError()              {}
 func (ErrDoesNotOwnRequiredToken) IsAuthorizationError() {}
-func (ErrDoesNotOwnRequiredToken) IsUserRegisterResult() {}
 func (ErrDoesNotOwnRequiredToken) IsLoginResult()        {}
+func (ErrDoesNotOwnRequiredToken) IsUserRegisterResult() {}
 
 type ErrInvalidInput struct {
 	Message    string   `json:"message"`
@@ -279,23 +293,23 @@ type ErrInvalidInput struct {
 }
 
 func (ErrInvalidInput) IsError()                   {}
-func (ErrInvalidInput) IsUserResult()              {}
-func (ErrInvalidInput) IsPoolResult()              {}
-func (ErrInvalidInput) IsSearchUsersResult()       {}
-func (ErrInvalidInput) IsSearchPoolsResult()       {}
-func (ErrInvalidInput) IsUserRegisterResult()      {}
-func (ErrInvalidInput) IsUserUpdateResult()        {}
-func (ErrInvalidInput) IsUserDeleteResult()        {}
+func (ErrInvalidInput) IsVerifyTokenResult()       {}
 func (ErrInvalidInput) IsAddUserWalletResult()     {}
 func (ErrInvalidInput) IsRemoveUserWalletsResult() {}
-func (ErrInvalidInput) IsVerifyTokenResult()       {}
+func (ErrInvalidInput) IsSearchUsersResult()       {}
+func (ErrInvalidInput) IsUserResult()              {}
+func (ErrInvalidInput) IsUserRegisterResult()      {}
+func (ErrInvalidInput) IsUserUpdateResult()        {}
 func (ErrInvalidInput) IsRoleUpdateResult()        {}
+func (ErrInvalidInput) IsUserDeleteResult()        {}
 func (ErrInvalidInput) IsClaimCreateResult()       {}
-func (ErrInvalidInput) IsClaimUpdateResult()       {}
-func (ErrInvalidInput) IsClaimDeleteResult()       {}
 func (ErrInvalidInput) IsClaimBulkCreateResult()   {}
+func (ErrInvalidInput) IsClaimUpdateResult()       {}
 func (ErrInvalidInput) IsClaimBulkUpdateResult()   {}
+func (ErrInvalidInput) IsClaimDeleteResult()       {}
 func (ErrInvalidInput) IsClaimBulkDeleteResult()   {}
+func (ErrInvalidInput) IsSearchPoolsResult()       {}
+func (ErrInvalidInput) IsPoolResult()              {}
 func (ErrInvalidInput) IsPoolCreateResult()        {}
 func (ErrInvalidInput) IsPoolUpdateResult()        {}
 func (ErrInvalidInput) IsPoolDeleteResult()        {}
@@ -320,18 +334,18 @@ type ErrNotAuthorized struct {
 }
 
 func (ErrNotAuthorized) IsError()                   {}
-func (ErrNotAuthorized) IsUserResult()              {}
-func (ErrNotAuthorized) IsUserUpdateResult()        {}
-func (ErrNotAuthorized) IsUserDeleteResult()        {}
+func (ErrNotAuthorized) IsVerifyTokenResult()       {}
 func (ErrNotAuthorized) IsAddUserWalletResult()     {}
 func (ErrNotAuthorized) IsRemoveUserWalletsResult() {}
-func (ErrNotAuthorized) IsVerifyTokenResult()       {}
+func (ErrNotAuthorized) IsUserResult()              {}
+func (ErrNotAuthorized) IsUserUpdateResult()        {}
 func (ErrNotAuthorized) IsRoleUpdateResult()        {}
+func (ErrNotAuthorized) IsUserDeleteResult()        {}
 func (ErrNotAuthorized) IsClaimCreateResult()       {}
-func (ErrNotAuthorized) IsClaimUpdateResult()       {}
-func (ErrNotAuthorized) IsClaimDeleteResult()       {}
 func (ErrNotAuthorized) IsClaimBulkCreateResult()   {}
+func (ErrNotAuthorized) IsClaimUpdateResult()       {}
 func (ErrNotAuthorized) IsClaimBulkUpdateResult()   {}
+func (ErrNotAuthorized) IsClaimDeleteResult()       {}
 func (ErrNotAuthorized) IsClaimBulkDeleteResult()   {}
 func (ErrNotAuthorized) IsPoolCreateResult()        {}
 func (ErrNotAuthorized) IsPoolUpdateResult()        {}
@@ -341,14 +355,14 @@ type ErrPoolNotFound struct {
 	Message string `json:"message"`
 }
 
+func (ErrPoolNotFound) IsClaimCreateResult()     {}
+func (ErrPoolNotFound) IsClaimBulkCreateResult() {}
+func (ErrPoolNotFound) IsClaimUpdateResult()     {}
+func (ErrPoolNotFound) IsClaimBulkUpdateResult() {}
+func (ErrPoolNotFound) IsClaimDeleteResult()     {}
+func (ErrPoolNotFound) IsClaimBulkDeleteResult() {}
 func (ErrPoolNotFound) IsError()                 {}
 func (ErrPoolNotFound) IsPoolResult()            {}
-func (ErrPoolNotFound) IsClaimCreateResult()     {}
-func (ErrPoolNotFound) IsClaimUpdateResult()     {}
-func (ErrPoolNotFound) IsClaimDeleteResult()     {}
-func (ErrPoolNotFound) IsClaimBulkCreateResult() {}
-func (ErrPoolNotFound) IsClaimBulkUpdateResult() {}
-func (ErrPoolNotFound) IsClaimBulkDeleteResult() {}
 func (ErrPoolNotFound) IsPoolUpdateResult()      {}
 func (ErrPoolNotFound) IsPoolDeleteResult()      {}
 
@@ -382,9 +396,9 @@ type ErrUserNotFound struct {
 	Message string `json:"message"`
 }
 
-func (ErrUserNotFound) IsError()       {}
-func (ErrUserNotFound) IsUserResult()  {}
 func (ErrUserNotFound) IsLoginResult() {}
+func (ErrUserNotFound) IsUserResult()  {}
+func (ErrUserNotFound) IsError()       {}
 
 type ErrUsernameNotAvailable struct {
 	Message string `json:"message"`
@@ -404,8 +418,9 @@ type LogoutPayload struct {
 }
 
 type Module struct {
+	DBID           persist.DBID    `json:"id"`
 	Address        persist.Address `json:"address"`
-	ChainID        int             `json:"chainId"`
+	Network        persist.Chain   `json:"network"`
 	ModuleRegistry *ModuleRegistry `json:"moduleRegistry"`
 	ModuleID       string          `json:"moduleId"`
 	ModuleType     ModuleType      `json:"moduleType"`
@@ -420,8 +435,9 @@ type Module struct {
 func (Module) IsNode() {}
 
 type ModuleRegistry struct {
+	DBID        persist.DBID    `json:"id"`
 	Address     persist.Address `json:"address"`
-	ChainID     int             `json:"chainId"`
+	Network     persist.Chain   `json:"network"`
 	ModuleCount int             `json:"moduleCount"`
 	Owner       *EVMAccount     `json:"owner"`
 	CreatedAt   time.Time       `json:"createdAt"`
@@ -431,15 +447,16 @@ type ModuleRegistry struct {
 func (ModuleRegistry) IsNode() {}
 
 type PageInfo struct {
-	Total           *int   `json:"total"`
-	Size            int    `json:"size"`
-	HasPreviousPage bool   `json:"hasPreviousPage"`
-	HasNextPage     bool   `json:"hasNextPage"`
-	StartCursor     string `json:"startCursor"`
-	EndCursor       string `json:"endCursor"`
+	Total           *int    `json:"total"`
+	Size            int     `json:"size"`
+	HasPreviousPage bool    `json:"hasPreviousPage"`
+	HasNextPage     bool    `json:"hasNextPage"`
+	StartCursor     *string `json:"startCursor"`
+	EndCursor       *string `json:"endCursor"`
 }
 
 type Pool struct {
+	DBID        persist.DBID     `json:"id"`
 	Name        string           `json:"name"`
 	Description string           `json:"description"`
 	Image       string           `json:"image"`
@@ -454,29 +471,36 @@ type Pool struct {
 	UpdatedAt   time.Time        `json:"updatedAt"`
 }
 
-func (Pool) IsNode()                   {}
 func (Pool) IsPoolOrUserOrEVMAccount() {}
+func (Pool) IsNode()                   {}
 func (Pool) IsPoolResult()             {}
 
 type PoolBalance struct {
-	TotalIncome float64 `json:"totalIncome"`
-	Balance     float64 `json:"balance"`
-	Withdrawals float64 `json:"withdrawals"`
+	TotalIncome []*Quote                `json:"totalIncome"`
+	Balance     []*Quote                `json:"balance"`
+	Withdrawals []*Quote                `json:"withdrawals"`
+	Tokens      *TokenBalanceConnection `json:"tokens"`
+}
+
+type PoolConnection struct {
+	Edges    []*PoolEdge `json:"edges"`
+	PageInfo *PageInfo   `json:"pageInfo"`
 }
 
 type PoolContract struct {
-	Address     persist.Address    `json:"address"`
-	ChainID     int                `json:"chainId"`
-	Status      PoolStatus         `json:"status"`
-	PoolFactory *PoolFactory       `json:"poolFactory"`
-	Account     *EVMAccount        `json:"account"`
-	Owner       *EVMAccount        `json:"owner"`
-	DayBalance  []*PoolDayBalance  `json:"dayBalance"`
-	HourBalance []*PoolHourBalance `json:"hourBalance"`
-	Deposits    []*Deposit         `json:"deposits"`
-	Withdrawals []*Withdrawal      `json:"withdrawals"`
-	CreatedAt   time.Time          `json:"createdAt"`
-	UpdatedAt   time.Time          `json:"updatedAt"`
+	DBID         persist.DBID               `json:"id"`
+	Address      persist.Address            `json:"address"`
+	Network      persist.Chain              `json:"network"`
+	Status       PoolStatus                 `json:"status"`
+	PoolFactory  *PoolFactory               `json:"poolFactory"`
+	Account      *EVMAccount                `json:"account"`
+	Owner        *EVMAccount                `json:"owner"`
+	DayBalances  *PoolDayBalanceConnection  `json:"dayBalances"`
+	HourBalances *PoolHourBalanceConnection `json:"hourBalances"`
+	Deposits     *DepositConnection         `json:"deposits"`
+	Withdrawals  *WithdrawalConnection      `json:"withdrawals"`
+	CreatedAt    time.Time                  `json:"createdAt"`
+	UpdatedAt    time.Time                  `json:"updatedAt"`
 }
 
 func (PoolContract) IsNode() {}
@@ -499,16 +523,29 @@ type PoolCreatePayload struct {
 func (PoolCreatePayload) IsPoolCreateResult() {}
 
 type PoolDayBalance struct {
-	ChainID   int               `json:"chainId"`
-	Date      time.Time         `json:"date"`
-	Pool      *Pool             `json:"pool"`
-	Token     *Token            `json:"token"`
-	Amount    persist.HexString `json:"amount"`
-	CreatedAt time.Time         `json:"createdAt"`
-	UpdatedAt time.Time         `json:"updatedAt"`
+	DBID            persist.DBID    `json:"id"`
+	Network         persist.Chain   `json:"network"`
+	Date            time.Time       `json:"date"`
+	Pool            *Pool           `json:"pool"`
+	Token           *Token          `json:"token"`
+	Amount          persist.UInt256 `json:"amount"`
+	FormattedAmount float64         `json:"formattedAmount"`
+	Quotes          []*Quote        `json:"quotes"`
+	CreatedAt       time.Time       `json:"createdAt"`
+	UpdatedAt       time.Time       `json:"updatedAt"`
 }
 
 func (PoolDayBalance) IsNode() {}
+
+type PoolDayBalanceConnection struct {
+	Edges    []*PoolDayBalanceEdge `json:"edges"`
+	PageInfo *PageInfo             `json:"pageInfo"`
+}
+
+type PoolDayBalanceEdge struct {
+	Node   *PoolDayBalance `json:"node"`
+	Cursor string          `json:"cursor"`
+}
 
 type PoolDeletePayload struct {
 	Pool *Pool `json:"pool"`
@@ -516,9 +553,15 @@ type PoolDeletePayload struct {
 
 func (PoolDeletePayload) IsPoolDeleteResult() {}
 
+type PoolEdge struct {
+	Node   *Pool  `json:"node"`
+	Cursor string `json:"cursor"`
+}
+
 type PoolFactory struct {
+	DBID      persist.DBID    `json:"id"`
 	Address   persist.Address `json:"address"`
-	ChainID   int             `json:"chainId"`
+	Network   persist.Chain   `json:"network"`
 	PoolCount int             `json:"poolCount"`
 	Owner     *EVMAccount     `json:"owner"`
 	CreatedAt time.Time       `json:"createdAt"`
@@ -528,19 +571,28 @@ type PoolFactory struct {
 func (PoolFactory) IsNode() {}
 
 type PoolHourBalance struct {
-	ChainID   int               `json:"chainId"`
-	Date      time.Time         `json:"date"`
-	Pool      *Pool             `json:"pool"`
-	Token     *Token            `json:"token"`
-	Amount    persist.HexString `json:"amount"`
-	CreatedAt time.Time         `json:"createdAt"`
-	UpdatedAt time.Time         `json:"updatedAt"`
+	DBID            persist.DBID    `json:"id"`
+	Network         persist.Chain   `json:"network"`
+	Date            time.Time       `json:"date"`
+	Pool            *Pool           `json:"pool"`
+	Token           *Token          `json:"token"`
+	Amount          persist.UInt256 `json:"amount"`
+	FormattedAmount float64         `json:"formattedAmount"`
+	Quotes          []*Quote        `json:"quotes"`
+	CreatedAt       time.Time       `json:"createdAt"`
+	UpdatedAt       time.Time       `json:"updatedAt"`
 }
 
 func (PoolHourBalance) IsNode() {}
 
-type PoolSearchResult struct {
-	Pool *Pool `json:"pool"`
+type PoolHourBalanceConnection struct {
+	Edges    []*PoolHourBalanceEdge `json:"edges"`
+	PageInfo *PageInfo              `json:"pageInfo"`
+}
+
+type PoolHourBalanceEdge struct {
+	Node   *PoolHourBalance `json:"node"`
+	Cursor string           `json:"cursor"`
 }
 
 type PoolUpdateInput struct {
@@ -561,6 +613,12 @@ type PoolUpdatePayload struct {
 
 func (PoolUpdatePayload) IsPoolUpdateResult() {}
 
+type Quote struct {
+	Currency      persist.Currency `json:"currency"`
+	Value         float64          `json:"value"`
+	LastUpdatedAt time.Time        `json:"lastUpdatedAt"`
+}
+
 type RemoveUserWalletsPayload struct {
 	Viewer *User `json:"viewer"`
 }
@@ -579,20 +637,21 @@ type RoleUpdatePayload struct {
 func (RoleUpdatePayload) IsRoleUpdateResult() {}
 
 type SearchPoolsPayload struct {
-	Results []*PoolSearchResult `json:"results"`
+	Results []*Pool `json:"results"`
 }
 
 func (SearchPoolsPayload) IsSearchPoolsResult() {}
 
 type SearchUsersPayload struct {
-	Results []*UserSearchResult `json:"results"`
+	Results []*User `json:"results"`
 }
 
 func (SearchUsersPayload) IsSearchUsersResult() {}
 
 type Token struct {
+	DBID         persist.DBID    `json:"id"`
 	Address      persist.Address `json:"address"`
-	ChainID      int             `json:"chainId"`
+	Network      persist.Chain   `json:"network"`
 	TokenType    TokenType       `json:"tokenType"`
 	Symbol       string          `json:"symbol"`
 	Name         string          `json:"name"`
@@ -601,6 +660,7 @@ type Token struct {
 	Thumbnail    *string         `json:"thumbnail"`
 	Validated    *int            `json:"validated"`
 	PossibleSpam *bool           `json:"possibleSpam"`
+	Quotes       []*Quote        `json:"quotes"`
 	CreatedAt    time.Time       `json:"createdAt"`
 	UpdatedAt    time.Time       `json:"updatedAt"`
 }
@@ -608,36 +668,56 @@ type Token struct {
 func (Token) IsNode() {}
 
 type TokenBalance struct {
-	ChainID   int                    `json:"chainId"`
-	Token     *Token                 `json:"token"`
-	Holder    PoolOrUserOrEVMAccount `json:"holder"`
-	Amount    persist.HexString      `json:"amount"`
-	CreatedAt time.Time              `json:"createdAt"`
-	UpdatedAt time.Time              `json:"updatedAt"`
+	DBID            persist.DBID           `json:"id"`
+	Network         persist.Chain          `json:"network"`
+	Token           *Token                 `json:"token"`
+	Holder          PoolOrUserOrEVMAccount `json:"holder"`
+	Amount          persist.UInt256        `json:"amount"`
+	FormattedAmount float64                `json:"formattedAmount"`
+	Quotes          []*Quote               `json:"quotes"`
+	CreatedAt       time.Time              `json:"createdAt"`
+	UpdatedAt       time.Time              `json:"updatedAt"`
 }
 
 func (TokenBalance) IsNode() {}
 
+type TokenBalanceConnection struct {
+	Edges    []*TokenBalanceEdge `json:"edges"`
+	PageInfo *PageInfo           `json:"pageInfo"`
+}
+
+type TokenBalanceEdge struct {
+	Node   *TokenBalance `json:"node"`
+	Cursor string        `json:"cursor"`
+}
+
 type Tx struct {
-	GasUsed     persist.HexString `json:"gasUsed"`
-	GasPrice    persist.HexString `json:"gasPrice"`
-	CreatedAt   time.Time         `json:"createdAt"`
-	UpdatedAt   time.Time         `json:"updatedAt"`
-	Deposits    []*Deposit        `json:"deposits"`
-	Withdrawals []*Withdrawal     `json:"withdrawals"`
+	DBID        persist.DBID          `json:"id"`
+	GasUsed     persist.UInt256       `json:"gasUsed"`
+	GasPrice    persist.UInt256       `json:"gasPrice"`
+	CreatedAt   time.Time             `json:"createdAt"`
+	UpdatedAt   time.Time             `json:"updatedAt"`
+	Deposits    *DepositConnection    `json:"deposits"`
+	Withdrawals *WithdrawalConnection `json:"withdrawals"`
 }
 
 func (Tx) IsNode() {}
 
 type User struct {
-	Roles []*persist.Role `json:"roles"`
-	Pools []*Pool         `json:"pools"`
+	DBID  persist.DBID    `json:"id"`
+	Roles []persist.Role  `json:"roles"`
+	Pools *PoolConnection `json:"pools"`
 }
 
+func (User) IsPoolOrUserOrEVMAccount() {}
 func (User) IsNode()                   {}
 func (User) IsUserOrEVMAccount()       {}
-func (User) IsPoolOrUserOrEVMAccount() {}
 func (User) IsUserResult()             {}
+
+type UserConnection struct {
+	Edges    []*UserEdge `json:"edges"`
+	PageInfo *PageInfo   `json:"pageInfo"`
+}
 
 type UserDeletePayload struct {
 	User *User `json:"user"`
@@ -646,8 +726,8 @@ type UserDeletePayload struct {
 func (UserDeletePayload) IsUserDeleteResult() {}
 
 type UserEdge struct {
-	Node   *User   `json:"node"`
-	Cursor *string `json:"cursor"`
+	Node   *User  `json:"node"`
+	Cursor string `json:"cursor"`
 }
 
 type UserRegisterPayload struct {
@@ -656,10 +736,6 @@ type UserRegisterPayload struct {
 }
 
 func (UserRegisterPayload) IsUserRegisterResult() {}
-
-type UserSearchResult struct {
-	User *User `json:"user"`
-}
 
 type UserUpdateInput struct {
 	Username *string `json:"username"`
@@ -671,11 +747,6 @@ type UserUpdatePayload struct {
 
 func (UserUpdatePayload) IsUserUpdateResult() {}
 
-type UsersConnection struct {
-	Edges    []*UserEdge `json:"edges"`
-	PageInfo *PageInfo   `json:"pageInfo"`
-}
-
 type VerifyTokenPayload struct {
 	User    *User `json:"user"`
 	IsValid bool  `json:"isValid"`
@@ -684,19 +755,30 @@ type VerifyTokenPayload struct {
 func (VerifyTokenPayload) IsVerifyTokenResult() {}
 
 type Withdrawal struct {
-	Transaction *Tx               `json:"transaction"`
-	Pool        *Pool             `json:"pool"`
-	Token       *Token            `json:"token"`
-	From        persist.Address   `json:"from"`
-	To          persist.Address   `json:"to"`
-	Origin      string            `json:"origin"`
-	Amount      persist.HexString `json:"amount"`
-	LogIndex    *int              `json:"logIndex"`
-	CreatedAt   time.Time         `json:"createdAt"`
-	UpdatedAt   time.Time         `json:"updatedAt"`
+	DBID        persist.DBID    `json:"id"`
+	Transaction *Tx             `json:"transaction"`
+	Pool        *Pool           `json:"pool"`
+	Token       *Token          `json:"token"`
+	From        persist.Address `json:"from"`
+	To          persist.Address `json:"to"`
+	Origin      string          `json:"origin"`
+	Amount      persist.UInt256 `json:"amount"`
+	LogIndex    *int            `json:"logIndex"`
+	CreatedAt   time.Time       `json:"createdAt"`
+	UpdatedAt   time.Time       `json:"updatedAt"`
 }
 
 func (Withdrawal) IsNode() {}
+
+type WithdrawalConnection struct {
+	Edges    []*WithdrawalEdge `json:"edges"`
+	PageInfo *PageInfo         `json:"pageInfo"`
+}
+
+type WithdrawalEdge struct {
+	Node   *Withdrawal `json:"node"`
+	Cursor string      `json:"cursor"`
+}
 
 type EVMAccountType string
 
@@ -872,17 +954,19 @@ const (
 	TokenTypeErc20   TokenType = "ERC20"
 	TokenTypeErc721  TokenType = "ERC721"
 	TokenTypeErc1155 TokenType = "ERC1155"
+	TokenTypeNative  TokenType = "NATIVE"
 )
 
 var AllTokenType = []TokenType{
 	TokenTypeErc20,
 	TokenTypeErc721,
 	TokenTypeErc1155,
+	TokenTypeNative,
 }
 
 func (e TokenType) IsValid() bool {
 	switch e {
-	case TokenTypeErc20, TokenTypeErc721, TokenTypeErc1155:
+	case TokenTypeErc20, TokenTypeErc721, TokenTypeErc1155, TokenTypeNative:
 		return true
 	}
 	return false

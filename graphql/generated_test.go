@@ -455,27 +455,19 @@ func (v *__userUpdateMutationInput) GetInput() UserUpdateInput { return v.Input 
 
 // __usersByRoleQueryInput is used internally by genqlient
 type __usersByRoleQueryInput struct {
-	Role   Role    `json:"role"`
-	Before *string `json:"before"`
-	After  *string `json:"after"`
-	First  *int    `json:"first"`
-	Last   *int    `json:"last"`
+	Role  Role    `json:"role"`
+	After *string `json:"after"`
+	First *int    `json:"first"`
 }
 
 // GetRole returns __usersByRoleQueryInput.Role, and is useful for accessing the field via an interface.
 func (v *__usersByRoleQueryInput) GetRole() Role { return v.Role }
-
-// GetBefore returns __usersByRoleQueryInput.Before, and is useful for accessing the field via an interface.
-func (v *__usersByRoleQueryInput) GetBefore() *string { return v.Before }
 
 // GetAfter returns __usersByRoleQueryInput.After, and is useful for accessing the field via an interface.
 func (v *__usersByRoleQueryInput) GetAfter() *string { return v.After }
 
 // GetFirst returns __usersByRoleQueryInput.First, and is useful for accessing the field via an interface.
 func (v *__usersByRoleQueryInput) GetFirst() *int { return v.First }
-
-// GetLast returns __usersByRoleQueryInput.Last, and is useful for accessing the field via an interface.
-func (v *__usersByRoleQueryInput) GetLast() *int { return v.Last }
 
 // poolClaimBulkCreateMutationPoolClaimBulkCreateClaimBulkCreatePayload includes the requested fields of the GraphQL type ClaimBulkCreatePayload.
 type poolClaimBulkCreateMutationPoolClaimBulkCreateClaimBulkCreatePayload struct {
@@ -696,6 +688,7 @@ func (v *poolClaimBulkCreateMutationPoolClaimBulkCreateErrPoolNotFound) GetMessa
 
 // poolClaimBulkCreateMutationResponse is returned by poolClaimBulkCreateMutation on success.
 type poolClaimBulkCreateMutationResponse struct {
+	// Creates multiple claim definitions for a pool in a single bulk operation.
 	PoolClaimBulkCreate poolClaimBulkCreateMutationPoolClaimBulkCreateClaimBulkCreateResult `json:"-"`
 }
 
@@ -946,6 +939,7 @@ func (v *poolClaimBulkDeleteMutationPoolClaimBulkDeleteErrPoolNotFound) GetMessa
 
 // poolClaimBulkDeleteMutationResponse is returned by poolClaimBulkDeleteMutation on success.
 type poolClaimBulkDeleteMutationResponse struct {
+	// Deletes multiple claim definitions from a pool in a single bulk operation.
 	PoolClaimBulkDelete poolClaimBulkDeleteMutationPoolClaimBulkDeleteClaimBulkDeleteResult `json:"-"`
 }
 
@@ -1236,6 +1230,7 @@ func (v *poolClaimBulkUpdateMutationPoolClaimBulkUpdateErrPoolNotFound) GetMessa
 
 // poolClaimBulkUpdateMutationResponse is returned by poolClaimBulkUpdateMutation on success.
 type poolClaimBulkUpdateMutationResponse struct {
+	// Updates multiple existing claim definitions within a pool in a single bulk operation.
 	PoolClaimBulkUpdate poolClaimBulkUpdateMutationPoolClaimBulkUpdateClaimBulkUpdateResult `json:"-"`
 }
 
@@ -1514,6 +1509,7 @@ func (v *poolClaimCreateMutationPoolClaimCreateErrPoolNotFound) GetMessage() str
 
 // poolClaimCreateMutationResponse is returned by poolClaimCreateMutation on success.
 type poolClaimCreateMutationResponse struct {
+	// Creates a new claim definition for a specific pool.
 	PoolClaimCreate poolClaimCreateMutationPoolClaimCreateClaimCreateResult `json:"-"`
 }
 
@@ -1768,6 +1764,7 @@ func (v *poolClaimDeleteMutationPoolClaimDeleteErrPoolNotFound) GetMessage() str
 
 // poolClaimDeleteMutationResponse is returned by poolClaimDeleteMutation on success.
 type poolClaimDeleteMutationResponse struct {
+	// Deletes a specific claim definition from a pool.
 	PoolClaimDelete poolClaimDeleteMutationPoolClaimDeleteClaimDeleteResult `json:"-"`
 }
 
@@ -2046,6 +2043,7 @@ func (v *poolClaimUpdateMutationPoolClaimUpdateErrPoolNotFound) GetMessage() str
 
 // poolClaimUpdateMutationResponse is returned by poolClaimUpdateMutation on success.
 type poolClaimUpdateMutationResponse struct {
+	// Updates an existing claim definition within a pool.
 	PoolClaimUpdate poolClaimUpdateMutationPoolClaimUpdateClaimUpdateResult `json:"-"`
 }
 
@@ -2288,6 +2286,7 @@ func __marshalpoolCreateMutationPoolCreatePoolCreateResult(v *poolCreateMutation
 
 // poolCreateMutationResponse is returned by poolCreateMutation on success.
 type poolCreateMutationResponse struct {
+	// Creates a new pool.
 	PoolCreate poolCreateMutationPoolCreatePoolCreateResult `json:"-"`
 }
 
@@ -2528,6 +2527,7 @@ func __marshalpoolDeleteMutationPoolDeletePoolDeleteResult(v *poolDeleteMutation
 
 // poolDeleteMutationResponse is returned by poolDeleteMutation on success.
 type poolDeleteMutationResponse struct {
+	// Soft-deletes or archives an existing pool.
 	PoolDelete poolDeleteMutationPoolDeletePoolDeleteResult `json:"-"`
 }
 
@@ -3229,6 +3229,7 @@ func __marshalpoolUpdateMutationPoolUpdatePoolUpdateResult(v *poolUpdateMutation
 
 // poolUpdateMutationResponse is returned by poolUpdateMutation on success.
 type poolUpdateMutationResponse struct {
+	// Updates the details, configuration, or claims of an existing pool.
 	PoolUpdate poolUpdateMutationPoolUpdatePoolUpdateResult `json:"-"`
 }
 
@@ -3302,6 +3303,7 @@ func (v *poolUpdateMutationResponse) __premarshalJSON() (*__premarshalpoolUpdate
 
 // roleUpdateMutationResponse is returned by roleUpdateMutation on success.
 type roleUpdateMutationResponse struct {
+	// Adds or removes administrative roles for a specific user.
 	RoleUpdate roleUpdateMutationRoleUpdateRoleUpdateResult `json:"-"`
 }
 
@@ -3421,15 +3423,15 @@ func (v *roleUpdateMutationRoleUpdateRoleUpdatePayload) GetUser() roleUpdateMuta
 
 // roleUpdateMutationRoleUpdateRoleUpdatePayloadUser includes the requested fields of the GraphQL type User.
 type roleUpdateMutationRoleUpdateRoleUpdatePayloadUser struct {
-	Id    string  `json:"id"`
-	Roles []*Role `json:"roles"`
+	Id    string `json:"id"`
+	Roles []Role `json:"roles"`
 }
 
 // GetId returns roleUpdateMutationRoleUpdateRoleUpdatePayloadUser.Id, and is useful for accessing the field via an interface.
 func (v *roleUpdateMutationRoleUpdateRoleUpdatePayloadUser) GetId() string { return v.Id }
 
 // GetRoles returns roleUpdateMutationRoleUpdateRoleUpdatePayloadUser.Roles, and is useful for accessing the field via an interface.
-func (v *roleUpdateMutationRoleUpdateRoleUpdatePayloadUser) GetRoles() []*Role { return v.Roles }
+func (v *roleUpdateMutationRoleUpdateRoleUpdatePayloadUser) GetRoles() []Role { return v.Roles }
 
 // roleUpdateMutationRoleUpdateRoleUpdateResult includes the requested fields of the GraphQL interface RoleUpdateResult.
 //
@@ -3520,13 +3522,12 @@ func __marshalroleUpdateMutationRoleUpdateRoleUpdateResult(v *roleUpdateMutation
 
 // userByAddressQueryResponse is returned by userByAddressQuery on success.
 type userByAddressQueryResponse struct {
-	UserByAddress userByAddressQueryUserByAddressUserResult `json:"-"`
+	// Combined lookup for a user by either their ID or their Ethereum address.
+	User userByAddressQueryUserUserResult `json:"-"`
 }
 
-// GetUserByAddress returns userByAddressQueryResponse.UserByAddress, and is useful for accessing the field via an interface.
-func (v *userByAddressQueryResponse) GetUserByAddress() userByAddressQueryUserByAddressUserResult {
-	return v.UserByAddress
-}
+// GetUser returns userByAddressQueryResponse.User, and is useful for accessing the field via an interface.
+func (v *userByAddressQueryResponse) GetUser() userByAddressQueryUserUserResult { return v.User }
 
 func (v *userByAddressQueryResponse) UnmarshalJSON(b []byte) error {
 
@@ -3536,7 +3537,7 @@ func (v *userByAddressQueryResponse) UnmarshalJSON(b []byte) error {
 
 	var firstPass struct {
 		*userByAddressQueryResponse
-		UserByAddress json.RawMessage `json:"userByAddress"`
+		User json.RawMessage `json:"user"`
 		graphql.NoUnmarshalJSON
 	}
 	firstPass.userByAddressQueryResponse = v
@@ -3547,14 +3548,14 @@ func (v *userByAddressQueryResponse) UnmarshalJSON(b []byte) error {
 	}
 
 	{
-		dst := &v.UserByAddress
-		src := firstPass.UserByAddress
+		dst := &v.User
+		src := firstPass.User
 		if len(src) != 0 && string(src) != "null" {
-			err = __unmarshaluserByAddressQueryUserByAddressUserResult(
+			err = __unmarshaluserByAddressQueryUserUserResult(
 				src, dst)
 			if err != nil {
 				return fmt.Errorf(
-					"unable to unmarshal userByAddressQueryResponse.UserByAddress: %w", err)
+					"unable to unmarshal userByAddressQueryResponse.User: %w", err)
 			}
 		}
 	}
@@ -3562,7 +3563,7 @@ func (v *userByAddressQueryResponse) UnmarshalJSON(b []byte) error {
 }
 
 type __premarshaluserByAddressQueryResponse struct {
-	UserByAddress json.RawMessage `json:"userByAddress"`
+	User json.RawMessage `json:"user"`
 }
 
 func (v *userByAddressQueryResponse) MarshalJSON() ([]byte, error) {
@@ -3578,100 +3579,97 @@ func (v *userByAddressQueryResponse) __premarshalJSON() (*__premarshaluserByAddr
 
 	{
 
-		dst := &retval.UserByAddress
-		src := v.UserByAddress
+		dst := &retval.User
+		src := v.User
 		var err error
-		*dst, err = __marshaluserByAddressQueryUserByAddressUserResult(
+		*dst, err = __marshaluserByAddressQueryUserUserResult(
 			&src)
 		if err != nil {
 			return nil, fmt.Errorf(
-				"unable to marshal userByAddressQueryResponse.UserByAddress: %w", err)
+				"unable to marshal userByAddressQueryResponse.User: %w", err)
 		}
 	}
 	return &retval, nil
 }
 
-// userByAddressQueryUserByAddressErrInvalidInput includes the requested fields of the GraphQL type ErrInvalidInput.
-type userByAddressQueryUserByAddressErrInvalidInput struct {
+// userByAddressQueryUser includes the requested fields of the GraphQL type User.
+type userByAddressQueryUser struct {
+	Typename *string `json:"__typename"`
+	Id       string  `json:"id"`
+	Roles    []Role  `json:"roles"`
+}
+
+// GetTypename returns userByAddressQueryUser.Typename, and is useful for accessing the field via an interface.
+func (v *userByAddressQueryUser) GetTypename() *string { return v.Typename }
+
+// GetId returns userByAddressQueryUser.Id, and is useful for accessing the field via an interface.
+func (v *userByAddressQueryUser) GetId() string { return v.Id }
+
+// GetRoles returns userByAddressQueryUser.Roles, and is useful for accessing the field via an interface.
+func (v *userByAddressQueryUser) GetRoles() []Role { return v.Roles }
+
+// userByAddressQueryUserErrInvalidInput includes the requested fields of the GraphQL type ErrInvalidInput.
+type userByAddressQueryUserErrInvalidInput struct {
 	Typename   *string  `json:"__typename"`
 	Message    string   `json:"message"`
 	Parameters []string `json:"parameters"`
 	Reasons    []string `json:"reasons"`
 }
 
-// GetTypename returns userByAddressQueryUserByAddressErrInvalidInput.Typename, and is useful for accessing the field via an interface.
-func (v *userByAddressQueryUserByAddressErrInvalidInput) GetTypename() *string { return v.Typename }
+// GetTypename returns userByAddressQueryUserErrInvalidInput.Typename, and is useful for accessing the field via an interface.
+func (v *userByAddressQueryUserErrInvalidInput) GetTypename() *string { return v.Typename }
 
-// GetMessage returns userByAddressQueryUserByAddressErrInvalidInput.Message, and is useful for accessing the field via an interface.
-func (v *userByAddressQueryUserByAddressErrInvalidInput) GetMessage() string { return v.Message }
+// GetMessage returns userByAddressQueryUserErrInvalidInput.Message, and is useful for accessing the field via an interface.
+func (v *userByAddressQueryUserErrInvalidInput) GetMessage() string { return v.Message }
 
-// GetParameters returns userByAddressQueryUserByAddressErrInvalidInput.Parameters, and is useful for accessing the field via an interface.
-func (v *userByAddressQueryUserByAddressErrInvalidInput) GetParameters() []string {
-	return v.Parameters
-}
+// GetParameters returns userByAddressQueryUserErrInvalidInput.Parameters, and is useful for accessing the field via an interface.
+func (v *userByAddressQueryUserErrInvalidInput) GetParameters() []string { return v.Parameters }
 
-// GetReasons returns userByAddressQueryUserByAddressErrInvalidInput.Reasons, and is useful for accessing the field via an interface.
-func (v *userByAddressQueryUserByAddressErrInvalidInput) GetReasons() []string { return v.Reasons }
+// GetReasons returns userByAddressQueryUserErrInvalidInput.Reasons, and is useful for accessing the field via an interface.
+func (v *userByAddressQueryUserErrInvalidInput) GetReasons() []string { return v.Reasons }
 
-// userByAddressQueryUserByAddressErrNotAuthorized includes the requested fields of the GraphQL type ErrNotAuthorized.
-type userByAddressQueryUserByAddressErrNotAuthorized struct {
+// userByAddressQueryUserErrNotAuthorized includes the requested fields of the GraphQL type ErrNotAuthorized.
+type userByAddressQueryUserErrNotAuthorized struct {
 	Typename *string `json:"__typename"`
 }
 
-// GetTypename returns userByAddressQueryUserByAddressErrNotAuthorized.Typename, and is useful for accessing the field via an interface.
-func (v *userByAddressQueryUserByAddressErrNotAuthorized) GetTypename() *string { return v.Typename }
+// GetTypename returns userByAddressQueryUserErrNotAuthorized.Typename, and is useful for accessing the field via an interface.
+func (v *userByAddressQueryUserErrNotAuthorized) GetTypename() *string { return v.Typename }
 
-// userByAddressQueryUserByAddressErrUserNotFound includes the requested fields of the GraphQL type ErrUserNotFound.
-type userByAddressQueryUserByAddressErrUserNotFound struct {
+// userByAddressQueryUserErrUserNotFound includes the requested fields of the GraphQL type ErrUserNotFound.
+type userByAddressQueryUserErrUserNotFound struct {
 	Typename *string `json:"__typename"`
 	Message  string  `json:"message"`
 }
 
-// GetTypename returns userByAddressQueryUserByAddressErrUserNotFound.Typename, and is useful for accessing the field via an interface.
-func (v *userByAddressQueryUserByAddressErrUserNotFound) GetTypename() *string { return v.Typename }
+// GetTypename returns userByAddressQueryUserErrUserNotFound.Typename, and is useful for accessing the field via an interface.
+func (v *userByAddressQueryUserErrUserNotFound) GetTypename() *string { return v.Typename }
 
-// GetMessage returns userByAddressQueryUserByAddressErrUserNotFound.Message, and is useful for accessing the field via an interface.
-func (v *userByAddressQueryUserByAddressErrUserNotFound) GetMessage() string { return v.Message }
+// GetMessage returns userByAddressQueryUserErrUserNotFound.Message, and is useful for accessing the field via an interface.
+func (v *userByAddressQueryUserErrUserNotFound) GetMessage() string { return v.Message }
 
-// userByAddressQueryUserByAddressUser includes the requested fields of the GraphQL type User.
-type userByAddressQueryUserByAddressUser struct {
-	Typename *string `json:"__typename"`
-	Id       string  `json:"id"`
-	Roles    []*Role `json:"roles"`
-}
-
-// GetTypename returns userByAddressQueryUserByAddressUser.Typename, and is useful for accessing the field via an interface.
-func (v *userByAddressQueryUserByAddressUser) GetTypename() *string { return v.Typename }
-
-// GetId returns userByAddressQueryUserByAddressUser.Id, and is useful for accessing the field via an interface.
-func (v *userByAddressQueryUserByAddressUser) GetId() string { return v.Id }
-
-// GetRoles returns userByAddressQueryUserByAddressUser.Roles, and is useful for accessing the field via an interface.
-func (v *userByAddressQueryUserByAddressUser) GetRoles() []*Role { return v.Roles }
-
-// userByAddressQueryUserByAddressUserResult includes the requested fields of the GraphQL interface UserResult.
+// userByAddressQueryUserUserResult includes the requested fields of the GraphQL interface UserResult.
 //
-// userByAddressQueryUserByAddressUserResult is implemented by the following types:
-// userByAddressQueryUserByAddressErrInvalidInput
-// userByAddressQueryUserByAddressErrNotAuthorized
-// userByAddressQueryUserByAddressErrUserNotFound
-// userByAddressQueryUserByAddressUser
-type userByAddressQueryUserByAddressUserResult interface {
-	implementsGraphQLInterfaceuserByAddressQueryUserByAddressUserResult()
+// userByAddressQueryUserUserResult is implemented by the following types:
+// userByAddressQueryUserErrInvalidInput
+// userByAddressQueryUserErrNotAuthorized
+// userByAddressQueryUserErrUserNotFound
+// userByAddressQueryUser
+type userByAddressQueryUserUserResult interface {
+	implementsGraphQLInterfaceuserByAddressQueryUserUserResult()
 	// GetTypename returns the receiver's concrete GraphQL type-name (see interface doc for possible values).
 	GetTypename() *string
 }
 
-func (v *userByAddressQueryUserByAddressErrInvalidInput) implementsGraphQLInterfaceuserByAddressQueryUserByAddressUserResult() {
+func (v *userByAddressQueryUserErrInvalidInput) implementsGraphQLInterfaceuserByAddressQueryUserUserResult() {
 }
-func (v *userByAddressQueryUserByAddressErrNotAuthorized) implementsGraphQLInterfaceuserByAddressQueryUserByAddressUserResult() {
+func (v *userByAddressQueryUserErrNotAuthorized) implementsGraphQLInterfaceuserByAddressQueryUserUserResult() {
 }
-func (v *userByAddressQueryUserByAddressErrUserNotFound) implementsGraphQLInterfaceuserByAddressQueryUserByAddressUserResult() {
+func (v *userByAddressQueryUserErrUserNotFound) implementsGraphQLInterfaceuserByAddressQueryUserUserResult() {
 }
-func (v *userByAddressQueryUserByAddressUser) implementsGraphQLInterfaceuserByAddressQueryUserByAddressUserResult() {
-}
+func (v *userByAddressQueryUser) implementsGraphQLInterfaceuserByAddressQueryUserUserResult() {}
 
-func __unmarshaluserByAddressQueryUserByAddressUserResult(b []byte, v *userByAddressQueryUserByAddressUserResult) error {
+func __unmarshaluserByAddressQueryUserUserResult(b []byte, v *userByAddressQueryUserUserResult) error {
 	if string(b) == "null" {
 		return nil
 	}
@@ -3686,77 +3684,78 @@ func __unmarshaluserByAddressQueryUserByAddressUserResult(b []byte, v *userByAdd
 
 	switch tn.TypeName {
 	case "ErrInvalidInput":
-		*v = new(userByAddressQueryUserByAddressErrInvalidInput)
+		*v = new(userByAddressQueryUserErrInvalidInput)
 		return json.Unmarshal(b, *v)
 	case "ErrNotAuthorized":
-		*v = new(userByAddressQueryUserByAddressErrNotAuthorized)
+		*v = new(userByAddressQueryUserErrNotAuthorized)
 		return json.Unmarshal(b, *v)
 	case "ErrUserNotFound":
-		*v = new(userByAddressQueryUserByAddressErrUserNotFound)
+		*v = new(userByAddressQueryUserErrUserNotFound)
 		return json.Unmarshal(b, *v)
 	case "User":
-		*v = new(userByAddressQueryUserByAddressUser)
+		*v = new(userByAddressQueryUser)
 		return json.Unmarshal(b, *v)
 	case "":
 		return fmt.Errorf(
 			"response was missing UserResult.__typename")
 	default:
 		return fmt.Errorf(
-			`unexpected concrete type for userByAddressQueryUserByAddressUserResult: "%v"`, tn.TypeName)
+			`unexpected concrete type for userByAddressQueryUserUserResult: "%v"`, tn.TypeName)
 	}
 }
 
-func __marshaluserByAddressQueryUserByAddressUserResult(v *userByAddressQueryUserByAddressUserResult) ([]byte, error) {
+func __marshaluserByAddressQueryUserUserResult(v *userByAddressQueryUserUserResult) ([]byte, error) {
 
 	var typename string
 	switch v := (*v).(type) {
-	case *userByAddressQueryUserByAddressErrInvalidInput:
+	case *userByAddressQueryUserErrInvalidInput:
 		typename = "ErrInvalidInput"
 
 		result := struct {
 			TypeName string `json:"__typename"`
-			*userByAddressQueryUserByAddressErrInvalidInput
+			*userByAddressQueryUserErrInvalidInput
 		}{typename, v}
 		return json.Marshal(result)
-	case *userByAddressQueryUserByAddressErrNotAuthorized:
+	case *userByAddressQueryUserErrNotAuthorized:
 		typename = "ErrNotAuthorized"
 
 		result := struct {
 			TypeName string `json:"__typename"`
-			*userByAddressQueryUserByAddressErrNotAuthorized
+			*userByAddressQueryUserErrNotAuthorized
 		}{typename, v}
 		return json.Marshal(result)
-	case *userByAddressQueryUserByAddressErrUserNotFound:
+	case *userByAddressQueryUserErrUserNotFound:
 		typename = "ErrUserNotFound"
 
 		result := struct {
 			TypeName string `json:"__typename"`
-			*userByAddressQueryUserByAddressErrUserNotFound
+			*userByAddressQueryUserErrUserNotFound
 		}{typename, v}
 		return json.Marshal(result)
-	case *userByAddressQueryUserByAddressUser:
+	case *userByAddressQueryUser:
 		typename = "User"
 
 		result := struct {
 			TypeName string `json:"__typename"`
-			*userByAddressQueryUserByAddressUser
+			*userByAddressQueryUser
 		}{typename, v}
 		return json.Marshal(result)
 	case nil:
 		return []byte("null"), nil
 	default:
 		return nil, fmt.Errorf(
-			`unexpected concrete type for userByAddressQueryUserByAddressUserResult: "%T"`, v)
+			`unexpected concrete type for userByAddressQueryUserUserResult: "%T"`, v)
 	}
 }
 
 // userByIdQueryResponse is returned by userByIdQuery on success.
 type userByIdQueryResponse struct {
-	UserById userByIdQueryUserByIdUserResult `json:"-"`
+	// Combined lookup for a user by either their ID or their Ethereum address.
+	User userByIdQueryUserUserResult `json:"-"`
 }
 
-// GetUserById returns userByIdQueryResponse.UserById, and is useful for accessing the field via an interface.
-func (v *userByIdQueryResponse) GetUserById() userByIdQueryUserByIdUserResult { return v.UserById }
+// GetUser returns userByIdQueryResponse.User, and is useful for accessing the field via an interface.
+func (v *userByIdQueryResponse) GetUser() userByIdQueryUserUserResult { return v.User }
 
 func (v *userByIdQueryResponse) UnmarshalJSON(b []byte) error {
 
@@ -3766,7 +3765,7 @@ func (v *userByIdQueryResponse) UnmarshalJSON(b []byte) error {
 
 	var firstPass struct {
 		*userByIdQueryResponse
-		UserById json.RawMessage `json:"userById"`
+		User json.RawMessage `json:"user"`
 		graphql.NoUnmarshalJSON
 	}
 	firstPass.userByIdQueryResponse = v
@@ -3777,14 +3776,14 @@ func (v *userByIdQueryResponse) UnmarshalJSON(b []byte) error {
 	}
 
 	{
-		dst := &v.UserById
-		src := firstPass.UserById
+		dst := &v.User
+		src := firstPass.User
 		if len(src) != 0 && string(src) != "null" {
-			err = __unmarshaluserByIdQueryUserByIdUserResult(
+			err = __unmarshaluserByIdQueryUserUserResult(
 				src, dst)
 			if err != nil {
 				return fmt.Errorf(
-					"unable to unmarshal userByIdQueryResponse.UserById: %w", err)
+					"unable to unmarshal userByIdQueryResponse.User: %w", err)
 			}
 		}
 	}
@@ -3792,7 +3791,7 @@ func (v *userByIdQueryResponse) UnmarshalJSON(b []byte) error {
 }
 
 type __premarshaluserByIdQueryResponse struct {
-	UserById json.RawMessage `json:"userById"`
+	User json.RawMessage `json:"user"`
 }
 
 func (v *userByIdQueryResponse) MarshalJSON() ([]byte, error) {
@@ -3808,97 +3807,94 @@ func (v *userByIdQueryResponse) __premarshalJSON() (*__premarshaluserByIdQueryRe
 
 	{
 
-		dst := &retval.UserById
-		src := v.UserById
+		dst := &retval.User
+		src := v.User
 		var err error
-		*dst, err = __marshaluserByIdQueryUserByIdUserResult(
+		*dst, err = __marshaluserByIdQueryUserUserResult(
 			&src)
 		if err != nil {
 			return nil, fmt.Errorf(
-				"unable to marshal userByIdQueryResponse.UserById: %w", err)
+				"unable to marshal userByIdQueryResponse.User: %w", err)
 		}
 	}
 	return &retval, nil
 }
 
-// userByIdQueryUserByIdErrInvalidInput includes the requested fields of the GraphQL type ErrInvalidInput.
-type userByIdQueryUserByIdErrInvalidInput struct {
+// userByIdQueryUser includes the requested fields of the GraphQL type User.
+type userByIdQueryUser struct {
+	Typename *string `json:"__typename"`
+	Id       string  `json:"id"`
+	Roles    []Role  `json:"roles"`
+}
+
+// GetTypename returns userByIdQueryUser.Typename, and is useful for accessing the field via an interface.
+func (v *userByIdQueryUser) GetTypename() *string { return v.Typename }
+
+// GetId returns userByIdQueryUser.Id, and is useful for accessing the field via an interface.
+func (v *userByIdQueryUser) GetId() string { return v.Id }
+
+// GetRoles returns userByIdQueryUser.Roles, and is useful for accessing the field via an interface.
+func (v *userByIdQueryUser) GetRoles() []Role { return v.Roles }
+
+// userByIdQueryUserErrInvalidInput includes the requested fields of the GraphQL type ErrInvalidInput.
+type userByIdQueryUserErrInvalidInput struct {
 	Typename   *string  `json:"__typename"`
 	Message    string   `json:"message"`
 	Parameters []string `json:"parameters"`
 	Reasons    []string `json:"reasons"`
 }
 
-// GetTypename returns userByIdQueryUserByIdErrInvalidInput.Typename, and is useful for accessing the field via an interface.
-func (v *userByIdQueryUserByIdErrInvalidInput) GetTypename() *string { return v.Typename }
+// GetTypename returns userByIdQueryUserErrInvalidInput.Typename, and is useful for accessing the field via an interface.
+func (v *userByIdQueryUserErrInvalidInput) GetTypename() *string { return v.Typename }
 
-// GetMessage returns userByIdQueryUserByIdErrInvalidInput.Message, and is useful for accessing the field via an interface.
-func (v *userByIdQueryUserByIdErrInvalidInput) GetMessage() string { return v.Message }
+// GetMessage returns userByIdQueryUserErrInvalidInput.Message, and is useful for accessing the field via an interface.
+func (v *userByIdQueryUserErrInvalidInput) GetMessage() string { return v.Message }
 
-// GetParameters returns userByIdQueryUserByIdErrInvalidInput.Parameters, and is useful for accessing the field via an interface.
-func (v *userByIdQueryUserByIdErrInvalidInput) GetParameters() []string { return v.Parameters }
+// GetParameters returns userByIdQueryUserErrInvalidInput.Parameters, and is useful for accessing the field via an interface.
+func (v *userByIdQueryUserErrInvalidInput) GetParameters() []string { return v.Parameters }
 
-// GetReasons returns userByIdQueryUserByIdErrInvalidInput.Reasons, and is useful for accessing the field via an interface.
-func (v *userByIdQueryUserByIdErrInvalidInput) GetReasons() []string { return v.Reasons }
+// GetReasons returns userByIdQueryUserErrInvalidInput.Reasons, and is useful for accessing the field via an interface.
+func (v *userByIdQueryUserErrInvalidInput) GetReasons() []string { return v.Reasons }
 
-// userByIdQueryUserByIdErrNotAuthorized includes the requested fields of the GraphQL type ErrNotAuthorized.
-type userByIdQueryUserByIdErrNotAuthorized struct {
+// userByIdQueryUserErrNotAuthorized includes the requested fields of the GraphQL type ErrNotAuthorized.
+type userByIdQueryUserErrNotAuthorized struct {
 	Typename *string `json:"__typename"`
 }
 
-// GetTypename returns userByIdQueryUserByIdErrNotAuthorized.Typename, and is useful for accessing the field via an interface.
-func (v *userByIdQueryUserByIdErrNotAuthorized) GetTypename() *string { return v.Typename }
+// GetTypename returns userByIdQueryUserErrNotAuthorized.Typename, and is useful for accessing the field via an interface.
+func (v *userByIdQueryUserErrNotAuthorized) GetTypename() *string { return v.Typename }
 
-// userByIdQueryUserByIdErrUserNotFound includes the requested fields of the GraphQL type ErrUserNotFound.
-type userByIdQueryUserByIdErrUserNotFound struct {
+// userByIdQueryUserErrUserNotFound includes the requested fields of the GraphQL type ErrUserNotFound.
+type userByIdQueryUserErrUserNotFound struct {
 	Typename *string `json:"__typename"`
 	Message  string  `json:"message"`
 }
 
-// GetTypename returns userByIdQueryUserByIdErrUserNotFound.Typename, and is useful for accessing the field via an interface.
-func (v *userByIdQueryUserByIdErrUserNotFound) GetTypename() *string { return v.Typename }
+// GetTypename returns userByIdQueryUserErrUserNotFound.Typename, and is useful for accessing the field via an interface.
+func (v *userByIdQueryUserErrUserNotFound) GetTypename() *string { return v.Typename }
 
-// GetMessage returns userByIdQueryUserByIdErrUserNotFound.Message, and is useful for accessing the field via an interface.
-func (v *userByIdQueryUserByIdErrUserNotFound) GetMessage() string { return v.Message }
+// GetMessage returns userByIdQueryUserErrUserNotFound.Message, and is useful for accessing the field via an interface.
+func (v *userByIdQueryUserErrUserNotFound) GetMessage() string { return v.Message }
 
-// userByIdQueryUserByIdUser includes the requested fields of the GraphQL type User.
-type userByIdQueryUserByIdUser struct {
-	Typename *string `json:"__typename"`
-	Id       string  `json:"id"`
-	Roles    []*Role `json:"roles"`
-}
-
-// GetTypename returns userByIdQueryUserByIdUser.Typename, and is useful for accessing the field via an interface.
-func (v *userByIdQueryUserByIdUser) GetTypename() *string { return v.Typename }
-
-// GetId returns userByIdQueryUserByIdUser.Id, and is useful for accessing the field via an interface.
-func (v *userByIdQueryUserByIdUser) GetId() string { return v.Id }
-
-// GetRoles returns userByIdQueryUserByIdUser.Roles, and is useful for accessing the field via an interface.
-func (v *userByIdQueryUserByIdUser) GetRoles() []*Role { return v.Roles }
-
-// userByIdQueryUserByIdUserResult includes the requested fields of the GraphQL interface UserResult.
+// userByIdQueryUserUserResult includes the requested fields of the GraphQL interface UserResult.
 //
-// userByIdQueryUserByIdUserResult is implemented by the following types:
-// userByIdQueryUserByIdErrInvalidInput
-// userByIdQueryUserByIdErrNotAuthorized
-// userByIdQueryUserByIdErrUserNotFound
-// userByIdQueryUserByIdUser
-type userByIdQueryUserByIdUserResult interface {
-	implementsGraphQLInterfaceuserByIdQueryUserByIdUserResult()
+// userByIdQueryUserUserResult is implemented by the following types:
+// userByIdQueryUserErrInvalidInput
+// userByIdQueryUserErrNotAuthorized
+// userByIdQueryUserErrUserNotFound
+// userByIdQueryUser
+type userByIdQueryUserUserResult interface {
+	implementsGraphQLInterfaceuserByIdQueryUserUserResult()
 	// GetTypename returns the receiver's concrete GraphQL type-name (see interface doc for possible values).
 	GetTypename() *string
 }
 
-func (v *userByIdQueryUserByIdErrInvalidInput) implementsGraphQLInterfaceuserByIdQueryUserByIdUserResult() {
-}
-func (v *userByIdQueryUserByIdErrNotAuthorized) implementsGraphQLInterfaceuserByIdQueryUserByIdUserResult() {
-}
-func (v *userByIdQueryUserByIdErrUserNotFound) implementsGraphQLInterfaceuserByIdQueryUserByIdUserResult() {
-}
-func (v *userByIdQueryUserByIdUser) implementsGraphQLInterfaceuserByIdQueryUserByIdUserResult() {}
+func (v *userByIdQueryUserErrInvalidInput) implementsGraphQLInterfaceuserByIdQueryUserUserResult()  {}
+func (v *userByIdQueryUserErrNotAuthorized) implementsGraphQLInterfaceuserByIdQueryUserUserResult() {}
+func (v *userByIdQueryUserErrUserNotFound) implementsGraphQLInterfaceuserByIdQueryUserUserResult()  {}
+func (v *userByIdQueryUser) implementsGraphQLInterfaceuserByIdQueryUserUserResult()                 {}
 
-func __unmarshaluserByIdQueryUserByIdUserResult(b []byte, v *userByIdQueryUserByIdUserResult) error {
+func __unmarshaluserByIdQueryUserUserResult(b []byte, v *userByIdQueryUserUserResult) error {
 	if string(b) == "null" {
 		return nil
 	}
@@ -3913,72 +3909,73 @@ func __unmarshaluserByIdQueryUserByIdUserResult(b []byte, v *userByIdQueryUserBy
 
 	switch tn.TypeName {
 	case "ErrInvalidInput":
-		*v = new(userByIdQueryUserByIdErrInvalidInput)
+		*v = new(userByIdQueryUserErrInvalidInput)
 		return json.Unmarshal(b, *v)
 	case "ErrNotAuthorized":
-		*v = new(userByIdQueryUserByIdErrNotAuthorized)
+		*v = new(userByIdQueryUserErrNotAuthorized)
 		return json.Unmarshal(b, *v)
 	case "ErrUserNotFound":
-		*v = new(userByIdQueryUserByIdErrUserNotFound)
+		*v = new(userByIdQueryUserErrUserNotFound)
 		return json.Unmarshal(b, *v)
 	case "User":
-		*v = new(userByIdQueryUserByIdUser)
+		*v = new(userByIdQueryUser)
 		return json.Unmarshal(b, *v)
 	case "":
 		return fmt.Errorf(
 			"response was missing UserResult.__typename")
 	default:
 		return fmt.Errorf(
-			`unexpected concrete type for userByIdQueryUserByIdUserResult: "%v"`, tn.TypeName)
+			`unexpected concrete type for userByIdQueryUserUserResult: "%v"`, tn.TypeName)
 	}
 }
 
-func __marshaluserByIdQueryUserByIdUserResult(v *userByIdQueryUserByIdUserResult) ([]byte, error) {
+func __marshaluserByIdQueryUserUserResult(v *userByIdQueryUserUserResult) ([]byte, error) {
 
 	var typename string
 	switch v := (*v).(type) {
-	case *userByIdQueryUserByIdErrInvalidInput:
+	case *userByIdQueryUserErrInvalidInput:
 		typename = "ErrInvalidInput"
 
 		result := struct {
 			TypeName string `json:"__typename"`
-			*userByIdQueryUserByIdErrInvalidInput
+			*userByIdQueryUserErrInvalidInput
 		}{typename, v}
 		return json.Marshal(result)
-	case *userByIdQueryUserByIdErrNotAuthorized:
+	case *userByIdQueryUserErrNotAuthorized:
 		typename = "ErrNotAuthorized"
 
 		result := struct {
 			TypeName string `json:"__typename"`
-			*userByIdQueryUserByIdErrNotAuthorized
+			*userByIdQueryUserErrNotAuthorized
 		}{typename, v}
 		return json.Marshal(result)
-	case *userByIdQueryUserByIdErrUserNotFound:
+	case *userByIdQueryUserErrUserNotFound:
 		typename = "ErrUserNotFound"
 
 		result := struct {
 			TypeName string `json:"__typename"`
-			*userByIdQueryUserByIdErrUserNotFound
+			*userByIdQueryUserErrUserNotFound
 		}{typename, v}
 		return json.Marshal(result)
-	case *userByIdQueryUserByIdUser:
+	case *userByIdQueryUser:
 		typename = "User"
 
 		result := struct {
 			TypeName string `json:"__typename"`
-			*userByIdQueryUserByIdUser
+			*userByIdQueryUser
 		}{typename, v}
 		return json.Marshal(result)
 	case nil:
 		return []byte("null"), nil
 	default:
 		return nil, fmt.Errorf(
-			`unexpected concrete type for userByIdQueryUserByIdUserResult: "%T"`, v)
+			`unexpected concrete type for userByIdQueryUserUserResult: "%T"`, v)
 	}
 }
 
 // userDeleteMutationResponse is returned by userDeleteMutation on success.
 type userDeleteMutationResponse struct {
+	// Completes the account deletion process using a provided confirmation token.
 	UserDelete userDeleteMutationUserDeleteUserDeleteResult `json:"-"`
 }
 
@@ -4193,6 +4190,7 @@ func __marshaluserDeleteMutationUserDeleteUserDeleteResult(v *userDeleteMutation
 
 // userRegisterMutationResponse is returned by userRegisterMutation on success.
 type userRegisterMutationResponse struct {
+	// Registers a new user and returns the user object or validation errors.
 	UserRegister userRegisterMutationUserRegisterUserRegisterResult `json:"-"`
 }
 
@@ -4479,6 +4477,7 @@ func __marshaluserRegisterMutationUserRegisterUserRegisterResult(v *userRegister
 
 // userRequestDeletionMutationResponse is returned by userRequestDeletionMutation on success.
 type userRequestDeletionMutationResponse struct {
+	// Initiates the account deletion process for the authenticated user and returns a redirect URL.
 	UserRequestDeletion userRequestDeletionMutationUserRequestDeletionUserDeleteResult `json:"-"`
 }
 
@@ -4941,6 +4940,7 @@ func __marshaluserRequestDeletionMutationUserRequestDeletionUserDeleteResult(v *
 
 // userUpdateMutationResponse is returned by userUpdateMutation on success.
 type userUpdateMutationResponse struct {
+	// Updates the profile information of the currently authenticated user.
 	UserUpdate userUpdateMutationUserUpdateUserUpdateResult `json:"-"`
 }
 
@@ -5427,98 +5427,98 @@ func __marshaluserUpdateMutationUserUpdateUserUpdateResult(v *userUpdateMutation
 
 // usersByRoleQueryResponse is returned by usersByRoleQuery on success.
 type usersByRoleQueryResponse struct {
-	UsersByRole *usersByRoleQueryUsersByRoleUsersConnection `json:"usersByRole"`
+	// Fetches a paginated list of users filtered by a specific role. Restricted to internal Retool basic auth.
+	UsersByRole usersByRoleQueryUsersByRoleUserConnection `json:"usersByRole"`
 }
 
 // GetUsersByRole returns usersByRoleQueryResponse.UsersByRole, and is useful for accessing the field via an interface.
-func (v *usersByRoleQueryResponse) GetUsersByRole() *usersByRoleQueryUsersByRoleUsersConnection {
+func (v *usersByRoleQueryResponse) GetUsersByRole() usersByRoleQueryUsersByRoleUserConnection {
 	return v.UsersByRole
 }
 
-// usersByRoleQueryUsersByRoleUsersConnection includes the requested fields of the GraphQL type UsersConnection.
-type usersByRoleQueryUsersByRoleUsersConnection struct {
-	Edges    []*usersByRoleQueryUsersByRoleUsersConnectionEdgesUserEdge `json:"edges"`
-	PageInfo usersByRoleQueryUsersByRoleUsersConnectionPageInfo         `json:"pageInfo"`
+// usersByRoleQueryUsersByRoleUserConnection includes the requested fields of the GraphQL type UserConnection.
+type usersByRoleQueryUsersByRoleUserConnection struct {
+	Edges    []usersByRoleQueryUsersByRoleUserConnectionEdgesUserEdge `json:"edges"`
+	PageInfo usersByRoleQueryUsersByRoleUserConnectionPageInfo        `json:"pageInfo"`
 }
 
-// GetEdges returns usersByRoleQueryUsersByRoleUsersConnection.Edges, and is useful for accessing the field via an interface.
-func (v *usersByRoleQueryUsersByRoleUsersConnection) GetEdges() []*usersByRoleQueryUsersByRoleUsersConnectionEdgesUserEdge {
+// GetEdges returns usersByRoleQueryUsersByRoleUserConnection.Edges, and is useful for accessing the field via an interface.
+func (v *usersByRoleQueryUsersByRoleUserConnection) GetEdges() []usersByRoleQueryUsersByRoleUserConnectionEdgesUserEdge {
 	return v.Edges
 }
 
-// GetPageInfo returns usersByRoleQueryUsersByRoleUsersConnection.PageInfo, and is useful for accessing the field via an interface.
-func (v *usersByRoleQueryUsersByRoleUsersConnection) GetPageInfo() usersByRoleQueryUsersByRoleUsersConnectionPageInfo {
+// GetPageInfo returns usersByRoleQueryUsersByRoleUserConnection.PageInfo, and is useful for accessing the field via an interface.
+func (v *usersByRoleQueryUsersByRoleUserConnection) GetPageInfo() usersByRoleQueryUsersByRoleUserConnectionPageInfo {
 	return v.PageInfo
 }
 
-// usersByRoleQueryUsersByRoleUsersConnectionEdgesUserEdge includes the requested fields of the GraphQL type UserEdge.
-type usersByRoleQueryUsersByRoleUsersConnectionEdgesUserEdge struct {
-	Node   *usersByRoleQueryUsersByRoleUsersConnectionEdgesUserEdgeNodeUser `json:"node"`
-	Cursor *string                                                          `json:"cursor"`
+// usersByRoleQueryUsersByRoleUserConnectionEdgesUserEdge includes the requested fields of the GraphQL type UserEdge.
+type usersByRoleQueryUsersByRoleUserConnectionEdgesUserEdge struct {
+	Node   usersByRoleQueryUsersByRoleUserConnectionEdgesUserEdgeNodeUser `json:"node"`
+	Cursor string                                                         `json:"cursor"`
 }
 
-// GetNode returns usersByRoleQueryUsersByRoleUsersConnectionEdgesUserEdge.Node, and is useful for accessing the field via an interface.
-func (v *usersByRoleQueryUsersByRoleUsersConnectionEdgesUserEdge) GetNode() *usersByRoleQueryUsersByRoleUsersConnectionEdgesUserEdgeNodeUser {
+// GetNode returns usersByRoleQueryUsersByRoleUserConnectionEdgesUserEdge.Node, and is useful for accessing the field via an interface.
+func (v *usersByRoleQueryUsersByRoleUserConnectionEdgesUserEdge) GetNode() usersByRoleQueryUsersByRoleUserConnectionEdgesUserEdgeNodeUser {
 	return v.Node
 }
 
-// GetCursor returns usersByRoleQueryUsersByRoleUsersConnectionEdgesUserEdge.Cursor, and is useful for accessing the field via an interface.
-func (v *usersByRoleQueryUsersByRoleUsersConnectionEdgesUserEdge) GetCursor() *string {
-	return v.Cursor
+// GetCursor returns usersByRoleQueryUsersByRoleUserConnectionEdgesUserEdge.Cursor, and is useful for accessing the field via an interface.
+func (v *usersByRoleQueryUsersByRoleUserConnectionEdgesUserEdge) GetCursor() string { return v.Cursor }
+
+// usersByRoleQueryUsersByRoleUserConnectionEdgesUserEdgeNodeUser includes the requested fields of the GraphQL type User.
+type usersByRoleQueryUsersByRoleUserConnectionEdgesUserEdgeNodeUser struct {
+	Id    string `json:"id"`
+	Roles []Role `json:"roles"`
 }
 
-// usersByRoleQueryUsersByRoleUsersConnectionEdgesUserEdgeNodeUser includes the requested fields of the GraphQL type User.
-type usersByRoleQueryUsersByRoleUsersConnectionEdgesUserEdgeNodeUser struct {
-	Id    string  `json:"id"`
-	Roles []*Role `json:"roles"`
-}
+// GetId returns usersByRoleQueryUsersByRoleUserConnectionEdgesUserEdgeNodeUser.Id, and is useful for accessing the field via an interface.
+func (v *usersByRoleQueryUsersByRoleUserConnectionEdgesUserEdgeNodeUser) GetId() string { return v.Id }
 
-// GetId returns usersByRoleQueryUsersByRoleUsersConnectionEdgesUserEdgeNodeUser.Id, and is useful for accessing the field via an interface.
-func (v *usersByRoleQueryUsersByRoleUsersConnectionEdgesUserEdgeNodeUser) GetId() string { return v.Id }
-
-// GetRoles returns usersByRoleQueryUsersByRoleUsersConnectionEdgesUserEdgeNodeUser.Roles, and is useful for accessing the field via an interface.
-func (v *usersByRoleQueryUsersByRoleUsersConnectionEdgesUserEdgeNodeUser) GetRoles() []*Role {
+// GetRoles returns usersByRoleQueryUsersByRoleUserConnectionEdgesUserEdgeNodeUser.Roles, and is useful for accessing the field via an interface.
+func (v *usersByRoleQueryUsersByRoleUserConnectionEdgesUserEdgeNodeUser) GetRoles() []Role {
 	return v.Roles
 }
 
-// usersByRoleQueryUsersByRoleUsersConnectionPageInfo includes the requested fields of the GraphQL type PageInfo.
-type usersByRoleQueryUsersByRoleUsersConnectionPageInfo struct {
-	Total           *int   `json:"total"`
-	Size            int    `json:"size"`
-	HasPreviousPage bool   `json:"hasPreviousPage"`
-	HasNextPage     bool   `json:"hasNextPage"`
-	StartCursor     string `json:"startCursor"`
-	EndCursor       string `json:"endCursor"`
+// usersByRoleQueryUsersByRoleUserConnectionPageInfo includes the requested fields of the GraphQL type PageInfo.
+type usersByRoleQueryUsersByRoleUserConnectionPageInfo struct {
+	Total           *int    `json:"total"`
+	Size            int     `json:"size"`
+	HasPreviousPage bool    `json:"hasPreviousPage"`
+	HasNextPage     bool    `json:"hasNextPage"`
+	StartCursor     *string `json:"startCursor"`
+	EndCursor       *string `json:"endCursor"`
 }
 
-// GetTotal returns usersByRoleQueryUsersByRoleUsersConnectionPageInfo.Total, and is useful for accessing the field via an interface.
-func (v *usersByRoleQueryUsersByRoleUsersConnectionPageInfo) GetTotal() *int { return v.Total }
+// GetTotal returns usersByRoleQueryUsersByRoleUserConnectionPageInfo.Total, and is useful for accessing the field via an interface.
+func (v *usersByRoleQueryUsersByRoleUserConnectionPageInfo) GetTotal() *int { return v.Total }
 
-// GetSize returns usersByRoleQueryUsersByRoleUsersConnectionPageInfo.Size, and is useful for accessing the field via an interface.
-func (v *usersByRoleQueryUsersByRoleUsersConnectionPageInfo) GetSize() int { return v.Size }
+// GetSize returns usersByRoleQueryUsersByRoleUserConnectionPageInfo.Size, and is useful for accessing the field via an interface.
+func (v *usersByRoleQueryUsersByRoleUserConnectionPageInfo) GetSize() int { return v.Size }
 
-// GetHasPreviousPage returns usersByRoleQueryUsersByRoleUsersConnectionPageInfo.HasPreviousPage, and is useful for accessing the field via an interface.
-func (v *usersByRoleQueryUsersByRoleUsersConnectionPageInfo) GetHasPreviousPage() bool {
+// GetHasPreviousPage returns usersByRoleQueryUsersByRoleUserConnectionPageInfo.HasPreviousPage, and is useful for accessing the field via an interface.
+func (v *usersByRoleQueryUsersByRoleUserConnectionPageInfo) GetHasPreviousPage() bool {
 	return v.HasPreviousPage
 }
 
-// GetHasNextPage returns usersByRoleQueryUsersByRoleUsersConnectionPageInfo.HasNextPage, and is useful for accessing the field via an interface.
-func (v *usersByRoleQueryUsersByRoleUsersConnectionPageInfo) GetHasNextPage() bool {
+// GetHasNextPage returns usersByRoleQueryUsersByRoleUserConnectionPageInfo.HasNextPage, and is useful for accessing the field via an interface.
+func (v *usersByRoleQueryUsersByRoleUserConnectionPageInfo) GetHasNextPage() bool {
 	return v.HasNextPage
 }
 
-// GetStartCursor returns usersByRoleQueryUsersByRoleUsersConnectionPageInfo.StartCursor, and is useful for accessing the field via an interface.
-func (v *usersByRoleQueryUsersByRoleUsersConnectionPageInfo) GetStartCursor() string {
+// GetStartCursor returns usersByRoleQueryUsersByRoleUserConnectionPageInfo.StartCursor, and is useful for accessing the field via an interface.
+func (v *usersByRoleQueryUsersByRoleUserConnectionPageInfo) GetStartCursor() *string {
 	return v.StartCursor
 }
 
-// GetEndCursor returns usersByRoleQueryUsersByRoleUsersConnectionPageInfo.EndCursor, and is useful for accessing the field via an interface.
-func (v *usersByRoleQueryUsersByRoleUsersConnectionPageInfo) GetEndCursor() string {
+// GetEndCursor returns usersByRoleQueryUsersByRoleUserConnectionPageInfo.EndCursor, and is useful for accessing the field via an interface.
+func (v *usersByRoleQueryUsersByRoleUserConnectionPageInfo) GetEndCursor() *string {
 	return v.EndCursor
 }
 
 // viewerQueryResponse is returned by viewerQuery on success.
 type viewerQueryResponse struct {
+	// Returns the currently authenticated user based on the session or token.
 	Viewer *viewerQueryViewerUserResult `json:"-"`
 }
 
@@ -5869,7 +5869,7 @@ func (v *viewerQueryViewerErrUserNotFound) GetTypename() *string { return v.Type
 type viewerQueryViewerUser struct {
 	Typename *string `json:"__typename"`
 	Id       string  `json:"id"`
-	Roles    []*Role `json:"roles"`
+	Roles    []Role  `json:"roles"`
 }
 
 // GetTypename returns viewerQueryViewerUser.Typename, and is useful for accessing the field via an interface.
@@ -5879,7 +5879,7 @@ func (v *viewerQueryViewerUser) GetTypename() *string { return v.Typename }
 func (v *viewerQueryViewerUser) GetId() string { return v.Id }
 
 // GetRoles returns viewerQueryViewerUser.Roles, and is useful for accessing the field via an interface.
-func (v *viewerQueryViewerUser) GetRoles() []*Role { return v.Roles }
+func (v *viewerQueryViewerUser) GetRoles() []Role { return v.Roles }
 
 // viewerQueryViewerUserResult includes the requested fields of the GraphQL interface UserResult.
 //
@@ -6595,7 +6595,7 @@ func roleUpdateMutation(
 // The query executed by userByAddressQuery.
 const userByAddressQuery_Operation = `
 query userByAddressQuery ($address: Address!) {
-	userByAddress(address: $address) {
+	user(address: $address) {
 		__typename
 		... on User {
 			id
@@ -6641,7 +6641,7 @@ func userByAddressQuery(
 // The query executed by userByIdQuery.
 const userByIdQuery_Operation = `
 query userByIdQuery ($id: ID!) {
-	userById(id: $id) {
+	user(id: $id) {
 		__typename
 		... on User {
 			id
@@ -6906,8 +6906,8 @@ func userUpdateMutation(
 
 // The query executed by usersByRoleQuery.
 const usersByRoleQuery_Operation = `
-query usersByRoleQuery ($role: Role!, $before: String, $after: String, $first: Int, $last: Int) {
-	usersByRole(role: $role, before: $before, after: $after, first: $first, last: $last) {
+query usersByRoleQuery ($role: Role!, $after: String, $first: Int) {
+	usersByRole(role: $role, after: $after, first: $first) {
 		edges {
 			node {
 				id
@@ -6931,20 +6931,16 @@ func usersByRoleQuery(
 	ctx_ context.Context,
 	client_ graphql.Client,
 	role Role,
-	before *string,
 	after *string,
 	first *int,
-	last *int,
 ) (data_ *usersByRoleQueryResponse, err_ error) {
 	req_ := &graphql.Request{
 		OpName: "usersByRoleQuery",
 		Query:  usersByRoleQuery_Operation,
 		Variables: &__usersByRoleQueryInput{
-			Role:   role,
-			Before: before,
-			After:  after,
-			First:  first,
-			Last:   last,
+			Role:  role,
+			After: after,
+			First: first,
 		},
 	}
 

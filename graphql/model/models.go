@@ -73,7 +73,6 @@ func JSONOrNil(j *persist.JSON) persist.JSON {
 	return *j
 }
 
-// ErrInvalidIDFormat indicates an invalid ID format
 type ErrInvalidIDFormat struct {
 	message string
 }
@@ -82,7 +81,6 @@ func (e ErrInvalidIDFormat) Error() string {
 	return fmt.Sprintf("invalid ID format: %s", e.message)
 }
 
-// ErrInvalidIDType indicates an unsupported ID type
 type ErrInvalidIDType struct {
 	typeName string
 }
@@ -91,7 +89,6 @@ func (e ErrInvalidIDType) Error() string {
 	return fmt.Sprintf("no fetch method found for ID type '%s'", e.typeName)
 }
 
-// Window represents a time window for queries
 type Window struct {
 	time.Duration
 	Name string

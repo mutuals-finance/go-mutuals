@@ -1,681 +1,745 @@
-"""
-Any field decorated with the @experimental directive should not be used in production.
-It will not conform to our rules around breaking changes.
-"""
 directive @experimental on FIELD_DEFINITION
-
-directive @goField(
-  forceResolver: Boolean
-  name: String
-) on INPUT_FIELD_DEFINITION | FIELD_DEFINITION
-
+directive @goField(forceResolver: Boolean, name: String) on INPUT_FIELD_DEFINITION | FIELD_DEFINITION
 directive @authRequired on FIELD_DEFINITION | INPUT_FIELD_DEFINITION
-
 directive @basicAuth(allowed: [BasicAuthType!]!) on FIELD_DEFINITION | INPUT_FIELD_DEFINITION
-
 directive @frontendBuildAuth on FIELD_DEFINITION | INPUT_FIELD_DEFINITION
-
 directive @scrub on INPUT_FIELD_DEFINITION
+directive @restrictEnvironment(allowed: [String!]!) on INPUT_FIELD_DEFINITION | INPUT_OBJECT | FIELD_DEFINITION | OBJECT
 
-directive @restrictEnvironment(
-  allowed: [String!]!
-) on INPUT_FIELD_DEFINITION | INPUT_OBJECT | FIELD_DEFINITION | OBJECT
+#-------------------------------------------------------------------------------
+# SHARED / COMMON
+#-------------------------------------------------------------------------------
 
 scalar Time
 scalar Address
 scalar PubKey
 scalar HexString
 scalar JSON
+scalar UInt256
+scalar Network
+scalar Currency
 
 enum ErrorPolicyEnum {
-  IGNORE_FAILED
-  REJECT_EVERYTHING
-  REJECT_FAILED_ROWS
+    IGNORE_FAILED
+    REJECT_EVERYTHING
+    REJECT_FAILED_ROWS
 }
 
 enum BasicAuthType {
-  Retool
-  Monitoring
+    Retool
+    Monitoring
+}
+
+enum ReportWindow {
+    LAST_5_DAYS
+    LAST_7_DAYS
+    ALL_TIME
 }
 
 interface Node {
-  id: ID!
+    id: ID!
 }
 
 type DeletedNode implements Node {
-  id: ID!
+    id: ID!
 }
 
 interface Error {
-  message: String!
+    message: String!
 }
-
-#-------------------------------------------------------------------------------
-# PAGINATION
-#-------------------------------------------------------------------------------
 
 type PageInfo {
-  total: Int
-  size: Int!
-  hasPreviousPage: Boolean!
-  hasNextPage: Boolean!
-  startCursor: String!
-  endCursor: String!
+    total: Int
+    size: Int!
+    hasPreviousPage: Boolean!
+    hasNextPage: Boolean!
+    startCursor: String
+    endCursor: String
+}
+
+type Quote {
+    currency: Currency!
+    value: Float!
+    lastUpdatedAt: Time!
+}
+
+type ErrInvalidInput implements Error {
+    message: String!
+    parameters: [String!]!
+    reasons: [String!]!
+}
+
+type ErrSyncFailed implements Error {
+    message: String!
 }
 
 #-------------------------------------------------------------------------------
-# ACCOUNT AND CONTRACTS
+# AUTHENTICATION
+#-------------------------------------------------------------------------------
+
+type ErrAuthenticationFailed implements Error {
+    message: String!
+}
+
+type ErrNoCookie implements Error {
+    message: String!
+}
+
+type ErrInvalidToken implements Error {
+    message: String!
+}
+
+type ErrSessionInvalidated implements Error {
+    message: String!
+}
+
+type ErrDoesNotOwnRequiredToken implements Error {
+    message: String!
+}
+
+union AuthorizationError = ErrNoCookie | ErrInvalidToken | ErrSessionInvalidated | ErrDoesNotOwnRequiredToken
+
+type ErrNotAuthorized implements Error {
+    message: String!
+    cause: AuthorizationError!
+}
+
+type LoginPayload {
+    viewer: User!
+}
+
+union LoginResult = LoginPayload | ErrUserNotFound | ErrAuthenticationFailed | ErrDoesNotOwnRequiredToken
+
+type LogoutPayload {
+    viewer: User
+}
+
+type VerifyTokenPayload {
+    user: User!
+    isValid: Boolean!
+}
+
+union VerifyTokenResult = VerifyTokenPayload | ErrNotAuthorized | ErrInvalidInput
+
+#-------------------------------------------------------------------------------
+# ACCOUNT & WALLET
 #-------------------------------------------------------------------------------
 
 enum EVMAccountType {
-  EOA
-  Contract
+    EOA
+    Contract
 }
 
 type EVMAccount implements Node {
-  id: ID!
-  address: Address!
-  accountType: EVMAccountType!
-  selfPools: [Pool!] @goField(forceResolver: true)
-  balances: [TokenBalance!] @goField(forceResolver: true)
-  createdAt: Time!
-  updatedAt: Time!
+    id: ID!
+    address: Address!
+    accountType: EVMAccountType!
+    selfPools(first: Int, after: String): PoolConnection! @goField(forceResolver: true)
+    balances(first: Int, after: String): TokenBalanceConnection! @goField(forceResolver: true)
+    createdAt: Time!
+    updatedAt: Time!
 }
 
-type PoolFactory implements Node {
-  id: ID!
-  address: Address!
-  chainId: Int!
-  poolCount: Int!
-  owner: EVMAccount!
-  createdAt: Time!
-  updatedAt: Time!
+union PoolOrUserOrEVMAccount = Pool | User | EVMAccount
+
+type ErrAddressOwnedByUser implements Error {
+    message: String!
 }
 
-type ModuleRegistry implements Node {
-  id: ID!
-  address: Address!
-  chainId: Int!
-  moduleCount: Int!
-  owner: EVMAccount! @goField(forceResolver: true)
-  createdAt: Time!
-  updatedAt: Time!
+type AddUserWalletPayload {
+    viewer: User!
 }
+
+union AddUserWalletResult = AddUserWalletPayload | ErrAuthenticationFailed | ErrNotAuthorized | ErrInvalidInput | ErrAddressOwnedByUser
+
+type RemoveUserWalletsPayload {
+    viewer: User!
+}
+
+union RemoveUserWalletsResult = RemoveUserWalletsPayload | ErrNotAuthorized | ErrInvalidInput
 
 #-------------------------------------------------------------------------------
 # USER
 #-------------------------------------------------------------------------------
 
 enum Role {
-  ADMIN
-  BETA_TESTER
-  EARLY_ACCESS
+    ADMIN
+    BETA_TESTER
+    EARLY_ACCESS
 }
 
 type User implements Node {
-  id: ID!
-  roles: [Role] @goField(forceResolver: true)
-  pools: [Pool] @goField(forceResolver: true)
+    id: ID!
+    roles: [Role!]! @goField(forceResolver: true)
+    pools(first: Int, after: String): PoolConnection! @goField(forceResolver: true)
 }
 
 union UserOrEVMAccount = User | EVMAccount
 
 type UserEdge {
-  node: User
-  cursor: String
+    node: User!
+    cursor: String!
 }
 
-type UsersConnection {
-  edges: [UserEdge]
-  pageInfo: PageInfo!
+type UserConnection {
+    edges: [UserEdge!]!
+    pageInfo: PageInfo!
 }
 
-# -------------------------------------------------------------------------------
+type SearchUsersPayload {
+    results: [User!]!
+}
+
+union SearchUsersResult = SearchUsersPayload | ErrInvalidInput
+
+union UserResult = User | ErrNotAuthorized | ErrUserNotFound | ErrInvalidInput
+
+type ErrUserAlreadyExists implements Error {
+    message: String!
+}
+
+type ErrUsernameNotAvailable implements Error {
+    message: String!
+}
+
+type ErrUserNotFound implements Error {
+    message: String!
+}
+
+# --- CREATE ---
+
+type UserRegisterPayload {
+    user: User!
+    requiresConfirmation: Boolean
+}
+
+union UserRegisterResult = UserRegisterPayload | ErrAuthenticationFailed | ErrUserAlreadyExists | ErrInvalidInput | ErrDoesNotOwnRequiredToken
+
+# --- UPDATE ---
+
+input UserUpdateInput {
+    username: String
+}
+
+type UserUpdatePayload {
+    user: User!
+}
+
+union UserUpdateResult = UserUpdatePayload | ErrNotAuthorized | ErrUsernameNotAvailable | ErrInvalidInput
+
+input RoleUpdateInput {
+    addRoles: [Role!]
+    removeRoles: [Role!]
+}
+
+type RoleUpdatePayload {
+    user: User!
+}
+
+union RoleUpdateResult = RoleUpdatePayload | ErrNotAuthorized | ErrInvalidInput
+
+# --- DELETE ---
+
+type UserDeletePayload {
+    user: User
+}
+
+union UserDeleteResult = UserDeletePayload | ErrNotAuthorized | ErrInvalidInput
+
+#-------------------------------------------------------------------------------
 # TOKEN
 #-------------------------------------------------------------------------------
 
 enum TokenType {
-  ERC20
-  ERC721
-  ERC1155
+    ERC20
+    ERC721
+    ERC1155
+    NATIVE
 }
 
 type Token implements Node {
-  id: ID!
-  address: Address!
-  chainId: Int!
-  tokenType: TokenType!
-  symbol: String!
-  name: String!
-  decimals: Int!
-  logo: String
-  thumbnail: String
-  validated: Int
-  possibleSpam: Boolean
-  createdAt: Time!
-  updatedAt: Time!
+    id: ID!
+    address: Address!
+    network: Network!
+    tokenType: TokenType!
+    symbol: String!
+    name: String!
+    decimals: Int!
+    logo: String
+    thumbnail: String
+    validated: Int
+    possibleSpam: Boolean
+    quotes: [Quote!]!
+    createdAt: Time!
+    updatedAt: Time!
+}
+
+type TokenBalanceEdge {
+    node: TokenBalance!
+    cursor: String!
+}
+
+type TokenBalanceConnection {
+    edges: [TokenBalanceEdge!]!
+    pageInfo: PageInfo!
 }
 
 type TokenBalance implements Node {
-  id: ID!
-  chainId: Int!
-  token: Token! @goField(forceResolver: true)
-  holder: PoolOrUserOrEVMAccount! @goField(forceResolver: true)
-  amount: HexString!
-  createdAt: Time!
-  updatedAt: Time!
+    id: ID!
+    network: Network!
+    token: Token! @goField(forceResolver: true)
+    holder: PoolOrUserOrEVMAccount! @goField(forceResolver: true)
+    amount: UInt256!
+    formattedAmount: Float!
+    quotes: [Quote!]!
+    createdAt: Time!
+    updatedAt: Time!
+}
+
+type ErrTokenNotFound implements Error {
+    message: String!
 }
 
 #-------------------------------------------------------------------------------
-# MODULES
+# MODULES & CLAIMS
 #-------------------------------------------------------------------------------
 
 enum ModuleType {
-  Validation
-  Distribution
+    Validation
+    Distribution
+}
+
+type ModuleRegistry implements Node {
+    id: ID!
+    address: Address!
+    network: Network!
+    moduleCount: Int!
+    owner: EVMAccount! @goField(forceResolver: true)
+    createdAt: Time!
+    updatedAt: Time!
 }
 
 type Module implements Node {
-  id: ID!
-  address: Address!
-  chainId: Int!
-  moduleRegistry: ModuleRegistry! @goField(forceResolver: true)
-  moduleId: String!
-  moduleType: ModuleType!
-  permissions: [String!]
-  data: JSON
-  name: String!
-  description: String!
-  createdAt: Time!
-  updatedAt: Time!
+    id: ID!
+    address: Address!
+    network: Network!
+    moduleRegistry: ModuleRegistry! @goField(forceResolver: true)
+    moduleId: String!
+    moduleType: ModuleType!
+    permissions: [String!]!
+    data: JSON
+    name: String!
+    description: String!
+    createdAt: Time!
+    updatedAt: Time!
 }
 
 type Claim implements Node {
-  id: ID!
-  label: String!
-  path: String!
-  parent: Claim @goField(forceResolver: true)
-  children: [Claim!] @goField(forceResolver: true)
-  pool: Pool! @goField(forceResolver: true)
-  validation: Module! @goField(forceResolver: true)
-  validationData: JSON
-  distribution: Module! @goField(forceResolver: true)
-  distributionData: JSON
-  createdAt: Time!
-  updatedAt: Time!
+    id: ID!
+    label: String!
+    path: String!
+    parent: Claim @goField(forceResolver: true)
+    children: [Claim!]! @goField(forceResolver: true)
+    pool: Pool! @goField(forceResolver: true)
+    validation: Module! @goField(forceResolver: true)
+    validationData: JSON
+    distribution: Module! @goField(forceResolver: true)
+    distributionData: JSON
+    createdAt: Time!
+    updatedAt: Time!
 }
+
+# --- CREATE ---
+
+input ClaimCreateInput {
+    label: String!
+    validationData: JSON
+    distributionData: JSON
+    parent: String
+    children: [String!]
+    validationId: String!
+    distributionId: String!
+}
+
+type ClaimCreatePayload {
+    claim: Claim!
+}
+
+union ClaimCreateResult = ClaimCreatePayload | ErrNotAuthorized | ErrInvalidInput | ErrPoolNotFound
+
+input ClaimBulkCreateInput {
+    validationData: JSON
+    distributionData: JSON
+    parent: ID
+    children: [ID!]
+    validationId: String!
+    distributionId: String!
+}
+
+type ClaimBulkCreatePayload {
+    count: Int!
+    claims: [Claim!]!
+}
+
+union ClaimBulkCreateResult = ClaimBulkCreatePayload | ErrNotAuthorized | ErrInvalidInput | ErrPoolNotFound
+
+# --- UPDATE ---
+
+input ClaimUpdateInput {
+    claimId: ID!
+    validationData: JSON
+    distributionData: JSON
+    parent: ID
+    children: [ID!]
+    validationId: String
+    distributionId: String
+}
+
+type ClaimUpdatePayload {
+    claim: Claim!
+}
+
+union ClaimUpdateResult = ClaimUpdatePayload | ErrNotAuthorized | ErrInvalidInput | ErrPoolNotFound
+
+input ClaimBulkUpdateInput {
+    claimId: ID!
+    validationData: JSON
+    distributionData: JSON
+    parent: ID
+    children: [ID!]
+    validationId: String
+    distributionId: String
+}
+
+type ClaimBulkUpdatePayload {
+    count: Int!
+    claims: [Claim!]!
+}
+
+union ClaimBulkUpdateResult = ClaimBulkUpdatePayload | ErrNotAuthorized | ErrInvalidInput | ErrPoolNotFound
+
+# --- DELETE ---
+
+type ClaimDeletePayload {
+    claim: Claim!
+}
+
+union ClaimDeleteResult = ClaimDeletePayload | ErrNotAuthorized | ErrInvalidInput | ErrPoolNotFound
+
+type ClaimBulkDeletePayload {
+    count: Int!
+}
+
+union ClaimBulkDeleteResult = ClaimBulkDeletePayload | ErrNotAuthorized | ErrInvalidInput | ErrPoolNotFound
 
 #-------------------------------------------------------------------------------
 # POOL
 #-------------------------------------------------------------------------------
 
 enum PoolStatus {
-  Draft
-  Active
-  Paused
+    Draft
+    Active
+    Paused
+}
+
+type PoolFactory implements Node {
+    id: ID!
+    address: Address!
+    network: Network!
+    poolCount: Int!
+    owner: EVMAccount!
+    createdAt: Time!
+    updatedAt: Time!
+}
+
+type PoolEdge {
+    node: Pool!
+    cursor: String!
+}
+
+type PoolConnection {
+    edges: [PoolEdge!]!
+    pageInfo: PageInfo!
 }
 
 type PoolBalance {
-  totalIncome: Float!
-  balance: Float!
-  withdrawals: Float!
+    totalIncome: [Quote!]!
+    balance: [Quote!]!
+    withdrawals: [Quote!]!
+    tokens(first: Int, after: String): TokenBalanceConnection! @goField(forceResolver: true)
 }
 
 type Pool implements Node {
-  id: ID!
-  name: String!
-  description: String!
-  image: String!
-  donationBps: Int!
-  slug: String!
-  status: PoolStatus!
-  owner: UserOrEVMAccount! @goField(forceResolver: true)
-  contract: PoolContract @goField(forceResolver: true)
-  claims: [Claim!] @goField(forceResolver: true)
-  balance: PoolBalance! @goField(forceResolver: true)
-  createdAt: Time!
-  updatedAt: Time!
+    id: ID!
+    name: String!
+    description: String!
+    image: String!
+    donationBps: Int!
+    slug: String!
+    status: PoolStatus!
+    owner: UserOrEVMAccount! @goField(forceResolver: true)
+    contract: PoolContract @goField(forceResolver: true)
+    claims: [Claim!]! @goField(forceResolver: true)
+    balance: PoolBalance! @goField(forceResolver: true)
+    createdAt: Time!
+    updatedAt: Time!
 }
 
-union PoolOrUserOrEVMAccount = Pool | User | EVMAccount
-
 type PoolContract implements Node {
-  id: ID!
-  address: Address!
-  chainId: Int!
-  status: PoolStatus!
-  poolFactory: PoolFactory! @goField(forceResolver: true)
-  account: EVMAccount! @goField(forceResolver: true)
-  owner: EVMAccount! @goField(forceResolver: true)
-  dayBalance: [PoolDayBalance!]! @goField(forceResolver: true)
-  hourBalance: [PoolHourBalance!]! @goField(forceResolver: true)
-  deposits: [Deposit!]! @goField(forceResolver: true)
-  withdrawals: [Withdrawal!]! @goField(forceResolver: true)
-  createdAt: Time!
-  updatedAt: Time!
+    id: ID!
+    address: Address!
+    network: Network!
+    status: PoolStatus!
+    poolFactory: PoolFactory! @goField(forceResolver: true)
+    account: EVMAccount! @goField(forceResolver: true)
+    owner: EVMAccount! @goField(forceResolver: true)
+    dayBalances(first: Int, after: String): PoolDayBalanceConnection! @goField(forceResolver: true)
+    hourBalances(first: Int, after: String): PoolHourBalanceConnection! @goField(forceResolver: true)
+    deposits(first: Int, after: String): DepositConnection! @goField(forceResolver: true)
+    withdrawals(first: Int, after: String): WithdrawalConnection! @goField(forceResolver: true)
+    createdAt: Time!
+    updatedAt: Time!
+}
+
+type PoolDayBalanceEdge {
+    node: PoolDayBalance!
+    cursor: String!
+}
+
+type PoolDayBalanceConnection {
+    edges: [PoolDayBalanceEdge!]!
+    pageInfo: PageInfo!
 }
 
 type PoolDayBalance implements Node {
-  id: ID!
-  chainId: Int!
-  date: Time!
-  pool: Pool! @goField(forceResolver: true)
-  token: Token! @goField(forceResolver: true)
-  amount: HexString!
-  createdAt: Time!
-  updatedAt: Time!
+    id: ID!
+    network: Network!
+    date: Time!
+    pool: Pool! @goField(forceResolver: true)
+    token: Token! @goField(forceResolver: true)
+    amount: UInt256!
+    formattedAmount: Float!
+    quotes: [Quote!]!
+    createdAt: Time!
+    updatedAt: Time!
+}
+
+type PoolHourBalanceEdge {
+    node: PoolHourBalance!
+    cursor: String!
+}
+
+type PoolHourBalanceConnection {
+    edges: [PoolHourBalanceEdge!]!
+    pageInfo: PageInfo!
 }
 
 type PoolHourBalance implements Node {
-  id: ID!
-  chainId: Int!
-  date: Time!
-  pool: Pool! @goField(forceResolver: true)
-  token: Token! @goField(forceResolver: true)
-  amount: HexString!
-  createdAt: Time!
-  updatedAt: Time!
+    id: ID!
+    network: Network!
+    date: Time!
+    pool: Pool! @goField(forceResolver: true)
+    token: Token! @goField(forceResolver: true)
+    amount: UInt256!
+    formattedAmount: Float!
+    quotes: [Quote!]!
+    createdAt: Time!
+    updatedAt: Time!
+}
+
+type SearchPoolsPayload {
+    results: [Pool!]!
+}
+
+union SearchPoolsResult = SearchPoolsPayload | ErrInvalidInput
+
+type ErrPoolNotFound implements Error {
+    message: String!
 }
 
 
-#-------------------------------------------------------------------------------
-# POOL
+union PoolResult = Pool | ErrPoolNotFound | ErrInvalidInput
+
+# --- CREATE ---
+
+input PoolCreateInput {
+    owner: String
+    private: Boolean
+    name: String!
+    description: String!
+    image: String
+    donationBps: Int
+    slug: String!
+    addClaims: [ClaimCreateInput!]
+}
+
+type PoolCreatePayload {
+    pool: Pool!
+}
+
+union PoolCreateResult = PoolCreatePayload | ErrNotAuthorized | ErrInvalidInput
+
+# --- UPDATE ---
+
+input PoolUpdateInput {
+    private: Boolean
+    name: String
+    description: String
+    image: String
+    donationBps: Int
+    slug: String
+    addClaims: [ClaimCreateInput!]
+    updateClaims: [ClaimUpdateInput!]
+    removeClaims: [ID!]
+}
+
+type PoolUpdatePayload {
+    pool: Pool!
+}
+
+union PoolUpdateResult = PoolUpdatePayload | ErrNotAuthorized | ErrInvalidInput | ErrPoolNotFound
+
+# --- DELETE ---
+
+type PoolDeletePayload {
+    pool: Pool!
+}
+
+union PoolDeleteResult = PoolDeletePayload | ErrNotAuthorized | ErrInvalidInput | ErrPoolNotFound
+
 #-------------------------------------------------------------------------------
 # EVENT
 #-------------------------------------------------------------------------------
 
-enum ReportWindow {
-  LAST_5_DAYS
-  LAST_7_DAYS
-  ALL_TIME
+type Tx implements Node {
+    id: ID!
+    gasUsed: UInt256!
+    gasPrice: UInt256!
+    createdAt: Time!
+    updatedAt: Time!
+    deposits(first: Int, after: String): DepositConnection! @goField(forceResolver: true)
+    withdrawals(first: Int, after: String): WithdrawalConnection! @goField(forceResolver: true)
 }
 
-type Tx implements Node {
-  id: ID!
-  gasUsed: HexString!
-  gasPrice: HexString!
-  createdAt: Time!
-  updatedAt: Time!
-  deposits: [Deposit]! @goField(forceResolver: true)
-  withdrawals: [Withdrawal]! @goField(forceResolver: true)
+type DepositEdge {
+    node: Deposit!
+    cursor: String!
+}
+
+type DepositConnection {
+    edges: [DepositEdge!]!
+    pageInfo: PageInfo!
 }
 
 type Deposit implements Node {
-  id: ID!
-  transaction: Tx! @goField(forceResolver: true)
-  pool: Pool! @goField(forceResolver: true)
-  token: Token! @goField(forceResolver: true)
-  from: Address!
-  to: Address!
-  origin: String!
-  amount: HexString!
-  logIndex: Int
-  createdAt: Time!
-  updatedAt: Time!
+    id: ID!
+    transaction: Tx! @goField(forceResolver: true)
+    pool: Pool! @goField(forceResolver: true)
+    token: Token! @goField(forceResolver: true)
+    from: Address!
+    to: Address!
+    origin: String!
+    amount: UInt256!
+    logIndex: Int
+    createdAt: Time!
+    updatedAt: Time!
+}
+
+type WithdrawalEdge {
+    node: Withdrawal!
+    cursor: String!
+}
+
+type WithdrawalConnection {
+    edges: [WithdrawalEdge!]!
+    pageInfo: PageInfo!
 }
 
 type Withdrawal implements Node {
-  id: ID!
-  transaction: Tx! @goField(forceResolver: true)
-  pool: Pool! @goField(forceResolver: true)
-  token: Token! @goField(forceResolver: true)
-  from: Address!
-  to: Address!
-  origin: String!
-  amount: HexString!
-  logIndex: Int
-  createdAt: Time!
-  updatedAt: Time!
+    id: ID!
+    transaction: Tx! @goField(forceResolver: true)
+    pool: Pool! @goField(forceResolver: true)
+    token: Token! @goField(forceResolver: true)
+    from: Address!
+    to: Address!
+    origin: String!
+    amount: UInt256!
+    logIndex: Int
+    createdAt: Time!
+    updatedAt: Time!
 }
-
-#-------------------------------------------------------------------------------
-# SEARCH
-#-------------------------------------------------------------------------------
-
-type UserSearchResult {
-  user: User
-}
-
-type SearchUsersPayload {
-  results: [UserSearchResult!]
-}
-
-type PoolSearchResult {
-  pool: Pool
-}
-
-type SearchPoolsPayload {
-  results: [PoolSearchResult!]
-}
-
-#-------------------------------------------------------------------------------
-# ERRORS
-#-------------------------------------------------------------------------------
-
-type ErrAuthenticationFailed implements Error {
-  message: String!
-}
-
-type ErrUserAlreadyExists implements Error {
-  message: String!
-}
-
-type ErrUsernameNotAvailable implements Error {
-  message: String!
-}
-
-type ErrAddressOwnedByUser implements Error {
-  message: String!
-}
-
-type ErrUserNotFound implements Error {
-  message: String!
-}
-
-type ErrPoolNotFound implements Error {
-  message: String!
-}
-
-type ErrTokenNotFound implements Error {
-  message: String!
-}
-
-type ErrInvalidInput implements Error {
-  message: String!
-  parameters: [String!]!
-  reasons: [String!]!
-}
-
-type ErrNoCookie implements Error {
-  message: String!
-}
-
-type ErrInvalidToken implements Error {
-  message: String!
-}
-
-type ErrSessionInvalidated implements Error {
-  message: String!
-}
-
-type ErrDoesNotOwnRequiredToken implements Error {
-  message: String!
-}
-
-union AuthorizationError =
-  ErrNoCookie
-  | ErrInvalidToken
-  | ErrSessionInvalidated
-  | ErrDoesNotOwnRequiredToken
-
-type ErrNotAuthorized implements Error {
-  message: String!
-  cause: AuthorizationError!
-}
-
-type ErrSyncFailed implements Error {
-  message: String!
-}
-
 
 #-------------------------------------------------------------------------------
 # QUERY
 #-------------------------------------------------------------------------------
 
-union UserResult = User | ErrNotAuthorized | ErrUserNotFound | ErrInvalidInput
-union PoolResult = Pool | ErrPoolNotFound | ErrInvalidInput
-union SearchUsersResult = SearchUsersPayload | ErrInvalidInput
-union SearchPoolsResult = SearchPoolsPayload | ErrInvalidInput
-
 type Query {
-  node(id: ID!): Node
-  viewer: UserResult @authRequired
-  userById(id: ID!): UserResult!
-  userByAddress(address: Address!): UserResult!
+    """Fetches an object given its globally unique ID."""
+    node(id: ID!): Node
 
-  """Look up a pool by ID, slug, or contract ID."""
-  pool(
-    id: ID
-    slug: String
-    contractId: ID
-  ): PoolResult!
+    """Returns the currently authenticated user based on the session or token."""
+    viewer: UserResult @authRequired
 
-  searchUsers(
-    query: String!
-    limit: Int
-    usernameWeight: Float
-  ): SearchUsersResult!
+    """Combined lookup for a user by either their ID or their Ethereum address."""
+    user(id: ID, address: Address): UserResult!
 
-  searchPools(
-    query: String!
-    limit: Int
-    nameWeight: Float
-    descriptionWeight: Float
-  ): SearchPoolsResult!
+    """Look up a pool by ID, slug, or contract ID."""
+    pool(id: ID, slug: String, contractId: ID): PoolResult!
 
+    """Searches for users based on a query string, with optional weighting for username matches."""
+    searchUsers(query: String!, limit: Int, usernameWeight: Float): SearchUsersResult!
 
-  usersByRole(role: Role!, before: String, after: String, first: Int, last: Int): UsersConnection
-  @basicAuth(allowed: [Retool])
+    """Searches for pools based on a query string, with optional weighting for name and description matches."""
+    searchPools(query: String!, limit: Int, nameWeight: Float, descriptionWeight: Float): SearchPoolsResult!
+
+    """Fetches a paginated list of users filtered by a specific role. Restricted to internal Retool basic auth."""
+    usersByRole(role: Role!, first: Int, after: String): UserConnection! @basicAuth(allowed: [Retool])
 }
 
 #-------------------------------------------------------------------------------
-# MUTATIONS
+# MUTATION
 #-------------------------------------------------------------------------------
-
-# USER MUTATIONS
-
-type UserRegisterPayload {
-  user: User!
-  requiresConfirmation: Boolean
-}
-
-union UserRegisterResult = UserRegisterPayload | ErrAuthenticationFailed | ErrUserAlreadyExists | ErrInvalidInput | ErrDoesNotOwnRequiredToken
-
-type UserUpdatePayload {
-  user: User!
-}
-
-input UserUpdateInput {
-  username: String
-}
-
-union UserUpdateResult = UserUpdatePayload | ErrNotAuthorized | ErrUsernameNotAvailable | ErrInvalidInput
-
-type UserDeletePayload {
-  user: User
-}
-
-union UserDeleteResult = UserDeletePayload | ErrNotAuthorized | ErrInvalidInput
-
-# WALLET MUTATIONS
-
-type AddUserWalletPayload {
-  viewer: User!
-}
-
-union AddUserWalletResult = AddUserWalletPayload | ErrAuthenticationFailed | ErrNotAuthorized | ErrInvalidInput | ErrAddressOwnedByUser
-
-type RemoveUserWalletsPayload {
-  viewer: User!
-}
-
-union RemoveUserWalletsResult = RemoveUserWalletsPayload | ErrNotAuthorized | ErrInvalidInput
-
-# AUTH MUTATIONS
-
-type LoginPayload {
-  viewer: User!
-}
-
-union LoginResult = LoginPayload | ErrUserNotFound | ErrAuthenticationFailed | ErrDoesNotOwnRequiredToken
-
-type LogoutPayload {
-  viewer: User
-}
-
-type VerifyTokenPayload {
-  user: User!
-  isValid: Boolean!
-}
-
-union VerifyTokenResult = VerifyTokenPayload | ErrNotAuthorized | ErrInvalidInput
-
-
-# ROLE MUTATIONS
-
-type RoleUpdatePayload {
-  user: User!
-}
-
-input RoleUpdateInput {
-  addRoles: [Role!]
-  removeRoles: [Role!]
-}
-
-union RoleUpdateResult = RoleUpdatePayload | ErrNotAuthorized | ErrInvalidInput
-
-# CLAIM MUTATIONS
-
-type ClaimCreatePayload {
-  claim: Claim!
-}
-
-input ClaimCreateInput {
-  label: String!
-  validationData: JSON
-  distributionData: JSON
-  parent: String
-  children: [String!]
-  validationId: String!
-  distributionId: String!
-}
-
-union ClaimCreateResult = ClaimCreatePayload | ErrNotAuthorized | ErrInvalidInput | ErrPoolNotFound
-
-type ClaimUpdatePayload {
-  claim: Claim!
-}
-
-input ClaimUpdateInput {
-  claimId: ID!
-  validationData: JSON
-  distributionData: JSON
-  parent: ID
-  children: [ID!]
-  validationId: String
-  distributionId: String
-}
-
-union ClaimUpdateResult = ClaimUpdatePayload | ErrNotAuthorized | ErrInvalidInput | ErrPoolNotFound
-
-type ClaimDeletePayload {
-  claim: Claim!
-}
-
-union ClaimDeleteResult = ClaimDeletePayload | ErrNotAuthorized | ErrInvalidInput | ErrPoolNotFound
-
-type ClaimBulkCreatePayload {
-  count: Int!
-  claims: [Claim!]!
-}
-
-input ClaimBulkCreateInput {
-  validationData: JSON
-  distributionData: JSON
-  parent: ID
-  children: [ID!]
-  validationId: String!
-  distributionId: String!
-}
-
-union ClaimBulkCreateResult = ClaimBulkCreatePayload | ErrNotAuthorized | ErrInvalidInput | ErrPoolNotFound
-
-type ClaimBulkUpdatePayload {
-  count: Int!
-  claims: [Claim!]!
-}
-
-input ClaimBulkUpdateInput {
-  claimId: ID!
-  validationData: JSON
-  distributionData: JSON
-  parent: ID
-  children: [ID!]
-  validationId: String
-  distributionId: String
-}
-
-union ClaimBulkUpdateResult = ClaimBulkUpdatePayload | ErrNotAuthorized | ErrInvalidInput | ErrPoolNotFound
-
-type ClaimBulkDeletePayload {
-  count: Int!
-}
-
-union ClaimBulkDeleteResult = ClaimBulkDeletePayload | ErrNotAuthorized | ErrInvalidInput | ErrPoolNotFound
-
-# POOL MUTATIONS
-
-type PoolCreatePayload {
-  pool: Pool!
-}
-
-input PoolCreateInput {
-  owner: String
-  private: Boolean
-  name: String!
-  description: String!
-  image: String
-  donationBps: Int
-  slug: String!
-  addClaims: [ClaimCreateInput!]
-}
-
-union PoolCreateResult = PoolCreatePayload | ErrNotAuthorized | ErrInvalidInput
-
-type PoolUpdatePayload {
-  pool: Pool!
-}
-
-input PoolUpdateInput {
-  private: Boolean
-  name: String
-  description: String
-  image: String
-  donationBps: Int
-  slug: String
-  addClaims: [ClaimCreateInput!]
-  updateClaims: [ClaimUpdateInput!]
-  removeClaims: [ID!]
-}
-
-union PoolUpdateResult = PoolUpdatePayload | ErrNotAuthorized | ErrInvalidInput | ErrPoolNotFound
-
-type PoolDeletePayload {
-  pool: Pool!
-}
-
-union PoolDeleteResult = PoolDeletePayload | ErrNotAuthorized | ErrInvalidInput | ErrPoolNotFound
 
 type Mutation {
-  # User
-  userRegister: UserRegisterResult! @authRequired
-  userUpdate(input: UserUpdateInput!): UserUpdateResult! @authRequired
-  userRequestDeletion(redirectUrl: String!): UserDeleteResult! @authRequired
-  userDelete(token: String!): UserDeleteResult! @authRequired
+    """Registers a new user and returns the user object or validation errors."""
+    userRegister: UserRegisterResult! @authRequired
 
-  # Roles
-  roleUpdate(role: Role!, input: RoleUpdateInput!): RoleUpdateResult! @authRequired
+    """Updates the profile information of the currently authenticated user."""
+    userUpdate(input: UserUpdateInput!): UserUpdateResult! @authRequired
 
-  # Claims
-  poolClaimCreate(poolId: ID!, input: ClaimCreateInput!): ClaimCreateResult! @authRequired
-  poolClaimUpdate(poolId: ID!, input: ClaimUpdateInput!): ClaimUpdateResult! @authRequired
-  poolClaimDelete(poolId: ID!, claimId: ID!): ClaimDeleteResult! @authRequired
-  poolClaimBulkCreate(errorPolicy: ErrorPolicyEnum, poolId: ID!, claims: [ClaimBulkCreateInput!]!): ClaimBulkCreateResult! @authRequired
-  poolClaimBulkUpdate(errorPolicy: ErrorPolicyEnum, poolId: ID!, claims: [ClaimBulkUpdateInput!]!): ClaimBulkUpdateResult! @authRequired
-  poolClaimBulkDelete(poolId: ID!, claimIds: [ID!]!): ClaimBulkDeleteResult! @authRequired
+    """Initiates the account deletion process for the authenticated user and returns a redirect URL."""
+    userRequestDeletion(redirectUrl: String!): UserDeleteResult! @authRequired
 
-  # Pools
-  poolCreate(input: PoolCreateInput!): PoolCreateResult!
-  poolUpdate(id: ID!, input: PoolUpdateInput!): PoolUpdateResult! @authRequired
-  poolDelete(id: ID!): PoolDeleteResult! @authRequired
+    """Completes the account deletion process using a provided confirmation token."""
+    userDelete(token: String!): UserDeleteResult! @authRequired
+
+    """Adds or removes administrative roles for a specific user."""
+    roleUpdate(role: Role!, input: RoleUpdateInput!): RoleUpdateResult! @authRequired
+
+    """Creates a new claim definition for a specific pool."""
+    poolClaimCreate(poolId: ID!, input: ClaimCreateInput!): ClaimCreateResult! @authRequired
+
+    """Updates an existing claim definition within a pool."""
+    poolClaimUpdate(poolId: ID!, input: ClaimUpdateInput!): ClaimUpdateResult! @authRequired
+
+    """Deletes a specific claim definition from a pool."""
+    poolClaimDelete(poolId: ID!, claimId: ID!): ClaimDeleteResult! @authRequired
+
+    """Creates multiple claim definitions for a pool in a single bulk operation."""
+    poolClaimBulkCreate(errorPolicy: ErrorPolicyEnum, poolId: ID!, claims: [ClaimBulkCreateInput!]!): ClaimBulkCreateResult! @authRequired
+
+    """Updates multiple existing claim definitions within a pool in a single bulk operation."""
+    poolClaimBulkUpdate(errorPolicy: ErrorPolicyEnum, poolId: ID!, claims: [ClaimBulkUpdateInput!]!): ClaimBulkUpdateResult! @authRequired
+
+    """Deletes multiple claim definitions from a pool in a single bulk operation."""
+    poolClaimBulkDelete(poolId: ID!, claimIds: [ID!]!): ClaimBulkDeleteResult! @authRequired
+
+    """Creates a new pool."""
+    poolCreate(input: PoolCreateInput!): PoolCreateResult!
+
+    """Updates the details, configuration, or claims of an existing pool."""
+    poolUpdate(id: ID!, input: PoolUpdateInput!): PoolUpdateResult! @authRequired
+
+    """Soft-deletes or archives an existing pool."""
+    poolDelete(id: ID!): PoolDeleteResult! @authRequired
 }

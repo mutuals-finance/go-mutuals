@@ -57,61 +57,30 @@ models:
       - github.com/99designs/gqlgen/graphql.Int64
       - github.com/99designs/gqlgen/graphql.Int32
 
-  # Blockchain types
+  # Custom scalars from schema
   Address:
     model:
       - github.com/mutuals/go-mutuals/service/persist.Address
-  Chain:
-    model:
-      - github.com/mutuals/go-mutuals/service/persist.Chain
-  ChainAddress:
-    model:
-      - github.com/mutuals/go-mutuals/service/persist.ChainAddress
-  ChainAddressInput:
-    model:
-      - github.com/mutuals/go-mutuals/service/persist.ChainAddress
-  ChainPubKey:
-    model:
-      - github.com/mutuals/go-mutuals/service/persist.ChainPubKey
-  ChainPubKeyInput:
-    model:
-      - github.com/mutuals/go-mutuals/service/persist.ChainPubKey
-  PubKey:
-    model:
-      - github.com/mutuals/go-mutuals/service/persist.PubKey
-  HexString:
-    model:
-      - github.com/mutuals/go-mutuals/service/persist.HexString
-
-  # Data types
   JSON:
     model:
       - github.com/mutuals/go-mutuals/service/persist.JSON
-
-  # Wallet types
-  WalletType:
+  Network:
     model:
-      - github.com/mutuals/go-mutuals/service/persist.WalletType
-
-  # Event types
-  Action:
+      - github.com/mutuals/go-mutuals/service/persist.Chain
+  UInt256:
     model:
-      - github.com/mutuals/go-mutuals/service/persist.Action
+      - github.com/mutuals/go-mutuals/service/persist.UInt256
+  Currency:
+    model:
+      - github.com/mutuals/go-mutuals/service/persist.Currency
 
-  # User types
+  # User/auth types in schema
   Role:
     model:
       - github.com/mutuals/go-mutuals/service/persist.Role
-  DarkMode:
-    model:
-      - github.com/mutuals/go-mutuals/service/persist.DarkMode
-
-  # Report types
   ReportWindow:
     model:
       - github.com/mutuals/go-mutuals/graphql/model.Window
-
-  # Auth types
   BasicAuthType:
     model:
       - github.com/mutuals/go-mutuals/service/auth/basicauth.AuthTokenType

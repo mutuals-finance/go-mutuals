@@ -6,7 +6,6 @@ import (
 	"path"
 	"path/filepath"
 	"runtime"
-	"strings"
 	"syscall"
 
 	"github.com/99designs/gqlgen/codegen"
@@ -120,31 +119,18 @@ func getNodeImplementors(objects []*codegen.Object, modelPackage string) []nodeI
 	for _, obj := range objects {
 		for _, impl := range obj.Implements {
 			if impl.Name == "Node" {
-				// Look for ID field - simple and straightforward
-				var idField string
-				candidates := []string{"ID", obj.Name + "ID", "DBID", "Id"}
-				for _, c := range candidates {
-					for _, f := range obj.Fields {
-						if strings.EqualFold(f.Name, c) {
-							idField = f.GoFieldName
-							break
-						}
-					}
-					if idField != "" {
-						break
-					}
-				}
-
-				if idField != "" {
-					res = append(res, nodeImplementor{
-						Name:           obj.Name,
-						Implementation: fmt.Sprintf(`GqlID(fmt.Sprintf("%s:%%s", r.%s))`, obj.Name, idField),
-						Types:          []string{"persist.DBID"},
-						TypeIsPointer:  []bool{false},
-						Args:           []string{"id"},
-						Packages:       []string{"github.com/mutuals/go-mutuals/service/persist"},
-					})
-				}
+				// All Node implementors use the DBID field added by modelgen_custom.
+				// We don't search schema fields because the `id: ID!` field is replaced
+				// by an explicit `DBID persist.DBID` Go field in the generated struct.
+				res = append(res, nodeImplementor{
+					Name:           obj.Name,
+					Implementation: fmt.Sprintf(`GqlID(fmt.Sprintf("%s:%%s", r.DBID))`, obj.Name),
+					Types:          []string{"persist.DBID"},
+					TypeIsPointer:  []bool{false},
+					Args:           []string{"id"},
+					Packages:       []string{"github.com/mutuals/go-mutuals/service/persist"},
+				})
+				break
 			}
 		}
 	}

@@ -1,51 +1,23 @@
 package persist
 
 import (
-	"context"
 	"database/sql/driver"
-	"encoding/json"
 	"fmt"
-	"io"
-	"strings"
 	"time"
 
 	"github.com/lib/pq"
 )
 
-type TraitType string
-
-const (
-	TraitTypeTopActiveUser TraitType = "top_activity"
-)
-
-type Traits map[TraitType]interface{}
-
-type SocialProvider string
-
-const (
-	SocialProviderTwitter   SocialProvider = "Twitter"
-	SocialProviderFarcaster SocialProvider = "Farcaster"
-	SocialProviderLens      SocialProvider = "Lens"
-)
-
-var AllSocialProviders = []SocialProvider{
-	SocialProviderTwitter,
-	SocialProviderFarcaster,
-	SocialProviderLens,
-}
-
 // User represents a user with all of their addresses
 type User struct {
-	Version            NullInt32  `json:"version"` // schema version for this model
+	Version            NullInt32  `json:"version"`
 	ID                 DBID       `json:"id" binding:"required"`
 	CreationTime       time.Time  `json:"created_at"`
 	Deleted            NullBool   `json:"-"`
 	UpdatedAt          time.Time  `json:"updated_at"`
-	Username           NullString `json:"username"` // mutable
+	Username           NullString `json:"username"`
 	UsernameIdempotent NullString `json:"username_idempotent"`
 	Wallets            []Wallet   `json:"wallets"`
-	Bio                NullString `json:"bio"`
-	Traits             Traits     `json:"traits"`
 	Universal          NullBool   `json:"universal"`
 	PrimaryWalletID    NullString `json:"primary_wallet_id"`
 }
@@ -55,80 +27,10 @@ type UserUpdateInfoInput struct {
 	UpdatedAt          time.Time  `json:"updated_at"`
 	Username           NullString `json:"username"`
 	UsernameIdempotent NullString `json:"username_idempotent"`
-	Bio                NullString `json:"bio"`
 }
 
 type CreateUserInput struct {
 	ID string
-}
-
-// UserRepository represents the interface for interacting with the persisted state of users
-type UserRepository interface {
-	UpdateByID(context.Context, DBID, interface{}) error
-	Create(context.Context, CreateUserInput) (DBID, error)
-	AddWallet(context.Context, DBID, ChainAddress, WalletType) error
-	RemoveWallet(context.Context, DBID, DBID) error
-	GetByID(context.Context, DBID) (User, error)
-	GetByIDs(context.Context, []DBID) ([]User, error)
-	GetByWalletID(context.Context, DBID) (User, error)
-	GetByChainAddress(context.Context, ChainAddress) (User, error)
-	GetByUsername(context.Context, string) (User, error)
-	Delete(context.Context, DBID) error
-	MergeUsers(context.Context, DBID, DBID) error
-	AddFollower(pCtx context.Context, follower DBID, followee DBID) (refollowed bool, err error)
-	RemoveFollower(pCtx context.Context, follower DBID, followee DBID) error
-	FillWalletDataForUser(pCtx context.Context, user *User) error
-}
-
-// Scan implements the database/sql Scanner interface for the Traits type
-func (m *Traits) Scan(src interface{}) error {
-	if src == nil {
-		*m = Traits{}
-		return nil
-	}
-	return json.Unmarshal(src.([]uint8), m)
-}
-
-// Value implements the database/sql/driver Valuer interface for the Traits type
-func (m Traits) Value() (driver.Value, error) {
-	val, err := json.Marshal(m)
-	if err != nil {
-		return nil, err
-	}
-
-	return []byte(strings.ToValidUTF8(strings.ReplaceAll(string(val), "\\u0000", ""), "")), nil
-}
-
-func (s SocialProvider) String() string {
-	return string(s)
-}
-
-func (s SocialProvider) Value() (driver.Value, error) {
-	if !s.IsValid() {
-		return nil, fmt.Errorf("invalid social provider: %s", s)
-	}
-	return s.String(), nil
-}
-
-func (s *SocialProvider) Scan(src interface{}) error {
-	if src == nil {
-		*s = SocialProvider("")
-		return nil
-	}
-	*s = SocialProvider(src.(string))
-	if !s.IsValid() {
-		return fmt.Errorf("invalid social provider: %s", s)
-	}
-	return nil
-}
-
-func (s SocialProvider) IsValid() bool {
-	switch s {
-	case SocialProviderTwitter, SocialProviderFarcaster, SocialProviderLens:
-		return true
-	default:
-		return false
-	}
 }
 
 // ErrUserNotFound is returned when a user is not found
@@ -193,25 +95,6 @@ func (e ErrAddressOwnedByUser) Error() string {
 	return fmt.Sprintf("address is owned by user: address: %s, ownerID: %s", e.ChainAddress, e.OwnerID)
 }
 
-type ErrAddressNotOwnedByUser struct {
-	ChainAddress ChainAddress
-	UserID       DBID
-}
-
-func (e ErrAddressNotOwnedByUser) Error() string {
-	return fmt.Sprintf("address is not owned by user: address: %s, userID: %s", e.ChainAddress, e.UserID)
-}
-
-type ErrWalletCreateFailed struct {
-	ChainAddress ChainAddress
-	WalletID     DBID
-	Err          error
-}
-
-func (e ErrWalletCreateFailed) Error() string {
-	return fmt.Sprintf("wallet create failed: address: %s, walletID: %s, error: %s", e.ChainAddress, e.WalletID, e.Err)
-}
-
 type ErrPushTokenBelongsToAnotherUser struct {
 	PushToken string
 }
@@ -228,7 +111,7 @@ const (
 	RoleEarlyAccess Role = "EARLY_ACCESS"
 )
 
-// Scan implements the database/sql Scanner interface for the DBID type
+// Scan implements the database/sql Scanner interface for the Role type
 func (r *Role) Scan(i interface{}) error {
 	if i == nil {
 		return nil
@@ -241,124 +124,20 @@ func (r *Role) Scan(i interface{}) error {
 	return nil
 }
 
-// Value implements the database/sql driver Valuer interface for the DBID type
+// Value implements the database/sql driver Valuer interface for the Role type
 func (r *Role) Value() (driver.Value, error) {
 	return r, nil
 }
 
-// UnmarshalGQL implements the graphql.Unmarshaler interface
-func (r *Role) UnmarshalGQL(v interface{}) error {
-	n, ok := v.(string)
-	if !ok {
-		return fmt.Errorf("Role must be a string")
-	}
-
-	switch strings.ToLower(n) {
-	case "admin":
-		*r = RoleAdmin
-	case "beta_tester":
-		*r = RoleBetaTester
-	case "early_access":
-		*r = RoleEarlyAccess
-	}
-	return nil
-}
-
-// MarshalGQL implements the graphql.Marshaler interface
-func (r Role) MarshalGQL(w io.Writer) {
-	switch r {
-	case RoleAdmin:
-		w.Write([]byte(`"ADMIN"`))
-	case RoleBetaTester:
-		w.Write([]byte(`"BETA_TESTER"`))
-	case RoleEarlyAccess:
-		w.Write([]byte(`"EARLY_ACCESS"`))
-	}
-}
-
+// RoleList is a slice of Roles, primarily used to implement scanner/valuer interfaces for Postgres Arrays.
 type RoleList []Role
 
+// Value implements the database/sql driver Valuer interface for RoleList.
 func (l RoleList) Value() (driver.Value, error) {
 	return pq.Array(l).Value()
 }
 
+// Scan implements the database/sql Scanner interface for RoleList.
 func (l *RoleList) Scan(value interface{}) error {
 	return pq.Array(l).Scan(value)
-}
-
-type Persona string
-
-const (
-	PersonaNone      Persona = "none"
-	PersonaCollector Persona = "collector"
-	PersonaCreator   Persona = "creator"
-	PersonaBoth      Persona = "both"
-)
-
-// Scan implements the database/sql Scanner interface for the Persona type
-func (p *Persona) Scan(i interface{}) error {
-	if i == nil {
-		return nil
-	}
-	if it, ok := i.([]uint8); ok {
-		*p = Persona(it)
-		return nil
-	}
-	*p = Persona(i.(string))
-	return nil
-}
-
-// Value implements the database/sql driver Valuer interface for the Persona type
-func (p *Persona) Value() (driver.Value, error) {
-	return p, nil
-}
-
-// UnmarshalGQL implements the graphql.Unmarshaler interface
-func (p *Persona) UnmarshalGQL(v interface{}) error {
-	n, ok := v.(string)
-	if !ok {
-		return fmt.Errorf("Persona must be a string")
-	}
-
-	switch strings.ToLower(n) {
-	case "none":
-		*p = PersonaNone
-	case "collector":
-		*p = PersonaCollector
-	case "creator":
-		*p = PersonaCreator
-	case "both":
-		*p = PersonaBoth
-	}
-	return nil
-}
-
-// MarshalGQL implements the graphql.Marshaler interface
-func (p Persona) MarshalGQL(w io.Writer) {
-	switch p {
-	case PersonaNone:
-		w.Write([]byte(`"none"`))
-	case PersonaCreator:
-		w.Write([]byte(`"creator"`))
-	case PersonaCollector:
-		w.Write([]byte(`"collector"`))
-	case PersonaBoth:
-		w.Write([]byte(`"both"`))
-	}
-}
-
-type ProfileImageSource string // ProfileImageSource represents the source of a profile image
-
-const (
-	ProfileImageSourceToken ProfileImageSource = "token"
-	ProfileImageSourceENS   ProfileImageSource = "ens"
-)
-
-type ErrProfileImageNotFound struct {
-	Err            error
-	ProfileImageID DBID
-}
-
-func (e ErrProfileImageNotFound) Error() string {
-	return fmt.Sprintf("profile image %s not found: %s", e.ProfileImageID, e.Err)
 }

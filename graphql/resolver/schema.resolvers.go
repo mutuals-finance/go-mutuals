@@ -16,7 +16,7 @@ import (
 
 // Parent is the resolver for the parent field.
 func (r *claimResolver) Parent(ctx context.Context, obj *model.Claim) (*model.Claim, error) {
-	dbClaim, err := publicapi.For(ctx).Claim.GetClaimById(ctx, obj.ID().DBID())
+	dbClaim, err := publicapi.For(ctx).Claim.GetClaimById(ctx, obj.DBID)
 	if err != nil {
 		return nil, err
 	}
@@ -40,7 +40,7 @@ func (r *claimResolver) Parent(ctx context.Context, obj *model.Claim) (*model.Cl
 
 // Children is the resolver for the children field.
 func (r *claimResolver) Children(ctx context.Context, obj *model.Claim) ([]*model.Claim, error) {
-	dbClaim, err := publicapi.For(ctx).Claim.GetClaimById(ctx, obj.ID().DBID())
+	dbClaim, err := publicapi.For(ctx).Claim.GetClaimById(ctx, obj.DBID)
 	if err != nil || len(dbClaim.Children) == 0 {
 		return []*model.Claim{}, nil
 	}
@@ -56,8 +56,7 @@ func (r *claimResolver) Children(ctx context.Context, obj *model.Claim) ([]*mode
 
 // Pool is the resolver for the pool field.
 func (r *claimResolver) Pool(ctx context.Context, obj *model.Claim) (*model.Pool, error) {
-	// Get the claim from database to access pool ID
-	dbClaim, err := publicapi.For(ctx).Claim.GetClaimById(ctx, obj.ID().DBID())
+	dbClaim, err := publicapi.For(ctx).Claim.GetClaimById(ctx, obj.DBID)
 	if err != nil {
 		return nil, err
 	}
@@ -95,12 +94,12 @@ func (r *depositResolver) Token(ctx context.Context, obj *model.Deposit) (*model
 }
 
 // SelfPools is the resolver for the selfPools field.
-func (r *eVMAccountResolver) SelfPools(ctx context.Context, obj *model.EVMAccount) ([]*model.Pool, error) {
+func (r *eVMAccountResolver) SelfPools(ctx context.Context, obj *model.EVMAccount, first *int, after *string) (*model.PoolConnection, error) {
 	panic(fmt.Errorf("not implemented: SelfPools - selfPools"))
 }
 
 // Balances is the resolver for the balances field.
-func (r *eVMAccountResolver) Balances(ctx context.Context, obj *model.EVMAccount) ([]*model.TokenBalance, error) {
+func (r *eVMAccountResolver) Balances(ctx context.Context, obj *model.EVMAccount, first *int, after *string) (*model.TokenBalanceConnection, error) {
 	panic(fmt.Errorf("not implemented: Balances - balances"))
 }
 
@@ -373,21 +372,26 @@ func (r *poolResolver) Contract(ctx context.Context, obj *model.Pool) (*model.Po
 
 // Claims is the resolver for the claims field.
 func (r *poolResolver) Claims(ctx context.Context, obj *model.Pool) ([]*model.Claim, error) {
-	return resolveClaimsByPoolID(ctx, obj.ID().DBID())
+	return resolveClaimsByPoolID(ctx, obj.DBID)
 }
 
 // Balance is the resolver for the balance field.
 func (r *poolResolver) Balance(ctx context.Context, obj *model.Pool) (*model.PoolBalance, error) {
-	b, err := publicapi.For(ctx).Pool.GetPoolBalance(ctx, obj.ID().DBID())
+	_, err := publicapi.For(ctx).Pool.GetPoolBalance(ctx, obj.DBID)
 	if err != nil {
 		return nil, err
 	}
-
+	// TODO: convert pool balance token quotes once the service returns real data
 	return &model.PoolBalance{
-		TotalIncome: b.TotalIncome,
-		Balance:     b.Balance,
-		Withdrawals: b.Withdrawals,
+		TotalIncome: []*model.Quote{},
+		Balance:     []*model.Quote{},
+		Withdrawals: []*model.Quote{},
 	}, nil
+}
+
+// Tokens is the resolver for the tokens field.
+func (r *poolBalanceResolver) Tokens(ctx context.Context, obj *model.PoolBalance, first *int, after *string) (*model.TokenBalanceConnection, error) {
+	panic(fmt.Errorf("not implemented: Tokens - tokens"))
 }
 
 // PoolFactory is the resolver for the poolFactory field.
@@ -405,23 +409,23 @@ func (r *poolContractResolver) Owner(ctx context.Context, obj *model.PoolContrac
 	panic(fmt.Errorf("not implemented: Owner - owner"))
 }
 
-// DayBalance is the resolver for the dayBalance field.
-func (r *poolContractResolver) DayBalance(ctx context.Context, obj *model.PoolContract) ([]*model.PoolDayBalance, error) {
-	panic(fmt.Errorf("not implemented: DayBalance - dayBalance"))
+// DayBalances is the resolver for the dayBalances field.
+func (r *poolContractResolver) DayBalances(ctx context.Context, obj *model.PoolContract, first *int, after *string) (*model.PoolDayBalanceConnection, error) {
+	panic(fmt.Errorf("not implemented: DayBalances - dayBalances"))
 }
 
-// HourBalance is the resolver for the hourBalance field.
-func (r *poolContractResolver) HourBalance(ctx context.Context, obj *model.PoolContract) ([]*model.PoolHourBalance, error) {
-	panic(fmt.Errorf("not implemented: HourBalance - hourBalance"))
+// HourBalances is the resolver for the hourBalances field.
+func (r *poolContractResolver) HourBalances(ctx context.Context, obj *model.PoolContract, first *int, after *string) (*model.PoolHourBalanceConnection, error) {
+	panic(fmt.Errorf("not implemented: HourBalances - hourBalances"))
 }
 
 // Deposits is the resolver for the deposits field.
-func (r *poolContractResolver) Deposits(ctx context.Context, obj *model.PoolContract) ([]*model.Deposit, error) {
+func (r *poolContractResolver) Deposits(ctx context.Context, obj *model.PoolContract, first *int, after *string) (*model.DepositConnection, error) {
 	panic(fmt.Errorf("not implemented: Deposits - deposits"))
 }
 
 // Withdrawals is the resolver for the withdrawals field.
-func (r *poolContractResolver) Withdrawals(ctx context.Context, obj *model.PoolContract) ([]*model.Withdrawal, error) {
+func (r *poolContractResolver) Withdrawals(ctx context.Context, obj *model.PoolContract, first *int, after *string) (*model.WithdrawalConnection, error) {
 	panic(fmt.Errorf("not implemented: Withdrawals - withdrawals"))
 }
 
@@ -459,22 +463,19 @@ func (r *queryResolver) Viewer(ctx context.Context) (model.UserResult, error) {
 	return user, nil
 }
 
-// UserByID is the resolver for the userById field.
-func (r *queryResolver) UserByID(ctx context.Context, id model.GqlID) (model.UserResult, error) {
-	user, err := publicapi.For(ctx).User.GetUserById(ctx, id.DBID())
-	if err != nil {
-		return nil, err
+// User is the resolver for the user field.
+func (r *queryResolver) User(ctx context.Context, id *model.GqlID, address *persist.Address) (model.UserResult, error) {
+	if id != nil {
+		return resolveUserByID(ctx, id.DBID())
 	}
-	return userToModel(ctx, *user), nil
-}
-
-// UserByAddress is the resolver for the userByAddress field.
-func (r *queryResolver) UserByAddress(ctx context.Context, address persist.Address) (model.UserResult, error) {
-	user, err := resolveUserByAddress(ctx, address)
-	if err != nil {
-		return nil, err
+	if address != nil {
+		return resolveUserByAddress(ctx, *address)
 	}
-	return user, nil
+	return model.ErrInvalidInput{
+		Message:    "either id or address must be provided",
+		Parameters: []string{"id", "address"},
+		Reasons:    []string{"at least one must be provided"},
+	}, nil
 }
 
 // Pool is the resolver for the pool field.
@@ -493,13 +494,12 @@ func (r *queryResolver) SearchPools(ctx context.Context, query string, limit *in
 }
 
 // UsersByRole is the resolver for the usersByRole field.
-func (r *queryResolver) UsersByRole(ctx context.Context, role persist.Role, before *string, after *string, first *int, last *int) (*model.UsersConnection, error) {
-	users, pageInfo, err := publicapi.For(ctx).User.PaginateUsersWithRole(ctx, role, before, after, first, last)
+func (r *queryResolver) UsersByRole(ctx context.Context, role persist.Role, first *int, after *string) (*model.UserConnection, error) {
+	users, pageInfo, err := publicapi.For(ctx).User.PaginateUsersWithRole(ctx, role, nil, after, first, nil)
 	if err != nil {
 		return nil, err
 	}
-
-	return &model.UsersConnection{
+	return &model.UserConnection{
 		Edges:    usersToEdges(ctx, users),
 		PageInfo: pageInfoToModel(ctx, pageInfo),
 	}, nil
@@ -516,34 +516,23 @@ func (r *tokenBalanceResolver) Holder(ctx context.Context, obj *model.TokenBalan
 }
 
 // Deposits is the resolver for the deposits field.
-func (r *txResolver) Deposits(ctx context.Context, obj *model.Tx) ([]*model.Deposit, error) {
+func (r *txResolver) Deposits(ctx context.Context, obj *model.Tx, first *int, after *string) (*model.DepositConnection, error) {
 	panic(fmt.Errorf("not implemented: Deposits - deposits"))
 }
 
 // Withdrawals is the resolver for the withdrawals field.
-func (r *txResolver) Withdrawals(ctx context.Context, obj *model.Tx) ([]*model.Withdrawal, error) {
+func (r *txResolver) Withdrawals(ctx context.Context, obj *model.Tx, first *int, after *string) (*model.WithdrawalConnection, error) {
 	panic(fmt.Errorf("not implemented: Withdrawals - withdrawals"))
 }
 
 // Roles is the resolver for the roles field.
-func (r *userResolver) Roles(ctx context.Context, obj *model.User) ([]*persist.Role, error) {
-	dbRoles, err := publicapi.For(ctx).User.GetUserRolesByUserId(ctx, obj.ID().DBID())
-	if err != nil {
-		return nil, err
-	}
-
-	roles := make([]*persist.Role, len(dbRoles))
-	for i, role := range dbRoles {
-		r := role
-		roles[i] = &r
-	}
-
-	return roles, nil
+func (r *userResolver) Roles(ctx context.Context, obj *model.User) ([]persist.Role, error) {
+	return publicapi.For(ctx).User.GetUserRolesByUserId(ctx, obj.DBID)
 }
 
 // Pools is the resolver for the pools field.
-func (r *userResolver) Pools(ctx context.Context, obj *model.User) ([]*model.Pool, error) {
-	return resolveUserPools(ctx, obj)
+func (r *userResolver) Pools(ctx context.Context, obj *model.User, first *int, after *string) (*model.PoolConnection, error) {
+	return resolveUserPools(ctx, obj, first, after)
 }
 
 // Transaction is the resolver for the transaction field.
@@ -584,6 +573,9 @@ func (r *Resolver) Mutation() generated.MutationResolver { return &mutationResol
 // Pool returns generated.PoolResolver implementation.
 func (r *Resolver) Pool() generated.PoolResolver { return &poolResolver{r} }
 
+// PoolBalance returns generated.PoolBalanceResolver implementation.
+func (r *Resolver) PoolBalance() generated.PoolBalanceResolver { return &poolBalanceResolver{r} }
+
 // PoolContract returns generated.PoolContractResolver implementation.
 func (r *Resolver) PoolContract() generated.PoolContractResolver { return &poolContractResolver{r} }
 
@@ -619,6 +611,7 @@ type moduleResolver struct{ *Resolver }
 type moduleRegistryResolver struct{ *Resolver }
 type mutationResolver struct{ *Resolver }
 type poolResolver struct{ *Resolver }
+type poolBalanceResolver struct{ *Resolver }
 type poolContractResolver struct{ *Resolver }
 type poolDayBalanceResolver struct{ *Resolver }
 type poolHourBalanceResolver struct{ *Resolver }

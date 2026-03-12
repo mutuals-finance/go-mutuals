@@ -27,13 +27,16 @@
 {{- range $model := .Models }}
     {{with .Description }} {{.|prefixLines "// "}} {{end}}
     type {{ .Name|go }} struct {
-       {{- range $field := .Fields }}
-          {{- $isNodeImplementor := false }}
-          {{- range $impl := $model.Implements }}
-             {{- if eq $impl "Node" }}
-                {{- $isNodeImplementor = true }}
-             {{- end }}
+       {{- $isNodeImplementor := false }}
+       {{- range $impl := $model.Implements }}
+          {{- if eq $impl "Node" }}
+             {{- $isNodeImplementor = true }}
           {{- end }}
+       {{- end }}
+       {{- if $isNodeImplementor }}
+          DBID persist.DBID `json:"id"`
+       {{- end }}
+       {{- range $field := .Fields }}
           {{- $skipField := and $isNodeImplementor (eq $field.Name "id") }}
           {{- if not $skipField }}
              {{- with .Description }}
