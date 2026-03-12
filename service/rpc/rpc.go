@@ -2,7 +2,6 @@ package rpc
 
 import (
 	"bytes"
-	"cloud.google.com/go/storage"
 	"compress/gzip"
 	"context"
 	"crypto/tls"
@@ -10,11 +9,6 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
-	"github.com/googleapis/gax-go/v2"
-	"github.com/mutuals/go-mutuals/service/rpc/ipfs"
-	"golang.org/x/image/bmp"
-	"google.golang.org/api/option"
-	htransport "google.golang.org/api/transport/http"
 	"image/gif"
 	"image/jpeg"
 	"image/png"
@@ -31,6 +25,13 @@ import (
 	"strconv"
 	"strings"
 	"time"
+
+	"cloud.google.com/go/storage"
+	"github.com/googleapis/gax-go/v2"
+	"github.com/mutuals/go-mutuals/service/rpc/ipfs"
+	"golang.org/x/image/bmp"
+	"google.golang.org/api/option"
+	htransport "google.golang.org/api/transport/http"
 
 	"github.com/getsentry/sentry-go"
 	"github.com/mutuals/go-mutuals/env"
@@ -765,8 +766,8 @@ func GetHTTPHeaders(ctx context.Context, url string) (contentType string, conten
 
 // GetBalanceOfERC20Token returns the balance of an ERC20 token
 func GetBalanceOfERC20Token(ctx context.Context, pOwnerAddress, pContractAddress persist.Address, ethClient *ethclient.Client) (*big.Int, error) {
-	contract := pContractAddress.Address()
-	owner := pOwnerAddress.Address()
+	contract := pContractAddress.EVMAddress()
+	owner := pOwnerAddress.EVMAddress()
 	instance, err := contracts.NewIERC1155(contract, ethClient)
 	if err != nil {
 		return nil, err

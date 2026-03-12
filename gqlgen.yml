@@ -66,7 +66,7 @@ models:
       - github.com/mutuals/go-mutuals/service/persist.JSON
   Network:
     model:
-      - github.com/mutuals/go-mutuals/service/persist.Chain
+      - github.com/mutuals/go-mutuals/service/persist.Network
   UInt256:
     model:
       - github.com/mutuals/go-mutuals/service/persist.UInt256

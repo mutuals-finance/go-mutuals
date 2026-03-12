@@ -5,11 +5,10 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"math/big"
 	"net/url"
 	"strconv"
 	"strings"
-
-	"github.com/mutuals/go-mutuals/util"
 )
 
 const (
@@ -77,48 +76,173 @@ func (m MediaType) ToContentType() string {
 	}
 }
 
-const (
-	// ChainETH represents the Ethereum blockchain
-	ChainETH Chain = iota
-	// ChainArbitrum represents the Arbitrum blockchain
-	ChainArbitrum
-	// ChainPolygon represents the Polygon/Matic blockchain
-	ChainPolygon
-	// ChainOptimism represents the Optimism blockchain
-	ChainOptimism
-	// ChainBase represents the base chain
-	ChainBase
-	// ChainSepolia - Ethereum testnet
-	ChainSepolia
-	// ChainBaseSepolia - Base testnet
-	ChainBaseSepolia
+// Network represents which blockchain network a token is on.
+type Network int
 
-	// MaxChainValue is the highest valid chain value
-	MaxChainValue = ChainBaseSepolia
+const (
+	// NetworkETH represents the Ethereum blockchain
+	NetworkETH Network = iota
+	// NetworkArbitrum represents the Arbitrum blockchain
+	NetworkArbitrum
+	// NetworkPolygon represents the Polygon/Matic blockchain
+	NetworkPolygon
+	// NetworkOptimism represents the Optimism blockchain
+	NetworkOptimism
+	// NetworkBase represents the Base chain
+	NetworkBase
+	// NetworkSepolia represents the Ethereum Sepolia testnet
+	NetworkSepolia
+	// NetworkBaseSepolia represents the Base Sepolia testnet
+	NetworkBaseSepolia
+
+	// MaxNetworkValue is the highest valid network value
+	MaxNetworkValue = NetworkBaseSepolia
 )
 
-var L1Chains = map[Chain]L1Chain{
-	ChainOptimism:    L1Chain(ChainETH),
-	ChainPolygon:     L1Chain(ChainETH),
-	ChainArbitrum:    L1Chain(ChainETH),
-	ChainBase:        L1Chain(ChainETH),
-	ChainBaseSepolia: L1Chain(ChainETH),
-	ChainETH:         L1Chain(ChainETH),
+// AllNetworks lists all production networks.
+var AllNetworks = []Network{NetworkETH, NetworkArbitrum, NetworkPolygon, NetworkOptimism, NetworkBase}
+
+// NormalizeAddress normalizes an address for the given network.
+// All currently supported networks are EVM-compatible, so addresses are lowercased.
+func (c Network) NormalizeAddress(addr Address) string {
+	return strings.ToLower(addr.String())
 }
 
-var L1ChainGroups = map[L1Chain][]Chain{
-	L1Chain(ChainETH): EvmChains,
+// Value implements the driver.Valuer interface for the Network type
+func (c Network) Value() (driver.Value, error) {
+	return c, nil
 }
 
-var AllChains = []Chain{ChainETH, ChainArbitrum, ChainPolygon, ChainOptimism, ChainBase}
-var EvmChains = util.MapKeys(evmChains)
-var evmChains map[Chain]bool = map[Chain]bool{
-	ChainETH:      true,
-	ChainOptimism: true,
-	ChainPolygon:  true,
-	ChainArbitrum: true,
-	ChainBase:     true,
+// Scan implements the sql.Scanner interface for the Network type
+func (c *Network) Scan(src interface{}) error {
+	if src == nil {
+		*c = Network(0)
+		return nil
+	}
+	*c = Network(src.(int64))
+	return nil
 }
+
+// UnmarshalJSON will unmarshall the JSON data into the Network type
+func (c *Network) UnmarshalJSON(data []byte) error {
+	var s int
+	var asString string
+	if err := json.Unmarshal(data, &s); err != nil {
+		err = json.Unmarshal(data, &asString)
+		if err != nil {
+			return err
+		}
+		switch strings.ToLower(asString) {
+		case "ethereum":
+			*c = NetworkETH
+		case "arbitrum":
+			*c = NetworkArbitrum
+		case "polygon":
+			*c = NetworkPolygon
+		case "optimism":
+			*c = NetworkOptimism
+		case "base":
+			*c = NetworkBase
+		}
+		return nil
+	}
+	*c = Network(s)
+	return nil
+}
+
+// UnmarshalGQL implements the graphql.Unmarshaler interface
+func (c *Network) UnmarshalGQL(v interface{}) error {
+	n, ok := v.(string)
+	if !ok {
+		return fmt.Errorf("Network must be a string")
+	}
+	switch strings.ToLower(n) {
+	case "ethereum":
+		*c = NetworkETH
+	case "arbitrum":
+		*c = NetworkArbitrum
+	case "polygon":
+		*c = NetworkPolygon
+	case "optimism":
+		*c = NetworkOptimism
+	case "base":
+		*c = NetworkBase
+	}
+	return nil
+}
+
+// MarshalGQL implements the graphql.Marshaler interface
+func (c Network) MarshalGQL(w io.Writer) {
+	switch c {
+	case NetworkETH:
+		io.WriteString(w, `"Ethereum"`)
+	case NetworkArbitrum:
+		io.WriteString(w, `"Arbitrum"`)
+	case NetworkPolygon:
+		io.WriteString(w, `"Polygon"`)
+	case NetworkOptimism:
+		io.WriteString(w, `"Optimism"`)
+	case NetworkBase:
+		io.WriteString(w, `"Base"`)
+	}
+}
+
+
+// UInt256 represents a 256-bit unsigned integer. It is consistent with go-ethereum's
+// use of *big.Int for uint256 values. In GraphQL it serializes as a decimal string.
+type UInt256 string
+
+// BigInt parses the UInt256 value into a *big.Int for interoperability with go-ethereum APIs.
+// Supports both decimal and 0x-prefixed hex representations.
+func (u UInt256) BigInt() *big.Int {
+	n := new(big.Int)
+	s := strings.TrimSpace(string(u))
+	if s == "" {
+		return n
+	}
+	if strings.HasPrefix(s, "0x") || strings.HasPrefix(s, "0X") {
+		n.SetString(s[2:], 16)
+	} else {
+		n.SetString(s, 10)
+	}
+	return n
+}
+
+func (u UInt256) String() string { return string(u) }
+
+// NewUInt256 creates a UInt256 from a go-ethereum-style *big.Int.
+func NewUInt256(n *big.Int) UInt256 {
+	if n == nil {
+		return UInt256("0")
+	}
+	return UInt256(n.String())
+}
+
+// UnmarshalGQL implements the graphql.Unmarshaler interface.
+func (u *UInt256) UnmarshalGQL(v interface{}) error {
+	switch val := v.(type) {
+	case string:
+		*u = UInt256(val)
+	case int:
+		*u = UInt256(strconv.Itoa(val))
+	case int64:
+		*u = UInt256(strconv.FormatInt(val, 10))
+	case float64:
+		*u = UInt256(strconv.FormatInt(int64(val), 10))
+	default:
+		return fmt.Errorf("UInt256 must be a string or number, got %T", v)
+	}
+	return nil
+}
+
+// MarshalGQL implements the graphql.Marshaler interface.
+func (u UInt256) MarshalGQL(w io.Writer) {
+	io.WriteString(w, `"`+string(u)+`"`)
+}
+
+// ---------------------------------------------------------------------------
+// URI / Token types
+// ---------------------------------------------------------------------------
 
 const (
 	// URITypeIPFS represents an IPFS URI
@@ -180,19 +304,13 @@ func (u URIType) ToMediaType() MediaType {
 		return MediaTypeJSON
 	case URITypeBase64SVG, URITypeSVG:
 		return MediaTypeSVG
-	case URITypeBase64BMP:
-		return MediaTypeImage
-	case URITypeBase64PNG:
+	case URITypeBase64BMP, URITypeBase64PNG, URITypeBase64JPEG:
 		return MediaTypeImage
 	case URITypeBase64HTML:
 		return MediaTypeHTML
-	case URITypeBase64JPEG:
-		return MediaTypeImage
 	case URITypeBase64GIF:
 		return MediaTypeGIF
-	case URITypeBase64MP3:
-		return MediaTypeAudio
-	case URITypeBase64WAV:
+	case URITypeBase64MP3, URITypeBase64WAV:
 		return MediaTypeAudio
 	default:
 		return MediaTypeUnknown
@@ -217,67 +335,56 @@ type MediaType string
 // URIType represents the type of a URI
 type URIType string
 
-// Chain represents which blockchain a token is on
-type Chain int
-
-type L1Chain Chain
-
 // TokenURI represents the URI for an Ethereum token
 type TokenURI string
 
 // TokenMetadata represents the JSON metadata for a token
 type TokenMetadata map[string]interface{}
 
-// HexString represents a hex number of any size
-type HexString string
-
-// TokenChainAddress represents an address and a chain for a token
-type TokenChainAddress struct {
+// TokenNetworkAddress represents an address and a network for a token
+type TokenNetworkAddress struct {
 	Address Address
-	Chain   Chain
+	Network Network
 }
 
-// NewTokenChainAddress creates a new token chain address
-func NewTokenChainAddress(pContractAddress Address, pChain Chain) TokenChainAddress {
-	return TokenChainAddress{
+// NewTokenNetworkAddress creates a new TokenNetworkAddress
+func NewTokenNetworkAddress(pContractAddress Address, pNetwork Network) TokenNetworkAddress {
+	return TokenNetworkAddress{
 		Address: pContractAddress,
-		Chain:   pChain,
+		Network: pNetwork,
 	}
 }
 
-func (t TokenChainAddress) String() string {
-	return fmt.Sprintf("%s+%d", t.Chain.NormalizeAddress(t.Address), t.Chain)
+func (t TokenNetworkAddress) String() string {
+	return fmt.Sprintf("%s+%d", t.Network.NormalizeAddress(t.Address), t.Network)
 }
 
 // Value implements the driver.Valuer interface
-func (t TokenChainAddress) Value() (driver.Value, error) {
+func (t TokenNetworkAddress) Value() (driver.Value, error) {
 	return t.String(), nil
 }
 
-// Scan implements the database/sql Scanner interface for the TokenChainAddress type
-func (t *TokenChainAddress) Scan(i interface{}) error {
+// Scan implements the database/sql Scanner interface for the TokenNetworkAddress type
+func (t *TokenNetworkAddress) Scan(i interface{}) error {
 	if i == nil {
-		*t = TokenChainAddress{}
+		*t = TokenNetworkAddress{}
 		return nil
 	}
 	res := strings.Split(i.(string), "+")
 	if len(res) != 2 {
-		return fmt.Errorf("invalid token chain address: %v - %T", i, i)
+		return fmt.Errorf("invalid token network address: %v - %T", i, i)
 	}
-	chain, err := strconv.Atoi(res[1])
+	network, err := strconv.Atoi(res[1])
 	if err != nil {
 		return err
 	}
-	*t = TokenChainAddress{
+	*t = TokenNetworkAddress{
 		Address: Address(res[0]),
-		Chain:   Chain(chain),
+		Network: Network(network),
 	}
 	return nil
 }
 
-func (t TokenChainAddress) ToL1ChainAddress() L1ChainAddress {
-	return NewL1ChainAddress(t.Address, t.Chain)
-}
 
 var errTokenNotFound ErrTokenNotFound
 
@@ -294,111 +401,6 @@ type ErrTokenNotFoundByID struct {
 func (e ErrTokenNotFoundByID) Unwrap() error { return errTokenNotFound }
 func (e ErrTokenNotFoundByID) Error() string {
 	return fmt.Sprintf("token not found by ID: %s", e.ID)
-}
-
-// NormalizeAddress normalizes an address for the given chain
-func (c Chain) NormalizeAddress(addr Address) string {
-	if evmChains[c] {
-		return strings.ToLower(addr.String())
-	}
-	return addr.String()
-}
-
-
-// Value implements the driver.Valuer interface for the Chain type
-func (c Chain) Value() (driver.Value, error) {
-	return c, nil
-}
-
-// Scan implements the sql.Scanner interface for the Chain type
-func (c *Chain) Scan(src interface{}) error {
-	if src == nil {
-		*c = Chain(0)
-		return nil
-	}
-	*c = Chain(src.(int64))
-	return nil
-}
-
-// UnmarshalJSON will unmarshall the JSON data into the Chain type
-func (c *Chain) UnmarshalJSON(data []byte) error {
-	var s int
-	var asString string
-	if err := json.Unmarshal(data, &s); err != nil {
-		err = json.Unmarshal(data, &asString)
-		if err != nil {
-			return err
-		}
-		switch strings.ToLower(asString) {
-		case "ethereum":
-			*c = ChainETH
-		case "arbitrum":
-			*c = ChainArbitrum
-		case "polygon":
-			*c = ChainPolygon
-		case "optimism":
-			*c = ChainOptimism
-		case "base":
-			*c = ChainBase
-		}
-		return nil
-	}
-	*c = Chain(s)
-	return nil
-}
-
-// UnmarshalGQL implements the graphql.Unmarshaler interface
-func (c *Chain) UnmarshalGQL(v interface{}) error {
-	n, ok := v.(string)
-	if !ok {
-		return fmt.Errorf("Chain must be a string")
-	}
-
-	switch strings.ToLower(n) {
-	case "ethereum":
-		*c = ChainETH
-	case "arbitrum":
-		*c = ChainArbitrum
-	case "polygon":
-		*c = ChainPolygon
-	case "optimism":
-		*c = ChainOptimism
-	case "base":
-		*c = ChainBase
-	}
-	return nil
-}
-
-// MarshalGQL implements the graphql.Marshaler interface
-func (c Chain) MarshalGQL(w io.Writer) {
-	switch c {
-	case ChainETH:
-		w.Write([]byte(`"Ethereum"`))
-	case ChainArbitrum:
-		w.Write([]byte(`"Arbitrum"`))
-	case ChainPolygon:
-		w.Write([]byte(`"Polygon"`))
-	case ChainOptimism:
-		w.Write([]byte(`"Optimism"`))
-	case ChainBase:
-		w.Write([]byte(`"Base"`))
-	}
-}
-
-func (c Chain) L1Chain() L1Chain {
-	lc, ok := L1Chains[c]
-	if !ok {
-		panic("l1 chain not found")
-	}
-	return lc
-}
-
-func (c Chain) L1ChainGroup() []Chain {
-	cg, ok := L1ChainGroups[c.L1Chain()]
-	if !ok {
-		panic("chain group not found")
-	}
-	return cg
 }
 
 func (uri TokenURI) String() string { return string(uri) }
@@ -579,25 +581,4 @@ func (t *TokenType) Scan(src interface{}) error {
 	*t = TokenType(src.(string))
 	return nil
 }
-
-func (hex HexString) String() string {
-	return strings.TrimPrefix(strings.ToLower(string(hex)), "0x")
-}
-
-// Value implements the driver.Valuer interface for hex strings
-func (hex HexString) Value() (driver.Value, error) {
-	return hex.String(), nil
-}
-
-// Scan implements the sql.Scanner interface for hex strings
-func (hex *HexString) Scan(src interface{}) error {
-	if src == nil {
-		*hex = HexString("")
-		return nil
-	}
-	*hex = HexString(src.(string))
-	return nil
-}
-
-
 

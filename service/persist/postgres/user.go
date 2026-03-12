@@ -168,7 +168,7 @@ func (u *UserRepository) GetByID(pCtx context.Context, pID persist.DBID) (persis
 
 	for i, walletID := range walletIDs {
 		wallet := persist.Wallet{ID: walletID}
-		err := u.getWalletStmt.QueryRowContext(pCtx, walletID).Scan(&wallet.Address, &wallet.Chain, &wallet.WalletType, &wallet.Version, &wallet.CreationTime, &wallet.UpdatedAt)
+		err := u.getWalletStmt.QueryRowContext(pCtx, walletID).Scan(&wallet.Address, &wallet.Network, &wallet.WalletType, &wallet.Version, &wallet.CreationTime, &wallet.UpdatedAt)
 		if err == nil {
 			wallets[i] = wallet
 		}

@@ -8692,9 +8692,9 @@ func (ec *executionContext) _Module_network(ctx context.Context, field graphql.C
 		}
 		return graphql.Null
 	}
-	res := resTmp.(persist.Chain)
+	res := resTmp.(persist.Network)
 	fc.Result = res
-	return ec.marshalNNetwork2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋserviceᚋpersistᚐChain(ctx, field.Selections, res)
+	return ec.marshalNNetwork2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋserviceᚋpersistᚐNetwork(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Module_network(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -9233,9 +9233,9 @@ func (ec *executionContext) _ModuleRegistry_network(ctx context.Context, field g
 		}
 		return graphql.Null
 	}
-	res := resTmp.(persist.Chain)
+	res := resTmp.(persist.Network)
 	fc.Result = res
-	return ec.marshalNNetwork2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋserviceᚋpersistᚐChain(ctx, field.Selections, res)
+	return ec.marshalNNetwork2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋserviceᚋpersistᚐNetwork(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_ModuleRegistry_network(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -11815,9 +11815,9 @@ func (ec *executionContext) _PoolContract_network(ctx context.Context, field gra
 		}
 		return graphql.Null
 	}
-	res := resTmp.(persist.Chain)
+	res := resTmp.(persist.Network)
 	fc.Result = res
-	return ec.marshalNNetwork2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋserviceᚋpersistᚐChain(ctx, field.Selections, res)
+	return ec.marshalNNetwork2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋserviceᚋpersistᚐNetwork(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_PoolContract_network(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -12531,9 +12531,9 @@ func (ec *executionContext) _PoolDayBalance_network(ctx context.Context, field g
 		}
 		return graphql.Null
 	}
-	res := resTmp.(persist.Chain)
+	res := resTmp.(persist.Network)
 	fc.Result = res
-	return ec.marshalNNetwork2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋserviceᚋpersistᚐChain(ctx, field.Selections, res)
+	return ec.marshalNNetwork2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋserviceᚋpersistᚐNetwork(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_PoolDayBalance_network(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -13487,9 +13487,9 @@ func (ec *executionContext) _PoolFactory_network(ctx context.Context, field grap
 		}
 		return graphql.Null
 	}
-	res := resTmp.(persist.Chain)
+	res := resTmp.(persist.Network)
 	fc.Result = res
-	return ec.marshalNNetwork2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋserviceᚋpersistᚐChain(ctx, field.Selections, res)
+	return ec.marshalNNetwork2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋserviceᚋpersistᚐNetwork(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_PoolFactory_network(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -13767,9 +13767,9 @@ func (ec *executionContext) _PoolHourBalance_network(ctx context.Context, field 
 		}
 		return graphql.Null
 	}
-	res := resTmp.(persist.Chain)
+	res := resTmp.(persist.Network)
 	fc.Result = res
-	return ec.marshalNNetwork2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋserviceᚋpersistᚐChain(ctx, field.Selections, res)
+	return ec.marshalNNetwork2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋserviceᚋpersistᚐNetwork(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_PoolHourBalance_network(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -15567,9 +15567,9 @@ func (ec *executionContext) _Token_network(ctx context.Context, field graphql.Co
 		}
 		return graphql.Null
 	}
-	res := resTmp.(persist.Chain)
+	res := resTmp.(persist.Network)
 	fc.Result = res
-	return ec.marshalNNetwork2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋserviceᚋpersistᚐChain(ctx, field.Selections, res)
+	return ec.marshalNNetwork2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋserviceᚋpersistᚐNetwork(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Token_network(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -16135,9 +16135,9 @@ func (ec *executionContext) _TokenBalance_network(ctx context.Context, field gra
 		}
 		return graphql.Null
 	}
-	res := resTmp.(persist.Chain)
+	res := resTmp.(persist.Network)
 	fc.Result = res
-	return ec.marshalNNetwork2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋserviceᚋpersistᚐChain(ctx, field.Selections, res)
+	return ec.marshalNNetwork2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋserviceᚋpersistᚐNetwork(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_TokenBalance_network(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -27599,13 +27599,13 @@ func (ec *executionContext) marshalNModuleType2githubᚗcomᚋmutualsᚋgoᚑmut
 	return v
 }
 
-func (ec *executionContext) unmarshalNNetwork2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋserviceᚋpersistᚐChain(ctx context.Context, v interface{}) (persist.Chain, error) {
-	var res persist.Chain
+func (ec *executionContext) unmarshalNNetwork2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋserviceᚋpersistᚐNetwork(ctx context.Context, v interface{}) (persist.Network, error) {
+	var res persist.Network
 	err := res.UnmarshalGQL(v)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) marshalNNetwork2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋserviceᚋpersistᚐChain(ctx context.Context, sel ast.SelectionSet, v persist.Chain) graphql.Marshaler {
+func (ec *executionContext) marshalNNetwork2githubᚗcomᚋmutualsᚋgoᚑmutualsᚋserviceᚋpersistᚐNetwork(ctx context.Context, sel ast.SelectionSet, v persist.Network) graphql.Marshaler {
 	return v
 }
 

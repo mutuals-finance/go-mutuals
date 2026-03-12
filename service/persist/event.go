@@ -32,7 +32,7 @@ type EventData struct {
 	UserFollowedBack       bool                 `json:"user_followed_back"`
 	UserRefollowed         bool                 `json:"user_refollowed"`
 	NewTokenID             DBID                 `json:"new_token_id"`
-	NewTokenQuantity       HexString            `json:"new_token_quantity"`
+	NewTokenQuantity       UInt256              `json:"new_token_quantity"`
 	TokenContractID        DBID                 `json:"token_contract_id"`
 	TokenDefinitionID      DBID                 `json:"token_definition_id"`
 	PoolName               *string              `json:"pool_name"`

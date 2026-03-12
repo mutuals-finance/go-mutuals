@@ -35,10 +35,10 @@ type TokenTransferProcessingMessage struct {
 }
 
 type TokenTransfer struct {
-	FromAddress persist.Address           `json:"from_address"`
-	ToAddress   persist.Address           `json:"to_address"`
-	Token       persist.TokenChainAddress `json:"token"`
-	Amount      persist.HexString         `json:"amount"`
+	FromAddress persist.Address            `json:"from_address"`
+	ToAddress   persist.Address            `json:"to_address"`
+	Token       persist.TokenNetworkAddress `json:"token"`
+	Amount      persist.UInt256            `json:"amount"`
 }
 
 type ValidateNFTsMessage struct {

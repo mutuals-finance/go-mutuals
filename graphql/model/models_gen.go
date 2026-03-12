@@ -420,7 +420,7 @@ type LogoutPayload struct {
 type Module struct {
 	DBID           persist.DBID    `json:"id"`
 	Address        persist.Address `json:"address"`
-	Network        persist.Chain   `json:"network"`
+	Network        persist.Network `json:"network"`
 	ModuleRegistry *ModuleRegistry `json:"moduleRegistry"`
 	ModuleID       string          `json:"moduleId"`
 	ModuleType     ModuleType      `json:"moduleType"`
@@ -437,7 +437,7 @@ func (Module) IsNode() {}
 type ModuleRegistry struct {
 	DBID        persist.DBID    `json:"id"`
 	Address     persist.Address `json:"address"`
-	Network     persist.Chain   `json:"network"`
+	Network     persist.Network `json:"network"`
 	ModuleCount int             `json:"moduleCount"`
 	Owner       *EVMAccount     `json:"owner"`
 	CreatedAt   time.Time       `json:"createdAt"`
@@ -490,7 +490,7 @@ type PoolConnection struct {
 type PoolContract struct {
 	DBID         persist.DBID               `json:"id"`
 	Address      persist.Address            `json:"address"`
-	Network      persist.Chain              `json:"network"`
+	Network      persist.Network            `json:"network"`
 	Status       PoolStatus                 `json:"status"`
 	PoolFactory  *PoolFactory               `json:"poolFactory"`
 	Account      *EVMAccount                `json:"account"`
@@ -524,7 +524,7 @@ func (PoolCreatePayload) IsPoolCreateResult() {}
 
 type PoolDayBalance struct {
 	DBID            persist.DBID    `json:"id"`
-	Network         persist.Chain   `json:"network"`
+	Network         persist.Network `json:"network"`
 	Date            time.Time       `json:"date"`
 	Pool            *Pool           `json:"pool"`
 	Token           *Token          `json:"token"`
@@ -561,7 +561,7 @@ type PoolEdge struct {
 type PoolFactory struct {
 	DBID      persist.DBID    `json:"id"`
 	Address   persist.Address `json:"address"`
-	Network   persist.Chain   `json:"network"`
+	Network   persist.Network `json:"network"`
 	PoolCount int             `json:"poolCount"`
 	Owner     *EVMAccount     `json:"owner"`
 	CreatedAt time.Time       `json:"createdAt"`
@@ -572,7 +572,7 @@ func (PoolFactory) IsNode() {}
 
 type PoolHourBalance struct {
 	DBID            persist.DBID    `json:"id"`
-	Network         persist.Chain   `json:"network"`
+	Network         persist.Network `json:"network"`
 	Date            time.Time       `json:"date"`
 	Pool            *Pool           `json:"pool"`
 	Token           *Token          `json:"token"`
@@ -651,7 +651,7 @@ func (SearchUsersPayload) IsSearchUsersResult() {}
 type Token struct {
 	DBID         persist.DBID    `json:"id"`
 	Address      persist.Address `json:"address"`
-	Network      persist.Chain   `json:"network"`
+	Network      persist.Network `json:"network"`
 	TokenType    TokenType       `json:"tokenType"`
 	Symbol       string          `json:"symbol"`
 	Name         string          `json:"name"`
@@ -669,7 +669,7 @@ func (Token) IsNode() {}
 
 type TokenBalance struct {
 	DBID            persist.DBID           `json:"id"`
-	Network         persist.Chain          `json:"network"`
+	Network         persist.Network        `json:"network"`
 	Token           *Token                 `json:"token"`
 	Holder          PoolOrUserOrEVMAccount `json:"holder"`
 	Amount          persist.UInt256        `json:"amount"`

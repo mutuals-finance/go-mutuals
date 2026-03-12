@@ -35,47 +35,39 @@ type CreateUserInput struct {
 
 // ErrUserNotFound is returned when a user is not found
 type ErrUserNotFound struct {
-	UserID         DBID
-	WalletID       DBID
-	L1ChainAddress L1ChainAddress
-	Username       string
-	Authenticator  string
+	UserID        DBID
+	WalletID      DBID
+	Address       Address
+	Username      string
+	Authenticator string
 }
 
 func (e ErrUserNotFound) Error() string {
 	template := "user not found: %s;authMethod=%s"
 
 	if e.UserID != "" {
-		method := fmt.Sprintf("method=%s;userID=%s", "byUserID", e.UserID)
-		return fmt.Sprintf(template, method, e.Authenticator)
+		return fmt.Sprintf(template, fmt.Sprintf("method=%s;userID=%s", "byUserID", e.UserID), e.Authenticator)
 	}
-
 	if e.WalletID != "" {
-		method := fmt.Sprintf("method=%s;walletID=%s", "byWalletID", e.WalletID)
-		return fmt.Sprintf(template, method, e.Authenticator)
+		return fmt.Sprintf(template, fmt.Sprintf("method=%s;walletID=%s", "byWalletID", e.WalletID), e.Authenticator)
 	}
-
 	if e.Username != "" {
-		method := fmt.Sprintf("method=%s;username=%s", "byUsername", e.Username)
-		return fmt.Sprintf(template, method, e.Authenticator)
+		return fmt.Sprintf(template, fmt.Sprintf("method=%s;username=%s", "byUsername", e.Username), e.Authenticator)
 	}
-
-	if e.L1ChainAddress != (L1ChainAddress{}) {
-		method := fmt.Sprintf("method=%s;chainAddress=%s", "byChainAddress", e.L1ChainAddress)
-		return fmt.Sprintf(template, method, e.Authenticator)
+	if e.Address != "" {
+		return fmt.Sprintf(template, fmt.Sprintf("method=%s;address=%s", "byAddress", e.Address), e.Authenticator)
 	}
-
 	return fmt.Sprintf("user not found:authMethod=%s", e.Authenticator)
 }
 
 type ErrUserAlreadyExists struct {
-	ChainAddress  ChainAddress
+	Address       Address
 	Authenticator string
 	Username      string
 }
 
 func (e ErrUserAlreadyExists) Error() string {
-	return fmt.Sprintf("user already exists: username: %s, address: %s, authenticator: %s", e.Username, e.ChainAddress, e.Authenticator)
+	return fmt.Sprintf("user already exists: username: %s, address: %s, authenticator: %s", e.Username, e.Address, e.Authenticator)
 }
 
 type ErrUsernameNotAvailable struct {
@@ -87,12 +79,12 @@ func (e ErrUsernameNotAvailable) Error() string {
 }
 
 type ErrAddressOwnedByUser struct {
-	ChainAddress ChainAddress
-	OwnerID      DBID
+	Address Address
+	OwnerID DBID
 }
 
 func (e ErrAddressOwnedByUser) Error() string {
-	return fmt.Sprintf("address is owned by user: address: %s, ownerID: %s", e.ChainAddress, e.OwnerID)
+	return fmt.Sprintf("address is owned by user: address: %s, ownerID: %s", e.Address, e.OwnerID)
 }
 
 type ErrPushTokenBelongsToAnotherUser struct {

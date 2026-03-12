@@ -2,6 +2,7 @@ package publicapi
 
 import (
 	"context"
+
 	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/go-playground/validator/v10"
 	db "github.com/mutuals/go-mutuals/db/gen/coredb"
@@ -21,11 +22,11 @@ type AssetAPI struct {
 	throttler *throttle.Locker
 }
 
-func (api AssetAPI) GetAssetsByOwnerChainAddressPaginate(ctx context.Context, ownerChainAddress persist.ChainAddress, before, after *string, first, last *int, onlyMutualsUsers bool) ([]any, PageInfo, error) {
+func (api AssetAPI) GetAssetsByOwnerAddressPaginate(ctx context.Context, ownerAddress persist.Address, before, after *string, first, last *int) ([]any, PageInfo, error) {
 
 	// Validate
 	if err := validate.ValidateFields(api.validator, validate.ValidationMap{
-		"ownerChainAddress": validate.WithTag(ownerChainAddress, "required"),
+		"ownerAddress": validate.WithTag(ownerAddress, "required"),
 	}); err != nil {
 		return nil, PageInfo{}, err
 	}
@@ -34,44 +35,6 @@ func (api AssetAPI) GetAssetsByOwnerChainAddressPaginate(ctx context.Context, ow
 		return nil, PageInfo{}, err
 	}
 
-	/*
-		TODO external call api
-
-		queryFunc := func(params boolTimeIDPagingParams) ([]db.GetAssetsByOwnerChainAddressPaginateRow, error) {
-				return api.queries.GetAssetsByOwnerChainAddressPaginate(ctx, db.GetAssetsByOwnerChainAddressPaginateParams{
-					Chain:         ownerChainAddress.Chain(),
-					OwnerAddress:  ownerChainAddress.Address(),
-					Limit:         params.Limit,
-					CurBeforeTime: params.CursorBeforeTime,
-					CurBeforeID:   params.CursorBeforeID,
-					CurAfterTime:  params.CursorAfterTime,
-					CurAfterID:    params.CursorAfterID,
-					PagingForward: params.PagingForward,
-				})
-			}
-
-			countFunc := func() (int, error) {
-				total, err := api.queries.CountAssetsByOwnerChainAddress(ctx, db.CountAssetsByOwnerChainAddressParams{
-					Chain:        ownerChainAddress.Chain(),
-					OwnerAddress: ownerChainAddress.Address(),
-				})
-				return int(total), err
-			}
-
-			cursorFunc := func(r db.GetAssetsByOwnerChainAddressPaginateRow) (bool, time.Time, persist.DBID, error) {
-				// TODO remove bool return val (`true`) from cursor
-				return true, r.Asset.CreatedAt, r.Asset.ID, nil
-			}
-
-			paginator := boolTimeIDPaginator[db.GetAssetsByOwnerChainAddressPaginateRow]{
-				QueryFunc:  queryFunc,
-				CursorFunc: cursorFunc,
-				CountFunc:  countFunc,
-			}
-
-			results, pageInfo, err := paginator.paginate(before, after, first, last)
-			assets := util.MapWithoutError(results, func(r db.GetAssetsByOwnerChainAddressPaginateRow) db.Asset { return r.Asset })
-			return assets, pageInfo, err
-	*/
+	// TODO: implement external call using ownerAddress
 	return nil, PageInfo{}, nil
 }

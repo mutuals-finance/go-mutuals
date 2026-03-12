@@ -20,12 +20,12 @@ func IsDebugEnv() bool {
 
 type DebugAuthenticator struct {
 	User               *db.User
-	ChainAddresses     []persist.ChainAddress
+	Addresses          []persist.Address
 	DebugToolsPassword string
 }
 
 func (d DebugAuthenticator) GetDescription() string {
-	return fmt.Sprintf("DebugAuthenticator(user: %+v, addresses: %v)", d.User, d.ChainAddresses)
+	return fmt.Sprintf("DebugAuthenticator(user: %+v, addresses: %v)", d.User, d.Addresses)
 }
 
 func (d DebugAuthenticator) UserRegistered(context.Context) (bool, error) {

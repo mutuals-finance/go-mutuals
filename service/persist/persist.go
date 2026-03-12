@@ -374,4 +374,23 @@ func JSONBToJSONPtr(j pgtype.JSONB) *JSON {
 	return &result
 }
 
+// Currency represents a currency identifier (e.g. "USD", "ETH") in GraphQL.
+type Currency string
+
+func (c Currency) String() string { return string(c) }
+
+// UnmarshalGQL implements the graphql.Unmarshaler interface.
+func (c *Currency) UnmarshalGQL(v interface{}) error {
+	str, ok := v.(string)
+	if !ok {
+		return fmt.Errorf("Currency must be a string, got %T", v)
+	}
+	*c = Currency(str)
+	return nil
+}
+
+// MarshalGQL implements the graphql.Marshaler interface.
+func (c Currency) MarshalGQL(w io.Writer) {
+	io.WriteString(w, `"`+string(c)+`"`)
+}
 

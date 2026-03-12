@@ -140,7 +140,7 @@ func RegisterCustomValidators(v *validator.Validate) {
 	v.RegisterValidation("signature", SignatureValidator)
 	v.RegisterValidation("username", UsernameValidator)
 	v.RegisterValidation("sorted_asc", SortedAscValidator)
-	v.RegisterValidation("chain", ChainValidator)
+	v.RegisterValidation("chain", NetworkValidator)
 	v.RegisterValidation("role", IsValidRole)
 	v.RegisterValidation("opt_in_role", IsOptInRole)
 	v.RegisterValidation("http", HTTPValidator)
@@ -152,7 +152,6 @@ func RegisterCustomValidators(v *validator.Validate) {
 	v.RegisterAlias("bio", "max=1200")
 	v.RegisterAlias("caption", "max=1200")
 
-	v.RegisterStructValidation(ChainAddressValidator, persist.ChainAddress{})
 	v.RegisterStructValidation(ConnectionPaginationParamsValidator, ConnectionPaginationParams{})
 	v.RegisterStructValidation(CollectionTokenSettingsParamsValidator, CollectionTokenSettingsParams{})
 	v.RegisterStructValidation(EventValidator, coredb.Event{})
@@ -169,21 +168,6 @@ var IsOptInRole validator.Func = func(fl validator.FieldLevel) bool {
 	return role == persist.RoleBetaTester
 }
 
-func ChainAddressValidator(sl validator.StructLevel) {
-	chainAddress := sl.Current().Interface().(persist.ChainAddress)
-
-	address := chainAddress.Address()
-	chain := chainAddress.Chain()
-
-	// TODO: At some point in the future, validate the address based on its chain type.
-	if len(address) == 0 {
-		sl.ReportError(address, "Address", "Address", "required", "")
-	}
-
-	if chain < 0 || chain > persist.MaxChainValue {
-		sl.ReportError(chain, "Chain", "Chain", "valid_chain_type", "")
-	}
-}
 
 func EventValidator(sl validator.StructLevel) {
 	event := sl.Current().Interface().(coredb.Event)
@@ -314,10 +298,10 @@ var SortedAscValidator validator.Func = func(fl validator.FieldLevel) bool {
 	return false
 }
 
-// ChainValidator ensures the specified Chain is one we support
-var ChainValidator validator.Func = func(fl validator.FieldLevel) bool {
+// NetworkValidator ensures the specified Network is one we support
+var NetworkValidator validator.Func = func(fl validator.FieldLevel) bool {
 	chain := fl.Field().Int()
-	return chain >= 0 && chain <= int64(persist.MaxChainValue)
+	return chain >= 0 && chain <= int64(persist.MaxNetworkValue)
 }
 
 var AtLeastOneValidator validator.Func = func(fl validator.FieldLevel) bool {

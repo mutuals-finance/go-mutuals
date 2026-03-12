@@ -15,7 +15,6 @@ import (
 
 	"github.com/mutuals/go-mutuals/env"
 	"github.com/mutuals/go-mutuals/service/auth"
-	"github.com/mutuals/go-mutuals/service/persist"
 )
 
 const Enabled bool = true
@@ -39,23 +38,8 @@ func (d DebugAuthenticator) Authenticate(ctx context.Context) (*auth.AuthResult,
 	if !IsDebugEnv() {
 		return nil, errors.New("DebugAuthenticator may only be used in a local and development environments")
 	}
-
 	if !isValidPassword(d.DebugToolsPassword) {
 		return nil, errors.New("invalid debug tools password")
 	}
-
-	wallets := make([]auth.AuthenticatedAddress, len(d.ChainAddresses))
-	for i, chainAddress := range d.ChainAddresses {
-		wallets[i] = auth.AuthenticatedAddress{
-			ChainAddress: chainAddress,
-			WalletType:   persist.WalletTypeEOA,
-		}
-	}
-
-	authResult := auth.AuthResult{
-		User:      d.User,
-		Addresses: wallets,
-	}
-
-	return &authResult, nil
+	return &auth.AuthResult{User: d.User}, nil
 }
